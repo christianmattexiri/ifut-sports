@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
-import { Mail, Lock, User, AtSign, Eye, EyeOff, Trophy } from "lucide-react";
+import { Mail, Lock, User, AtSign, Eye, EyeOff } from "lucide-react";
+import ifutCrest from "@/assets/ifut-crest.png";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -68,9 +69,10 @@ function Index() {
         <div className="w-full max-w-md">
           {/* Header */}
           <div className="mb-8 flex flex-col items-center text-center">
-            <Trophy
-              className="h-12 w-12 text-[#00FF00] drop-shadow-[0_0_10px_rgba(0,255,0,0.5)]"
-              strokeWidth={2}
+            <img
+              src={ifutCrest}
+              alt="iFut"
+              className="mx-auto h-28 w-auto object-contain mix-blend-screen drop-shadow-[0_0_25px_rgba(0,255,0,0.45)]"
             />
             <h1 className="mt-4 text-5xl font-bold tracking-tight text-white [text-shadow:_0_0_14px_rgba(0,255,0,0.45),_0_0_30px_rgba(0,255,0,0.25)]">
               iFut
