@@ -51,7 +51,7 @@ function Dashboard() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [fixoOpen, setFixoOpen] = useState(false);
-  const [peladas] = useState<Pelada[]>([]);
+  const [peladas, setPeladas] = useState<Pelada[]>([]);
 
   useEffect(() => {
     let active = true;
@@ -62,11 +62,18 @@ function Dashboard() {
         return;
       }
       const uid = sess.session.user.id;
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, full_name, username, avatar_url")
-        .eq("id", uid)
-        .maybeSingle();
+      const [{ data }, { data: matches }] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("id, full_name, username, avatar_url")
+          .eq("id", uid)
+          .maybeSingle(),
+        supabase
+          .from("matches")
+          .select("id, name, day_of_week, match_time, location, logo_url")
+          .eq("admin_id", uid)
+          .order("created_at", { ascending: false }),
+      ]);
       if (!active) return;
       setProfile(
         data ?? {
@@ -75,6 +82,17 @@ function Dashboard() {
           username: "jogador",
           avatar_url: null,
         },
+      );
+      setPeladas(
+        (matches ?? []).map((m: any) => ({
+          id: m.id,
+          name: m.name,
+          time: [m.day_of_week, m.match_time].filter(Boolean).join(" • ") || "Sem horário",
+          participants: 0,
+          status: "Ativa" as const,
+          avatars: [],
+          logoUrl: m.logo_url ?? null,
+        })),
       );
       setReady(true);
     })();
@@ -188,7 +206,11 @@ function Dashboard() {
           ) : (
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
               {peladas.map((p) => (
-                <MatchCard key={p.id} pelada={p} />
+                <MatchCard
+                  key={p.id}
+                  pelada={p}
+                  onClick={() => navigate({ to: "/pelada/$id", params: { id: p.id } })}
+                />
               ))}
             </div>
           )}
