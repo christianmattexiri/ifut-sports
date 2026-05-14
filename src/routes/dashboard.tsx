@@ -328,6 +328,146 @@ function EmptyState() {
   );
 }
 
+function CreateFixoDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+}) {
+  const navigate = useNavigate();
+  const [name, setName] = useState("");
+  const [day, setDay] = useState("");
+  const [time, setTime] = useState("");
+  const [place, setPlace] = useState("");
+  const [logo, setLogo] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  function handleLogo(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setLogo(reader.result as string);
+    reader.readAsDataURL(file);
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!name || !day || !time || !place) {
+      toast.error("Preencha todos os campos obrigatórios");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      localStorage.setItem(
+        "ifut:pelada:fixa",
+        JSON.stringify({ name, day, time, place, logo }),
+      );
+    } catch {
+      /* noop */
+    }
+    toast.success("Pelada criada!");
+    onOpenChange(false);
+    navigate({ to: "/pelada/fixa" });
+  }
+
+  const days = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="mx-4 max-h-[90vh] max-w-lg overflow-y-auto rounded-2xl border border-[#00FF00] bg-zinc-950 p-6 shadow-[0_0_60px_-5px_rgba(0,255,0,0.7)] sm:rounded-3xl">
+        <DialogTitle className="text-center text-xl font-bold text-white md:text-2xl">
+          Nova Pelada Fixa
+        </DialogTitle>
+        <p className="mt-1 text-center text-sm text-zinc-400">
+          Configure sua pelada recorrente
+        </p>
+
+        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="pelada-name" className="text-zinc-300">Nome da Pelada</Label>
+            <Input
+              id="pelada-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Ex: Pelada da Quarta"
+              className="border-white/10 bg-zinc-900 text-white"
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-zinc-300">Dia da Semana</Label>
+              <Select value={day} onValueChange={setDay}>
+                <SelectTrigger className="border-white/10 bg-zinc-900 text-white">
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-900 text-white">
+                  {days.map((d) => (
+                    <SelectItem key={d} value={d}>{d}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="pelada-time" className="text-zinc-300">Horário</Label>
+              <Input
+                id="pelada-time"
+                type="time"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                className="border-white/10 bg-zinc-900 text-white"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="pelada-place" className="text-zinc-300">Nome da Quadra/Local</Label>
+            <Input
+              id="pelada-place"
+              value={place}
+              onChange={(e) => setPlace(e.target.value)}
+              placeholder="Ex: Arena Martello"
+              className="border-white/10 bg-zinc-900 text-white"
+              required
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="pelada-logo" className="text-zinc-300">Logo (opcional)</Label>
+            <div className="flex items-center gap-3">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-zinc-900">
+                {logo ? (
+                  <img src={logo} alt="logo" className="h-full w-full object-cover" />
+                ) : (
+                  <Trophy className="h-6 w-6 text-zinc-600" />
+                )}
+              </div>
+              <Input
+                id="pelada-logo"
+                type="file"
+                accept="image/*"
+                onChange={handleLogo}
+                className="border-white/10 bg-zinc-900 text-zinc-300 file:text-zinc-200"
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={submitting}
+            className="mt-2 w-full rounded-xl bg-[#00FF00] py-3 text-base font-bold text-black shadow-[0_0_30px_-6px_rgba(0,255,0,0.9)] transition hover:scale-[1.01] hover:bg-[#22ff22] disabled:opacity-60"
+          >
+            {submitting ? "Criando..." : "CRIAR"}
+          </button>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function NavItem({
   icon,
   label,
