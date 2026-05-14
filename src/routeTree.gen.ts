@@ -11,7 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as PeladaFixaRouteImport } from './routes/pelada.fixa'
+import { Route as PeladaRouteImport } from './routes/pelada.'
 
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
@@ -23,40 +23,40 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PeladaFixaRoute = PeladaFixaRouteImport.update({
-  id: '/pelada/fixa',
-  path: '/pelada/fixa',
+const PeladaRoute = PeladaRouteImport.update({
+  id: '/pelada/',
+  path: '/pelada/',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
-  '/pelada/fixa': typeof PeladaFixaRoute
+  '/pelada/': typeof PeladaRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
-  '/pelada/fixa': typeof PeladaFixaRoute
+  '/pelada': typeof PeladaRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
-  '/pelada/fixa': typeof PeladaFixaRoute
+  '/pelada/': typeof PeladaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/pelada/fixa'
+  fullPaths: '/' | '/dashboard' | '/pelada/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/pelada/fixa'
-  id: '__root__' | '/' | '/dashboard' | '/pelada/fixa'
+  to: '/' | '/dashboard' | '/pelada'
+  id: '__root__' | '/' | '/dashboard' | '/pelada/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRoute: typeof DashboardRoute
-  PeladaFixaRoute: typeof PeladaFixaRoute
+  PeladaRoute: typeof PeladaRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -75,11 +75,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/pelada/fixa': {
-      id: '/pelada/fixa'
-      path: '/pelada/fixa'
-      fullPath: '/pelada/fixa'
-      preLoaderRoute: typeof PeladaFixaRouteImport
+    '/pelada/': {
+      id: '/pelada/'
+      path: '/pelada'
+      fullPath: '/pelada/'
+      preLoaderRoute: typeof PeladaRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -88,8 +88,18 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRoute,
-  PeladaFixaRoute: PeladaFixaRoute,
+  PeladaRoute: PeladaRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
