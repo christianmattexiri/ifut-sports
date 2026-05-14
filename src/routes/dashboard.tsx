@@ -10,9 +10,7 @@ import {
   ArrowDown,
   Trophy,
   Repeat,
-  Whistle,
   RefreshCw,
-  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -224,17 +222,20 @@ function CreatePeladaDialog({
 }) {
   const options = [
     {
-      icon: Whistle,
+      icon: RefreshCw,
+      emoji: "⚽",
       title: "Futebol Avulso",
       desc: "Pelada de um dia só",
     },
     {
       icon: RefreshCw,
+      emoji: null,
       title: "Futebol Fixo",
       desc: "Pelada recorrente (ex: toda quarta)",
     },
     {
       icon: Trophy,
+      emoji: null,
       title: "Organizar Campeonato",
       desc: "Módulo de torneio",
     },
@@ -243,24 +244,14 @@ function CreatePeladaDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        showCloseButton={false}
         className="max-w-4xl border border-[#00FF00] bg-zinc-950 p-8 sm:rounded-3xl shadow-[0_0_60px_-5px_rgba(0,255,0,0.7)]"
       >
-        <button
-          type="button"
-          onClick={() => onOpenChange(false)}
-          className="absolute right-5 top-5 rounded-full p-1.5 text-zinc-400 transition hover:bg-white/5 hover:text-zinc-100"
-          aria-label="Fechar"
-        >
-          <X className="h-5 w-5" />
-        </button>
-
         <DialogTitle className="text-center text-2xl font-bold text-white md:text-3xl">
           Criar uma nova Pelada
         </DialogTitle>
 
         <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-3">
-          {options.map(({ icon: Icon, title, desc }) => (
+          {options.map(({ icon: Icon, emoji, title, desc }) => (
             <button
               key={title}
               type="button"
@@ -270,10 +261,16 @@ function CreatePeladaDialog({
               }}
               className="group flex flex-col items-center justify-between gap-5 rounded-2xl border border-green-500/50 bg-zinc-900 p-6 text-center transition-all duration-200 hover:scale-[1.03] hover:border-[#00FF00] hover:shadow-[0_0_30px_-5px_rgba(0,255,0,0.7)]"
             >
-              <Icon
-                className="h-16 w-16 text-[#00FF00] drop-shadow-[0_0_8px_rgba(0,255,0,0.8)]"
-                strokeWidth={2}
-              />
+              {emoji ? (
+                <span className="text-6xl leading-none drop-shadow-[0_0_12px_rgba(0,255,0,0.8)]">
+                  {emoji}
+                </span>
+              ) : (
+                <Icon
+                  className="h-16 w-16 text-[#00FF00] drop-shadow-[0_0_8px_rgba(0,255,0,0.8)]"
+                  strokeWidth={2}
+                />
+              )}
               <div className="space-y-2">
                 <h3 className="text-xl font-semibold text-white">{title}</h3>
                 <p className="text-sm text-zinc-400">{desc}</p>
