@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
-import { Mail, Lock, User, AtSign, Eye, EyeOff } from "lucide-react";
-import ifutLogo from "@/assets/ifut-logo.png";
+import { Mail, Lock, User, AtSign, Eye, EyeOff, Trophy } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -68,22 +67,21 @@ function Index() {
       <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-10">
         <div className="w-full max-w-md">
           {/* Header */}
-          <div className="mb-6 flex flex-col items-center text-center">
-            <img
-              src={ifutLogo}
-              alt="iFut — escudo com bola de futebol"
-              className="h-32 w-auto drop-shadow-[0_0_25px_rgba(0,255,0,0.45)]"
+          <div className="mb-8 flex flex-col items-center text-center">
+            <Trophy
+              className="h-12 w-12 text-[#00FF00] drop-shadow-[0_0_10px_rgba(0,255,0,0.5)]"
+              strokeWidth={2}
             />
-            <h1 className="mt-3 text-4xl font-extrabold tracking-[0.18em] text-[#00FF00] [text-shadow:_0_0_12px_rgba(0,255,0,0.7),_0_0_28px_rgba(0,255,0,0.45)]">
-              IFUT
+            <h1 className="mt-4 text-5xl font-bold tracking-tight text-white [text-shadow:_0_0_14px_rgba(0,255,0,0.45),_0_0_30px_rgba(0,255,0,0.25)]">
+              iFut
             </h1>
-            <p className="mt-2 italic text-sm text-zinc-300/90">
-              Gerencie sua pelada do jeito certo.
+            <p className="mt-3 text-base tracking-wide text-zinc-400">
+              Venha organizar sua pelada do jeito certo.
             </p>
           </div>
 
           {/* Glass card */}
-          <div className="relative rounded-2xl border border-white/10 bg-white/[0.04] p-7 shadow-[0_30px_60px_-20px_rgba(0,0,0,0.6)] backdrop-blur-xl after:pointer-events-none after:absolute after:inset-x-6 after:-bottom-px after:h-px after:bg-gradient-to-r after:from-transparent after:via-[#00FF00] after:to-transparent after:shadow-[0_0_20px_2px_rgba(0,255,0,0.6)]">
+          <div className="relative rounded-2xl border border-white/10 bg-zinc-900/40 p-7 shadow-[0_30px_60px_-20px_rgba(0,0,0,0.6)] backdrop-blur-xl transition-all duration-300 after:pointer-events-none after:absolute after:inset-x-6 after:-bottom-px after:h-px after:bg-gradient-to-r after:from-transparent after:via-[#00FF00] after:to-transparent after:shadow-[0_0_20px_2px_rgba(0,255,0,0.6)]">
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -168,7 +166,7 @@ function Index() {
             <button
               type="submit"
               disabled={loading}
-              className="mt-2 w-full rounded-xl bg-[#00FF00] py-3 text-base font-semibold text-black shadow-[0_0_30px_-8px_rgba(0,255,0,0.8)] transition hover:bg-[#33ff33] focus:outline-none focus:ring-2 focus:ring-[#00FF00]/60 focus:ring-offset-2 focus:ring-offset-zinc-950 disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-2 w-full rounded-xl bg-[#00FF00] py-3 text-base font-bold text-black shadow-[0_0_30px_-6px_rgba(0,255,0,0.9)] transition-transform duration-200 hover:scale-105 hover:bg-[#22ff22] focus:outline-none focus:ring-2 focus:ring-[#00FF00]/60 focus:ring-offset-2 focus:ring-offset-zinc-950 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100"
             >
               {loading
                 ? "Aguarde..."
