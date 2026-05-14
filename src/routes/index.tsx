@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
-import { Mail, Lock, User, AtSign, Eye, EyeOff, Goal } from "lucide-react";
+import { Mail, Lock, User, AtSign, Eye, EyeOff } from "lucide-react";
+import ifutLogo from "@/assets/ifut-logo.png";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -65,19 +66,24 @@ function Index() {
       />
 
       <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-10">
-        <div className="w-full max-w-md rounded-2xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-xl">
+        <div className="w-full max-w-md">
           {/* Header */}
-          <div className="mb-8 flex flex-col items-center text-center">
-            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-[#00FF00]/30 bg-[#00FF00]/10 shadow-[0_0_30px_-5px_rgba(0,255,0,0.5)]">
-              <Goal className="h-7 w-7 text-[#00FF00]" strokeWidth={2.2} />
-            </div>
-            <h1 className="text-3xl font-bold tracking-tight text-white">
-              i<span className="text-[#00FF00]">Fut</span>
+          <div className="mb-6 flex flex-col items-center text-center">
+            <img
+              src={ifutLogo}
+              alt="iFut — escudo com bola de futebol"
+              className="h-32 w-auto drop-shadow-[0_0_25px_rgba(0,255,0,0.45)]"
+            />
+            <h1 className="mt-3 text-4xl font-extrabold tracking-[0.18em] text-[#00FF00] [text-shadow:_0_0_12px_rgba(0,255,0,0.7),_0_0_28px_rgba(0,255,0,0.45)]">
+              IFUT
             </h1>
-            <p className="mt-2 text-base text-zinc-300">
-              Venha organizar sua pelada do jeito certo.
+            <p className="mt-2 italic text-sm text-zinc-300/90">
+              Gerencie sua pelada do jeito certo.
             </p>
           </div>
+
+          {/* Glass card */}
+          <div className="relative rounded-2xl border border-white/10 bg-white/[0.04] p-7 shadow-[0_30px_60px_-20px_rgba(0,0,0,0.6)] backdrop-blur-xl after:pointer-events-none after:absolute after:inset-x-6 after:-bottom-px after:h-px after:bg-gradient-to-r after:from-transparent after:via-[#00FF00] after:to-transparent after:shadow-[0_0_20px_2px_rgba(0,255,0,0.6)]">
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -170,7 +176,7 @@ function Index() {
                   ? "Entrar"
                   : "Criar conta"}
             </button>
-          </form>
+            </form>
 
           {/* Footer toggle */}
           <p className="mt-6 text-center text-sm text-zinc-400">
@@ -197,7 +203,8 @@ function Index() {
                 </button>
               </>
             )}
-          </p>
+            </p>
+          </div>
         </div>
       </div>
     </main>
