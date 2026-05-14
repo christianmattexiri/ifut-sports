@@ -152,11 +152,6 @@ function Index() {
       setLoading(false);
     }
   }
-      }
-    } finally {
-      setLoading(false);
-    }
-  }
 
   return (
     <main className="relative min-h-screen w-full overflow-hidden bg-zinc-950 font-sans antialiased">
