@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-export const Route = createFileRoute("/pelada/")({
+export const Route = createFileRoute("/pelada/$id")({
   component: PeladaPage,
   head: () => ({ meta: [{ title: "iFut — Pelada" }] }),
 });
