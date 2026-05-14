@@ -363,11 +363,13 @@ function CreateFixoDialog({
   const [time, setTime] = useState("");
   const [place, setPlace] = useState("");
   const [logo, setLogo] = useState<string | null>(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   function handleLogo(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    setLogoFile(file);
     const reader = new FileReader();
     reader.onload = () => setLogo(reader.result as string);
     reader.readAsDataURL(file);
@@ -381,16 +383,49 @@ function CreateFixoDialog({
     }
     setSubmitting(true);
     try {
-      localStorage.setItem(
-        "ifut:pelada:fixa",
-        JSON.stringify({ name, day, time, place, logo }),
-      );
-    } catch {
-      /* noop */
+      const { data: sess } = await supabase.auth.getSession();
+      const uid = sess.session?.user.id;
+      if (!uid) {
+        toast.error("Faça login novamente");
+        setSubmitting(false);
+        return;
+      }
+
+      let logo_url: string | null = null;
+      if (logoFile) {
+        const ext = logoFile.name.split(".").pop() || "png";
+        const path = `${uid}/match-${Date.now()}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from("avatars")
+          .upload(path, logoFile, { upsert: true, contentType: logoFile.type });
+        if (upErr) throw upErr;
+        const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
+        logo_url = pub.publicUrl;
+      }
+
+      const { data: inserted, error } = await supabase
+        .from("matches")
+        .insert({
+          name,
+          day_of_week: day,
+          match_time: time,
+          location: place,
+          logo_url,
+          match_type: "fixa",
+          admin_id: uid,
+        })
+        .select("id")
+        .single();
+      if (error || !inserted) throw error ?? new Error("Falha ao criar");
+
+      toast.success("Pelada criada!");
+      onOpenChange(false);
+      navigate({ to: "/pelada/$id", params: { id: inserted.id } });
+    } catch (err: any) {
+      toast.error(err?.message ?? "Erro ao criar pelada");
+    } finally {
+      setSubmitting(false);
     }
-    toast.success("Pelada criada!");
-    onOpenChange(false);
-    navigate({ to: "/pelada/fixa" });
   }
 
   const days = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
