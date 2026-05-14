@@ -10,18 +10,16 @@ import {
   ArrowDown,
   Trophy,
   Repeat,
+  Whistle,
+  RefreshCw,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import ifutCrest from "@/assets/ifut-crest.png";
 import { MatchCard, type Pelada } from "@/components/MatchCard";
 import { ProfileDialog } from "@/components/ProfileDialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
@@ -44,6 +42,7 @@ function Dashboard() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [ready, setReady] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
   const [peladas] = useState<Pelada[]>([]);
 
   useEffect(() => {
@@ -188,40 +187,19 @@ function Dashboard() {
 
           {/* CTA Dropdown */}
           <div className="mt-10 flex justify-center pb-6">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  className="inline-flex w-full max-w-xl items-center justify-center gap-2 rounded-2xl bg-[#00FF00] px-6 py-4 text-base font-bold text-black shadow-[0_0_40px_-6px_rgba(0,255,0,0.9)] transition-transform duration-200 hover:scale-[1.02] hover:bg-[#22ff22] focus:outline-none focus:ring-2 focus:ring-[#00FF00]/60 focus:ring-offset-2 focus:ring-offset-zinc-950"
-                >
-                  <Plus className="h-5 w-5" strokeWidth={2.5} />
-                  Criar pelada
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="center"
-                className="w-72 border-white/10 bg-zinc-900/90 text-zinc-100 backdrop-blur-xl"
-              >
-                <CreateOption
-                  icon="⚽"
-                  title="Futebol Avulso"
-                  desc="Pelada de um dia só"
-                />
-                <CreateOption
-                  icon={<Repeat className="h-4 w-4" />}
-                  title="Futebol Fixo"
-                  desc="Pelada recorrente (ex: toda quarta)"
-                />
-                <CreateOption
-                  icon={<Trophy className="h-4 w-4" />}
-                  title="Organizar Campeonato"
-                  desc="Módulo de torneio"
-                />
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <button
+              type="button"
+              onClick={() => setCreateOpen(true)}
+              className="inline-flex w-full max-w-xl items-center justify-center gap-2 rounded-2xl bg-[#00FF00] px-6 py-4 text-base font-bold text-black shadow-[0_0_40px_-6px_rgba(0,255,0,0.9)] transition-transform duration-200 hover:scale-[1.02] hover:bg-[#22ff22] focus:outline-none focus:ring-2 focus:ring-[#00FF00]/60 focus:ring-offset-2 focus:ring-offset-zinc-950"
+            >
+              <Plus className="h-5 w-5" strokeWidth={2.5} />
+              Criar pelada
+            </button>
           </div>
         </section>
       </div>
+
+      <CreatePeladaDialog open={createOpen} onOpenChange={setCreateOpen} />
 
       <ProfileDialog
         open={profileOpen}
@@ -237,28 +215,77 @@ function Dashboard() {
   );
 }
 
-function CreateOption({
-  icon,
-  title,
-  desc,
+function CreatePeladaDialog({
+  open,
+  onOpenChange,
 }: {
-  icon: React.ReactNode;
-  title: string;
-  desc: string;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
 }) {
+  const options = [
+    {
+      icon: Whistle,
+      title: "Futebol Avulso",
+      desc: "Pelada de um dia só",
+    },
+    {
+      icon: RefreshCw,
+      title: "Futebol Fixo",
+      desc: "Pelada recorrente (ex: toda quarta)",
+    },
+    {
+      icon: Trophy,
+      title: "Organizar Campeonato",
+      desc: "Módulo de torneio",
+    },
+  ] as const;
+
   return (
-    <DropdownMenuItem
-      onSelect={() => toast("Em breve", { description: title })}
-      className="cursor-pointer gap-3 px-3 py-3 focus:bg-[#00FF00]/10 focus:text-[#00FF00]"
-    >
-      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/5 text-base">
-        {icon}
-      </span>
-      <span className="flex flex-col">
-        <span className="text-sm font-semibold">{title}</span>
-        <span className="text-xs text-zinc-400">{desc}</span>
-      </span>
-    </DropdownMenuItem>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        showCloseButton={false}
+        className="max-w-4xl border border-[#00FF00] bg-zinc-950 p-8 sm:rounded-3xl shadow-[0_0_60px_-5px_rgba(0,255,0,0.7)]"
+      >
+        <button
+          type="button"
+          onClick={() => onOpenChange(false)}
+          className="absolute right-5 top-5 rounded-full p-1.5 text-zinc-400 transition hover:bg-white/5 hover:text-zinc-100"
+          aria-label="Fechar"
+        >
+          <X className="h-5 w-5" />
+        </button>
+
+        <DialogTitle className="text-center text-2xl font-bold text-white md:text-3xl">
+          Criar uma nova Pelada
+        </DialogTitle>
+
+        <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-3">
+          {options.map(({ icon: Icon, title, desc }) => (
+            <button
+              key={title}
+              type="button"
+              onClick={() => {
+                toast("Em breve", { description: title });
+                onOpenChange(false);
+              }}
+              className="group flex flex-col items-center justify-between gap-5 rounded-2xl border border-green-500/50 bg-zinc-900 p-6 text-center transition-all duration-200 hover:scale-[1.03] hover:border-[#00FF00] hover:shadow-[0_0_30px_-5px_rgba(0,255,0,0.7)]"
+            >
+              <Icon
+                className="h-16 w-16 text-[#00FF00] drop-shadow-[0_0_8px_rgba(0,255,0,0.8)]"
+                strokeWidth={2}
+              />
+              <div className="space-y-2">
+                <h3 className="text-xl font-semibold text-white">{title}</h3>
+                <p className="text-sm text-zinc-400">{desc}</p>
+              </div>
+              <span className="rounded-full border border-[#00FF00]/60 px-5 py-1.5 text-sm font-medium text-[#00FF00] transition group-hover:bg-[#00FF00]/10">
+                Selecionar
+              </span>
+            </button>
+          ))}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
