@@ -270,11 +270,7 @@ function Index() {
               disabled={loading}
               className="mt-2 w-full rounded-xl bg-[#00FF00] py-3 text-base font-bold text-black shadow-[0_0_30px_-6px_rgba(0,255,0,0.9)] transition-transform duration-200 hover:scale-105 hover:bg-[#22ff22] focus:outline-none focus:ring-2 focus:ring-[#00FF00]/60 focus:ring-offset-2 focus:ring-offset-zinc-950 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100"
             >
-              {loading
-                ? "Aguarde..."
-                : mode === "login"
-                  ? "Entrar"
-                  : "Criar conta"}
+              {loading ? "Carregando..." : mode === "login" ? "Entrar" : "Criar conta"}
             </button>
             </form>
 
