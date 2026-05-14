@@ -18,6 +18,15 @@ import ifutCrest from "@/assets/ifut-crest.png";
 import { MatchCard, type Pelada } from "@/components/MatchCard";
 import { ProfileDialog } from "@/components/ProfileDialog";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
@@ -41,6 +50,7 @@ function Dashboard() {
   const [ready, setReady] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const [fixoOpen, setFixoOpen] = useState(false);
   const [peladas] = useState<Pelada[]>([]);
 
   useEffect(() => {
@@ -197,7 +207,16 @@ function Dashboard() {
         </section>
       </div>
 
-      <CreatePeladaDialog open={createOpen} onOpenChange={setCreateOpen} />
+      <CreatePeladaDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        onSelectFixo={() => {
+          setCreateOpen(false);
+          setFixoOpen(true);
+        }}
+      />
+
+      <CreateFixoDialog open={fixoOpen} onOpenChange={setFixoOpen} />
 
       <ProfileDialog
         open={profileOpen}
@@ -216,9 +235,11 @@ function Dashboard() {
 function CreatePeladaDialog({
   open,
   onOpenChange,
+  onSelectFixo,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  onSelectFixo: () => void;
 }) {
   const options = [
     {
@@ -256,6 +277,10 @@ function CreatePeladaDialog({
               key={title}
               type="button"
               onClick={() => {
+                if (title === "Futebol Fixo") {
+                  onSelectFixo();
+                  return;
+                }
                 toast("Em breve", { description: title });
                 onOpenChange(false);
               }}
