@@ -244,13 +244,13 @@ function CreatePeladaDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-4xl border border-[#00FF00] bg-zinc-950 p-8 sm:rounded-3xl shadow-[0_0_60px_-5px_rgba(0,255,0,0.7)]"
+        className="max-w-4xl border border-[#00FF00] bg-zinc-950 p-5 sm:p-8 mx-4 max-h-[90vh] overflow-y-auto rounded-2xl sm:rounded-3xl shadow-[0_0_60px_-5px_rgba(0,255,0,0.7)]"
       >
-        <DialogTitle className="text-center text-2xl font-bold text-white md:text-3xl">
+        <DialogTitle className="text-center text-xl font-bold text-white md:text-3xl">
           Criar uma nova Pelada
         </DialogTitle>
 
-        <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div className="mt-6 grid grid-cols-1 gap-3 md:gap-6 md:grid-cols-3">
           {options.map(({ icon: Icon, emoji, title, desc }) => (
             <button
               key={title}
@@ -259,23 +259,23 @@ function CreatePeladaDialog({
                 toast("Em breve", { description: title });
                 onOpenChange(false);
               }}
-              className="group flex flex-col items-center justify-between gap-5 rounded-2xl border border-green-500/50 bg-zinc-900 p-6 text-center transition-all duration-200 hover:scale-[1.03] hover:border-[#00FF00] hover:shadow-[0_0_30px_-5px_rgba(0,255,0,0.7)]"
+              className="group flex flex-row items-center gap-4 rounded-2xl border border-green-500/50 bg-zinc-900 p-4 text-left transition-all duration-200 hover:border-[#00FF00] hover:shadow-[0_0_30px_-5px_rgba(0,255,0,0.7)] md:flex-col md:items-center md:justify-between md:gap-5 md:p-6 md:text-center md:hover:scale-[1.03]"
             >
               {emoji ? (
-                <span className="text-6xl leading-none drop-shadow-[0_0_12px_rgba(0,255,0,0.8)]">
+                <span className="shrink-0 text-4xl leading-none drop-shadow-[0_0_12px_rgba(0,255,0,0.8)] md:text-6xl">
                   {emoji}
                 </span>
               ) : (
                 <Icon
-                  className="h-16 w-16 text-[#00FF00] drop-shadow-[0_0_8px_rgba(0,255,0,0.8)]"
+                  className="h-12 w-12 shrink-0 text-[#00FF00] drop-shadow-[0_0_8px_rgba(0,255,0,0.8)] md:h-16 md:w-16"
                   strokeWidth={2}
                 />
               )}
-              <div className="space-y-2">
-                <h3 className="text-xl font-semibold text-white">{title}</h3>
-                <p className="text-sm text-zinc-400">{desc}</p>
+              <div className="flex-1 space-y-1 md:space-y-2">
+                <h3 className="text-base font-semibold text-white md:text-xl">{title}</h3>
+                <p className="text-xs text-zinc-400 md:text-sm">{desc}</p>
               </div>
-              <span className="rounded-full border border-[#00FF00]/60 px-5 py-1.5 text-sm font-medium text-[#00FF00] transition group-hover:bg-[#00FF00]/10">
+              <span className="ml-auto shrink-0 rounded-full border border-[#00FF00]/60 px-3 py-1 text-xs font-medium text-[#00FF00] transition group-hover:bg-[#00FF00]/10 md:ml-0 md:px-5 md:py-1.5 md:text-sm">
                 Selecionar
               </span>
             </button>
