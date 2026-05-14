@@ -5,14 +5,23 @@ import {
   ShieldCheck,
   UserCircle2,
   LogOut,
-  Clock,
-  CheckCircle2,
   Plus,
-  Users,
+  CalendarDays,
+  ArrowDown,
+  Trophy,
+  Repeat,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import ifutCrest from "@/assets/ifut-crest.png";
+import { MatchCard, type Pelada } from "@/components/MatchCard";
+import { ProfileDialog } from "@/components/ProfileDialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
@@ -21,39 +30,21 @@ export const Route = createFileRoute("/dashboard")({
   }),
 });
 
-type Profile = { full_name: string | null; username: string };
+const SUPER_ADMIN_USERNAME = "christianmatte";
 
-type Pelada = {
+type Profile = {
   id: string;
-  name: string;
-  time: string;
-  participants: number;
-  status: "Ativa" | "Confirmada";
-  avatars: string[];
+  full_name: string | null;
+  username: string;
+  avatar_url: string | null;
 };
-
-const MOCK_PELADAS: Pelada[] = [
-  { id: "1", name: "Pelada da Turma", time: "Sábado · 16h00", participants: 12, status: "Ativa", avatars: avatarSeeds(5) },
-  { id: "2", name: "Quarta no Sintético", time: "Quarta · 20h30", participants: 10, status: "Confirmada", avatars: avatarSeeds(5) },
-  { id: "3", name: "Racha do Trampo", time: "Sexta · 19h00", participants: 8, status: "Ativa", avatars: avatarSeeds(4) },
-  { id: "4", name: "Domingueira", time: "Domingo · 09h00", participants: 14, status: "Confirmada", avatars: avatarSeeds(5) },
-  { id: "5", name: "Pelada dos Veteranos", time: "Terça · 21h00", participants: 9, status: "Ativa", avatars: avatarSeeds(5) },
-  { id: "6", name: "Resenha FC", time: "Quinta · 19h30", participants: 11, status: "Confirmada", avatars: avatarSeeds(5) },
-  { id: "7", name: "Society Center", time: "Sábado · 10h00", participants: 7, status: "Ativa", avatars: avatarSeeds(4) },
-  { id: "8", name: "Pelada Relâmpago", time: "Sexta · 22h00", participants: 6, status: "Confirmada", avatars: avatarSeeds(3) },
-];
-
-function avatarSeeds(n: number): string[] {
-  const seeds = ["Felipe", "Bruno", "Caio", "Diego", "Eduardo", "Fabio", "Gustavo"];
-  return seeds.slice(0, n).map(
-    (s) => `https://api.dicebear.com/7.x/avataaars/svg?seed=${s}&backgroundColor=00ff00,1a1a1a`,
-  );
-}
 
 function Dashboard() {
   const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [ready, setReady] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [peladas] = useState<Pelada[]>([]);
 
   useEffect(() => {
     let active = true;
@@ -63,14 +54,20 @@ function Dashboard() {
         navigate({ to: "/" });
         return;
       }
+      const uid = sess.session.user.id;
       const { data } = await supabase
         .from("profiles")
-        .select("full_name, username")
-        .eq("id", sess.session.user.id)
+        .select("id, full_name, username, avatar_url")
+        .eq("id", uid)
         .maybeSingle();
       if (!active) return;
       setProfile(
-        data ?? { full_name: sess.session.user.email ?? "Jogador", username: "jogador" },
+        data ?? {
+          id: uid,
+          full_name: sess.session.user.email ?? "Jogador",
+          username: "jogador",
+          avatar_url: null,
+        },
       );
       setReady(true);
     })();
@@ -85,7 +82,7 @@ function Dashboard() {
     navigate({ to: "/" });
   }
 
-  if (!ready) {
+  if (!ready || !profile) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-zinc-950 text-zinc-400">
         Carregando...
@@ -93,13 +90,14 @@ function Dashboard() {
     );
   }
 
-  const firstName = (profile?.full_name?.trim() || profile?.username || "Jogador").split(" ")[0];
-  const username = profile?.username ?? "jogador";
-  const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}&backgroundColor=00ff00`;
+  const firstName = (profile.full_name?.trim() || profile.username || "Jogador").split(" ")[0];
+  const username = profile.username;
+  const fallbackAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}&backgroundColor=00ff00`;
+  const avatarUrl = profile.avatar_url || fallbackAvatar;
+  const isSuperAdmin = username === SUPER_ADMIN_USERNAME;
 
   return (
     <main className="relative min-h-screen w-full bg-zinc-950 text-zinc-100 font-sans antialiased">
-      {/* Ambient glow */}
       <div
         aria-hidden
         className="pointer-events-none fixed -top-40 left-1/3 h-[480px] w-[480px] rounded-full bg-[#00FF00]/10 blur-[160px]"
@@ -108,24 +106,27 @@ function Dashboard() {
       <div className="relative z-10 flex min-h-screen">
         {/* SIDEBAR */}
         <aside className="hidden w-[280px] shrink-0 flex-col justify-between border-r border-white/5 bg-zinc-900/40 px-5 py-6 backdrop-blur-xl md:flex">
-          {/* Top: logo */}
           <div>
             <div className="flex items-center justify-center pb-6">
-              <img src={ifutCrest} alt="iFut" className="h-24 w-auto object-contain drop-shadow-[0_0_20px_rgba(0,255,0,0.45)]" />
+              <img
+                src={ifutCrest}
+                alt="iFut"
+                className="h-24 w-auto object-contain drop-shadow-[0_0_20px_rgba(0,255,0,0.45)]"
+              />
             </div>
 
-            {/* Nav */}
             <nav className="space-y-1.5">
               <NavItem icon={<Home className="h-4 w-4" />} label="Início" active />
-              <NavItem
-                icon={<ShieldCheck className="h-4 w-4" />}
-                label="Painel Admin"
-                badge="Only for super admin"
-              />
+              {isSuperAdmin && (
+                <NavItem
+                  icon={<ShieldCheck className="h-4 w-4" />}
+                  label="Painel Admin"
+                  badge="Super admin"
+                />
+              )}
             </nav>
           </div>
 
-          {/* Profile card */}
           <div className="rounded-2xl border border-white/10 bg-zinc-900/60 p-4 backdrop-blur">
             <div className="flex items-center gap-3">
               <img
@@ -141,6 +142,7 @@ function Dashboard() {
             <div className="mt-3 grid grid-cols-2 gap-2">
               <button
                 type="button"
+                onClick={() => setProfileOpen(true)}
                 className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-xs font-medium text-zinc-200 transition hover:bg-white/10"
               >
                 <UserCircle2 className="h-3.5 w-3.5" />
@@ -160,7 +162,6 @@ function Dashboard() {
 
         {/* MAIN */}
         <section className="flex-1 px-5 py-8 md:px-10 md:py-10">
-          {/* Header */}
           <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#00FF00]/80">
@@ -171,30 +172,110 @@ function Dashboard() {
               </h1>
             </div>
             <p className="text-sm text-zinc-400">
-              <span className="font-semibold text-zinc-200">{MOCK_PELADAS.length}</span> Peladas no Total
+              <span className="font-semibold text-zinc-200">{peladas.length}</span> Peladas no Total
             </p>
           </header>
 
-          {/* Grid */}
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
-            {MOCK_PELADAS.map((p) => (
-              <PeladaCard key={p.id} pelada={p} />
-            ))}
-          </div>
+          {peladas.length === 0 ? (
+            <EmptyState />
+          ) : (
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+              {peladas.map((p) => (
+                <MatchCard key={p.id} pelada={p} />
+              ))}
+            </div>
+          )}
 
-          {/* CTA */}
+          {/* CTA Dropdown */}
           <div className="mt-10 flex justify-center pb-6">
-            <button
-              type="button"
-              className="inline-flex w-full max-w-xl items-center justify-center gap-2 rounded-2xl bg-[#00FF00] px-6 py-4 text-base font-bold text-black shadow-[0_0_40px_-6px_rgba(0,255,0,0.9)] transition-transform duration-200 hover:scale-[1.02] hover:bg-[#22ff22] focus:outline-none focus:ring-2 focus:ring-[#00FF00]/60 focus:ring-offset-2 focus:ring-offset-zinc-950"
-            >
-              <Plus className="h-5 w-5" strokeWidth={2.5} />
-              Criar pelada
-            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex w-full max-w-xl items-center justify-center gap-2 rounded-2xl bg-[#00FF00] px-6 py-4 text-base font-bold text-black shadow-[0_0_40px_-6px_rgba(0,255,0,0.9)] transition-transform duration-200 hover:scale-[1.02] hover:bg-[#22ff22] focus:outline-none focus:ring-2 focus:ring-[#00FF00]/60 focus:ring-offset-2 focus:ring-offset-zinc-950"
+                >
+                  <Plus className="h-5 w-5" strokeWidth={2.5} />
+                  Criar pelada
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="center"
+                className="w-72 border-white/10 bg-zinc-900/90 text-zinc-100 backdrop-blur-xl"
+              >
+                <CreateOption
+                  icon="⚽"
+                  title="Futebol Avulso"
+                  desc="Pelada de um dia só"
+                />
+                <CreateOption
+                  icon={<Repeat className="h-4 w-4" />}
+                  title="Futebol Fixo"
+                  desc="Pelada recorrente (ex: toda quarta)"
+                />
+                <CreateOption
+                  icon={<Trophy className="h-4 w-4" />}
+                  title="Organizar Campeonato"
+                  desc="Módulo de torneio"
+                />
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </section>
       </div>
+
+      <ProfileDialog
+        open={profileOpen}
+        onOpenChange={setProfileOpen}
+        userId={profile.id}
+        fullName={profile.full_name ?? ""}
+        username={profile.username}
+        avatarUrl={profile.avatar_url}
+        fallbackAvatar={fallbackAvatar}
+        onUpdated={(data) => setProfile((p) => (p ? { ...p, ...data } : p))}
+      />
     </main>
+  );
+}
+
+function CreateOption({
+  icon,
+  title,
+  desc,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  desc: string;
+}) {
+  return (
+    <DropdownMenuItem
+      onSelect={() => toast("Em breve", { description: title })}
+      className="cursor-pointer gap-3 px-3 py-3 focus:bg-[#00FF00]/10 focus:text-[#00FF00]"
+    >
+      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/5 text-base">
+        {icon}
+      </span>
+      <span className="flex flex-col">
+        <span className="text-sm font-semibold">{title}</span>
+        <span className="text-xs text-zinc-400">{desc}</span>
+      </span>
+    </DropdownMenuItem>
+  );
+}
+
+function EmptyState() {
+  return (
+    <div className="flex flex-col items-center justify-center gap-4 rounded-3xl border border-dashed border-white/10 bg-zinc-900/30 px-6 py-16 text-center backdrop-blur-xl">
+      <div className="flex h-20 w-20 items-center justify-center rounded-full border border-[#00FF00]/30 bg-[#00FF00]/5 text-[#00FF00] shadow-[0_0_40px_-12px_rgba(0,255,0,0.6)]">
+        <CalendarDays className="h-9 w-9" strokeWidth={1.6} />
+      </div>
+      <p className="max-w-sm text-base text-zinc-400">
+        Você ainda não participa de nenhuma pelada.
+      </p>
+      <div className="mt-2 flex flex-col items-center gap-1 text-sm font-medium text-[#00FF00]">
+        <span>Crie a sua primeira logo abaixo</span>
+        <ArrowDown className="h-5 w-5 animate-bounce" />
+      </div>
+    </div>
   );
 }
 
@@ -228,53 +309,5 @@ function NavItem({
         </span>
       )}
     </button>
-  );
-}
-
-function PeladaCard({ pelada }: { pelada: Pelada }) {
-  return (
-    <article className="group relative overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/60 p-5 backdrop-blur-xl transition-transform duration-200 hover:scale-[1.02] hover:border-[#00FF00]/30">
-      <div className="absolute inset-x-6 -top-px h-px bg-gradient-to-r from-transparent via-[#00FF00]/40 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
-
-      <header className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="text-lg font-semibold text-zinc-50">{pelada.name}</h3>
-          <p className="mt-1 inline-flex items-center gap-1.5 text-xs text-zinc-400">
-            <Clock className="h-3.5 w-3.5" />
-            {pelada.time}
-          </p>
-        </div>
-      </header>
-
-      <div className="mt-5 flex items-center gap-3">
-        <div className="flex -space-x-2">
-          {pelada.avatars.map((src, i) => (
-            <img
-              key={i}
-              src={src}
-              alt=""
-              className="h-8 w-8 rounded-full border-2 border-zinc-900 bg-zinc-800 object-cover"
-            />
-          ))}
-        </div>
-        <span className="inline-flex items-center gap-1 rounded-full bg-white/5 px-2 py-0.5 text-xs text-zinc-300">
-          <Users className="h-3 w-3" />
-          {pelada.participants}
-        </span>
-      </div>
-
-      <footer className="mt-5 flex items-center justify-between border-t border-white/5 pt-4">
-        <span className="inline-flex items-center gap-1.5 text-sm font-medium text-[#00FF00]">
-          <CheckCircle2 className="h-4 w-4" />
-          {pelada.status}
-        </span>
-        <button
-          type="button"
-          className="text-xs font-medium text-zinc-400 transition hover:text-[#00FF00]"
-        >
-          Ver detalhes →
-        </button>
-      </footer>
-    </article>
   );
 }
