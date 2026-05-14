@@ -72,12 +72,9 @@ function Index() {
             <img
               src={ifutCrest}
               alt="iFut"
-              className="mx-auto h-28 w-auto object-contain mix-blend-screen drop-shadow-[0_0_25px_rgba(0,255,0,0.45)]"
+              className="mx-auto h-32 w-auto object-contain drop-shadow-[0_0_25px_rgba(0,255,0,0.45)]"
             />
-            <h1 className="mt-4 text-5xl font-bold tracking-tight text-white [text-shadow:_0_0_14px_rgba(0,255,0,0.45),_0_0_30px_rgba(0,255,0,0.25)]">
-              iFut
-            </h1>
-            <p className="mt-3 text-base tracking-wide text-zinc-400">
+            <p className="mt-4 text-base tracking-wide text-zinc-400">
               Venha organizar sua pelada do jeito certo.
             </p>
           </div>
