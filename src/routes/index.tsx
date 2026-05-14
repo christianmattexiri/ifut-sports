@@ -1,6 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState, type FormEvent } from "react";
 import { Mail, Lock, User, AtSign, Eye, EyeOff } from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import ifutCrest from "@/assets/ifut-crest.png";
 
 export const Route = createFileRoute("/")({
@@ -20,6 +22,7 @@ export const Route = createFileRoute("/")({
 type Mode = "login" | "signup";
 
 function Index() {
+  const navigate = useNavigate();
   const [mode, setMode] = useState<Mode>("login");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -30,23 +33,125 @@ function Index() {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
 
+  // Se já houver sessão ativa, manda direto pro dashboard.
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) navigate({ to: "/dashboard" });
+    });
+  }, [navigate]);
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    if (loading) return;
+
+    // Validação básica de senha
+    if (password.length < 6) {
+      toast.error("A senha deve ter no mínimo 6 caracteres.");
+      return;
+    }
+
     setLoading(true);
     try {
       if (mode === "login") {
-        // TODO: Supabase Auth
-        // const { data, error } = await supabase.auth.signInWithPassword({
-        //   email: identifier,
-        //   password,
-        // });
+        const id = identifier.trim();
+        if (!id) {
+          toast.error("Informe seu e-mail ou username.");
+          return;
+        }
+
+        let loginEmail = id;
+
+        // Se NÃO contiver "@", tratamos como username e buscamos o e-mail.
+        if (!id.includes("@")) {
+          const { data: foundEmail, error: lookupError } = await supabase.rpc(
+            "get_email_by_username",
+            { uname: id },
+          );
+          if (lookupError) {
+            toast.error("Erro ao buscar usuário. Tente novamente.");
+            return;
+          }
+          if (!foundEmail) {
+            toast.error("Usuário não encontrado.");
+            return;
+          }
+          loginEmail = foundEmail as string;
+        } else if (!emailRegex.test(id)) {
+          toast.error("E-mail inválido.");
+          return;
+        }
+
+        const { error } = await supabase.auth.signInWithPassword({
+          email: loginEmail,
+          password,
+        });
+        if (error) {
+          toast.error(
+            error.message === "Invalid login credentials"
+              ? "E-mail/usuário ou senha inválidos."
+              : error.message,
+          );
+          return;
+        }
+        toast.success("Login realizado!");
+        navigate({ to: "/dashboard" });
       } else {
-        // TODO: Supabase Auth
-        // const { data, error } = await supabase.auth.signUp({
-        //   email,
-        //   password,
-        //   options: { data: { full_name: fullName, username } },
-        // });
+        // SIGN UP
+        if (!fullName.trim()) {
+          toast.error("Informe seu nome completo.");
+          return;
+        }
+        if (!username.trim() || username.includes(" ")) {
+          toast.error("Username inválido (sem espaços).");
+          return;
+        }
+        if (!emailRegex.test(email)) {
+          toast.error("E-mail inválido.");
+          return;
+        }
+
+        const redirectUrl =
+          typeof window !== "undefined" ? `${window.location.origin}/dashboard` : undefined;
+
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: redirectUrl,
+            // Metadata vai pro raw_user_meta_data e a trigger handle_new_user
+            // grava em public.profiles automaticamente.
+            data: {
+              full_name: fullName.trim(),
+              username: username.trim(),
+            },
+          },
+        });
+        if (error) {
+          if (error.message.toLowerCase().includes("already")) {
+            toast.error("Este e-mail já está cadastrado. Faça login.");
+          } else {
+            toast.error(error.message);
+          }
+          return;
+        }
+
+        if (data.session) {
+          toast.success("Conta criada! Bem-vindo.");
+          navigate({ to: "/dashboard" });
+        } else {
+          toast.success("Conta criada! Verifique seu e-mail para confirmar.");
+          setMode("login");
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Algo deu errado. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
+  }
       }
     } finally {
       setLoading(false);
