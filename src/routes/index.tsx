@@ -72,9 +72,12 @@ function Index() {
             <img
               src={ifutCrest}
               alt="iFut"
-              className="mx-auto h-32 w-auto object-contain drop-shadow-[0_0_25px_rgba(0,255,0,0.45)]"
+              className="mx-auto h-44 w-auto object-contain drop-shadow-[0_0_30px_rgba(0,255,0,0.55)] sm:h-48"
             />
-            <p className="mt-4 text-base tracking-wide text-zinc-400">
+            <p
+              className="mt-4 text-2xl tracking-wide text-zinc-100 [text-shadow:0_2px_12px_rgba(0,0,0,0.6)]"
+              style={{ fontFamily: "'Permanent Marker', cursive" }}
+            >
               Venha organizar sua pelada do jeito certo.
             </p>
           </div>
