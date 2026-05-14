@@ -1,26 +1,240 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState, type FormEvent } from "react";
+import { Mail, Lock, User, AtSign, Eye, EyeOff, Goal } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   component: Index,
+  head: () => ({
+    meta: [
+      { title: "iFut — Organize sua pelada do jeito certo" },
+      {
+        name: "description",
+        content:
+          "Entre ou cadastre-se no iFut e organize suas peladas com facilidade.",
+      },
+    ],
+  }),
 });
 
-// IMPORTANT: Replace this placeholder. For sites with multiple pages (About, Services, Contact, etc.),
-// create separate route files (about.tsx, services.tsx, contact.tsx) — don't put all pages in this file.
-function PlaceholderIndex() {
+type Mode = "login" | "signup";
+
+function Index() {
+  const [mode, setMode] = useState<Mode>("login");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const [fullName, setFullName] = useState("");
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      if (mode === "login") {
+        // TODO: Supabase Auth
+        // const { data, error } = await supabase.auth.signInWithPassword({
+        //   email: identifier,
+        //   password,
+        // });
+      } else {
+        // TODO: Supabase Auth
+        // const { data, error } = await supabase.auth.signUp({
+        //   email,
+        //   password,
+        //   options: { data: { full_name: fullName, username } },
+        // });
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
+    <main className="relative min-h-screen w-full overflow-hidden bg-zinc-950 font-sans antialiased">
+      {/* Ambient glow */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -top-40 left-1/2 h-[480px] w-[480px] -translate-x-1/2 rounded-full bg-[#00FF00]/20 blur-[140px]"
       />
-    </div>
+      <div
+        aria-hidden
+        className="pointer-events-none absolute bottom-[-200px] right-[-100px] h-[420px] w-[420px] rounded-full bg-[#00FF00]/10 blur-[160px]"
+      />
+
+      <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-10">
+        <div className="w-full max-w-md rounded-2xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-xl">
+          {/* Header */}
+          <div className="mb-8 flex flex-col items-center text-center">
+            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-[#00FF00]/30 bg-[#00FF00]/10 shadow-[0_0_30px_-5px_rgba(0,255,0,0.5)]">
+              <Goal className="h-7 w-7 text-[#00FF00]" strokeWidth={2.2} />
+            </div>
+            <h1 className="text-3xl font-bold tracking-tight text-white">
+              i<span className="text-[#00FF00]">Fut</span>
+            </h1>
+            <p className="mt-2 text-base text-zinc-300">
+              Venha organizar sua pelada do jeito certo.
+            </p>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {mode === "signup" && (
+              <>
+                <Field
+                  icon={<User className="h-5 w-5" />}
+                  type="text"
+                  placeholder="Nome completo"
+                  value={fullName}
+                  onChange={setFullName}
+                  autoComplete="name"
+                  required
+                />
+                <Field
+                  icon={<AtSign className="h-5 w-5" />}
+                  type="text"
+                  placeholder="Username"
+                  value={username}
+                  onChange={setUsername}
+                  autoComplete="username"
+                  required
+                />
+                <Field
+                  icon={<Mail className="h-5 w-5" />}
+                  type="email"
+                  placeholder="E-mail"
+                  value={email}
+                  onChange={setEmail}
+                  autoComplete="email"
+                  required
+                />
+              </>
+            )}
+
+            {mode === "login" && (
+              <Field
+                icon={<Mail className="h-5 w-5" />}
+                type="text"
+                placeholder="E-mail ou username"
+                value={identifier}
+                onChange={setIdentifier}
+                autoComplete="username"
+                required
+              />
+            )}
+
+            <div className="relative">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">
+                <Lock className="h-5 w-5" />
+              </span>
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="Senha"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete={mode === "login" ? "current-password" : "new-password"}
+                required
+                className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-11 pr-11 text-base text-zinc-100 placeholder:text-zinc-500 transition focus:border-[#00FF00]/50 focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-[#00FF00]/40"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-zinc-400 transition hover:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-[#00FF00]/40"
+              >
+                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
+            </div>
+
+            {mode === "login" && (
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  className="text-sm text-zinc-400 transition hover:text-[#00FF00] focus:outline-none"
+                >
+                  Esqueceu a senha?
+                </button>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="mt-2 w-full rounded-xl bg-[#00FF00] py-3 text-base font-semibold text-black shadow-[0_0_30px_-8px_rgba(0,255,0,0.8)] transition hover:bg-[#33ff33] focus:outline-none focus:ring-2 focus:ring-[#00FF00]/60 focus:ring-offset-2 focus:ring-offset-zinc-950 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {loading
+                ? "Aguarde..."
+                : mode === "login"
+                  ? "Entrar"
+                  : "Criar conta"}
+            </button>
+          </form>
+
+          {/* Footer toggle */}
+          <p className="mt-6 text-center text-sm text-zinc-400">
+            {mode === "login" ? (
+              <>
+                Não tem uma conta?{" "}
+                <button
+                  type="button"
+                  onClick={() => setMode("signup")}
+                  className="font-medium text-[#00FF00] transition hover:underline focus:outline-none"
+                >
+                  Crie agora.
+                </button>
+              </>
+            ) : (
+              <>
+                Já tem uma conta?{" "}
+                <button
+                  type="button"
+                  onClick={() => setMode("login")}
+                  className="font-medium text-[#00FF00] transition hover:underline focus:outline-none"
+                >
+                  Faça login.
+                </button>
+              </>
+            )}
+          </p>
+        </div>
+      </div>
+    </main>
   );
 }
 
-function Index() {
-  return <PlaceholderIndex />;
+function Field({
+  icon,
+  type,
+  placeholder,
+  value,
+  onChange,
+  autoComplete,
+  required,
+}: {
+  icon: React.ReactNode;
+  type: string;
+  placeholder: string;
+  value: string;
+  onChange: (v: string) => void;
+  autoComplete?: string;
+  required?: boolean;
+}) {
+  return (
+    <div className="relative">
+      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">
+        {icon}
+      </span>
+      <input
+        type={type}
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        autoComplete={autoComplete}
+        required={required}
+        className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-11 pr-3 text-base text-zinc-100 placeholder:text-zinc-500 transition focus:border-[#00FF00]/50 focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-[#00FF00]/40"
+      />
+    </div>
+  );
 }
