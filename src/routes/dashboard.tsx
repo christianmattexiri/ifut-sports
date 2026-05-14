@@ -51,7 +51,7 @@ function Dashboard() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [fixoOpen, setFixoOpen] = useState(false);
-  const [peladas] = useState<Pelada[]>([]);
+  const [peladas, setPeladas] = useState<Pelada[]>([]);
 
   useEffect(() => {
     let active = true;
@@ -62,11 +62,18 @@ function Dashboard() {
         return;
       }
       const uid = sess.session.user.id;
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, full_name, username, avatar_url")
-        .eq("id", uid)
-        .maybeSingle();
+      const [{ data }, { data: matches }] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("id, full_name, username, avatar_url")
+          .eq("id", uid)
+          .maybeSingle(),
+        supabase
+          .from("matches")
+          .select("id, name, day_of_week, match_time, location, logo_url")
+          .eq("admin_id", uid)
+          .order("created_at", { ascending: false }),
+      ]);
       if (!active) return;
       setProfile(
         data ?? {
@@ -75,6 +82,17 @@ function Dashboard() {
           username: "jogador",
           avatar_url: null,
         },
+      );
+      setPeladas(
+        (matches ?? []).map((m: any) => ({
+          id: m.id,
+          name: m.name,
+          time: [m.day_of_week, m.match_time].filter(Boolean).join(" • ") || "Sem horário",
+          participants: 0,
+          status: "Ativa" as const,
+          avatars: [],
+          logoUrl: m.logo_url ?? null,
+        })),
       );
       setReady(true);
     })();
@@ -188,7 +206,11 @@ function Dashboard() {
           ) : (
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
               {peladas.map((p) => (
-                <MatchCard key={p.id} pelada={p} />
+                <MatchCard
+                  key={p.id}
+                  pelada={p}
+                  onClick={() => navigate({ to: "/pelada/$id", params: { id: p.id } })}
+                />
               ))}
             </div>
           )}
@@ -341,11 +363,13 @@ function CreateFixoDialog({
   const [time, setTime] = useState("");
   const [place, setPlace] = useState("");
   const [logo, setLogo] = useState<string | null>(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   function handleLogo(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    setLogoFile(file);
     const reader = new FileReader();
     reader.onload = () => setLogo(reader.result as string);
     reader.readAsDataURL(file);
@@ -359,16 +383,49 @@ function CreateFixoDialog({
     }
     setSubmitting(true);
     try {
-      localStorage.setItem(
-        "ifut:pelada:fixa",
-        JSON.stringify({ name, day, time, place, logo }),
-      );
-    } catch {
-      /* noop */
+      const { data: sess } = await supabase.auth.getSession();
+      const uid = sess.session?.user.id;
+      if (!uid) {
+        toast.error("Faça login novamente");
+        setSubmitting(false);
+        return;
+      }
+
+      let logo_url: string | null = null;
+      if (logoFile) {
+        const ext = logoFile.name.split(".").pop() || "png";
+        const path = `${uid}/match-${Date.now()}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from("avatars")
+          .upload(path, logoFile, { upsert: true, contentType: logoFile.type });
+        if (upErr) throw upErr;
+        const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
+        logo_url = pub.publicUrl;
+      }
+
+      const { data: inserted, error } = await supabase
+        .from("matches")
+        .insert({
+          name,
+          day_of_week: day,
+          match_time: time,
+          location: place,
+          logo_url,
+          match_type: "fixa",
+          admin_id: uid,
+        })
+        .select("id")
+        .single();
+      if (error || !inserted) throw error ?? new Error("Falha ao criar");
+
+      toast.success("Pelada criada!");
+      onOpenChange(false);
+      navigate({ to: "/pelada/$id", params: { id: inserted.id } });
+    } catch (err: any) {
+      toast.error(err?.message ?? "Erro ao criar pelada");
+    } finally {
+      setSubmitting(false);
     }
-    toast.success("Pelada criada!");
-    onOpenChange(false);
-    navigate({ to: "/pelada/fixa" });
   }
 
   const days = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];

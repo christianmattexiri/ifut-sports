@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      matches: {
+        Row: {
+          admin_id: string
+          created_at: string
+          day_of_week: string | null
+          id: string
+          location: string | null
+          logo_url: string | null
+          match_time: string | null
+          match_type: string | null
+          name: string
+        }
+        Insert: {
+          admin_id: string
+          created_at?: string
+          day_of_week?: string | null
+          id?: string
+          location?: string | null
+          logo_url?: string | null
+          match_time?: string | null
+          match_type?: string | null
+          name: string
+        }
+        Update: {
+          admin_id?: string
+          created_at?: string
+          day_of_week?: string | null
+          id?: string
+          location?: string | null
+          logo_url?: string | null
+          match_time?: string | null
+          match_type?: string | null
+          name?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

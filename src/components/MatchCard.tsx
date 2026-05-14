@@ -7,20 +7,33 @@ export type Pelada = {
   participants: number;
   status: "Ativa" | "Confirmada";
   avatars: string[];
+  logoUrl?: string | null;
 };
 
-export function MatchCard({ pelada }: { pelada: Pelada }) {
+export function MatchCard({ pelada, onClick }: { pelada: Pelada; onClick?: () => void }) {
   return (
-    <article className="group relative overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/60 p-5 backdrop-blur-xl transition-transform duration-200 hover:scale-[1.02] hover:border-[#00FF00]/30">
+    <article
+      onClick={onClick}
+      className="group relative cursor-pointer overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/60 p-5 backdrop-blur-xl transition-transform duration-200 hover:scale-[1.02] hover:border-[#00FF00]/30"
+    >
       <div className="absolute inset-x-6 -top-px h-px bg-gradient-to-r from-transparent via-[#00FF00]/40 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
 
       <header className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="text-lg font-semibold text-zinc-50">{pelada.name}</h3>
-          <p className="mt-1 inline-flex items-center gap-1.5 text-xs text-zinc-400">
-            <Clock className="h-3.5 w-3.5" />
-            {pelada.time}
-          </p>
+        <div className="flex items-center gap-3">
+          {pelada.logoUrl ? (
+            <img
+              src={pelada.logoUrl}
+              alt={pelada.name}
+              className="h-12 w-12 rounded-full border border-[#00FF00]/30 bg-zinc-800 object-cover"
+            />
+          ) : null}
+          <div>
+            <h3 className="text-lg font-semibold text-zinc-50">{pelada.name}</h3>
+            <p className="mt-1 inline-flex items-center gap-1.5 text-xs text-zinc-400">
+              <Clock className="h-3.5 w-3.5" />
+              {pelada.time}
+            </p>
+          </div>
         </div>
       </header>
 

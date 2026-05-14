@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useParams } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   ArrowLeft,
@@ -20,16 +20,26 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-export const Route = createFileRoute("/pelada/fixa")({
-  component: PeladaFixa,
+export const Route = createFileRoute("/pelada/")({
+  component: PeladaPage,
   head: () => ({ meta: [{ title: "iFut — Pelada" }] }),
 });
 
-function PeladaFixa() {
+type Match = {
+  id: string;
+  name: string;
+  day_of_week: string | null;
+  match_time: string | null;
+  location: string | null;
+  logo_url: string | null;
+};
+
+function PeladaPage() {
   const navigate = useNavigate();
+  const { id } = useParams({ from: "/pelada/$id" });
   const [firstName, setFirstName] = useState("Jogador");
-  const [peladaName, setPeladaName] = useState("Minha Pelada");
-  const [peladaLogo, setPeladaLogo] = useState<string | null>(null);
+  const [match, setMatch] = useState<Match | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
@@ -39,26 +49,26 @@ function PeladaFixa() {
         return;
       }
       const uid = sess.session.user.id;
-      const { data } = await supabase
-        .from("profiles")
-        .select("full_name, username")
-        .eq("id", uid)
-        .maybeSingle();
-      const full = data?.full_name?.trim() || data?.username || "Jogador";
+      const [{ data: prof }, { data: m }] = await Promise.all([
+        supabase.from("profiles").select("full_name, username").eq("id", uid).maybeSingle(),
+        supabase
+          .from("matches")
+          .select("id, name, day_of_week, match_time, location, logo_url")
+          .eq("id", id)
+          .maybeSingle(),
+      ]);
+      const full = prof?.full_name?.trim() || prof?.username || "Jogador";
       setFirstName(full.split(" ")[0]);
+      setMatch(m as Match | null);
+      setLoading(false);
     })();
+  }, [navigate, id]);
 
-    try {
-      const raw = localStorage.getItem("ifut:pelada:fixa");
-      if (raw) {
-        const p = JSON.parse(raw);
-        if (p.name) setPeladaName(p.name);
-        if (p.logo) setPeladaLogo(p.logo);
-      }
-    } catch {
-      /* noop */
-    }
-  }, [navigate]);
+  const peladaName = match?.name ?? "Minha Pelada";
+  const peladaLogo = match?.logo_url ?? null;
+  const nextLine = match
+    ? [match.day_of_week, match.match_time, match.location].filter(Boolean).join(" • ")
+    : "";
 
   return (
     <main className="relative min-h-screen w-full bg-zinc-950 text-zinc-100 font-sans antialiased">
@@ -68,7 +78,6 @@ function PeladaFixa() {
       />
 
       <div className="relative z-10 flex min-h-screen">
-        {/* SIDEBAR */}
         <aside className="hidden w-[280px] shrink-0 flex-col border-r border-white/5 bg-zinc-900/40 px-5 py-5 backdrop-blur-xl md:flex">
           <button
             type="button"
@@ -111,21 +120,27 @@ function PeladaFixa() {
           </div>
         </aside>
 
-        {/* MAIN */}
         <section className="flex-1 px-5 py-8 md:px-10 md:py-10">
           <h1 className="text-3xl font-bold uppercase tracking-tight text-[#00FF00] md:text-4xl">
             Bem-vindo, {firstName}! <span className="inline-block">👋</span>
           </h1>
 
-          {/* Banner próximo jogo */}
           <div className="mt-8 flex items-center justify-between gap-4 rounded-2xl border border-[#00FF00]/30 bg-zinc-900/50 px-6 py-5 backdrop-blur-xl shadow-[0_0_40px_-15px_rgba(0,255,0,0.5)]">
             <div className="flex items-center gap-3">
               <MapPin className="h-5 w-5 text-[#00FF00]" />
-              <p className="text-sm font-medium text-zinc-200 md:text-base">
-                Adicione a <span className="text-[#00FF00]">data</span> /{" "}
-                <span className="text-[#00FF00]">local</span> /{" "}
-                <span className="text-[#00FF00]">horário</span> da próxima pelada.
-              </p>
+              {loading ? (
+                <p className="text-sm text-zinc-400">Carregando...</p>
+              ) : nextLine ? (
+                <p className="text-sm font-medium text-zinc-200 md:text-base">
+                  Próximo fut: <span className="text-[#00FF00]">{nextLine}</span>
+                </p>
+              ) : (
+                <p className="text-sm font-medium text-zinc-200 md:text-base">
+                  Adicione a <span className="text-[#00FF00]">data</span> /{" "}
+                  <span className="text-[#00FF00]">local</span> /{" "}
+                  <span className="text-[#00FF00]">horário</span> da próxima pelada.
+                </p>
+              )}
             </div>
             <button
               type="button"
@@ -136,14 +151,12 @@ function PeladaFixa() {
             </button>
           </div>
 
-          {/* Acesso rápido */}
           <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
             <QuickCard icon={<Users className="h-6 w-6" />} label="Presença" color="#00FF00" />
             <QuickCard icon={<BarChart className="h-6 w-6" />} label="Ranking" color="#fb923c" />
             <QuickCard icon={<UserIcon className="h-6 w-6" />} label="Stats" color="#60a5fa" />
           </div>
 
-          {/* Última partida */}
           <div className="mt-10 rounded-2xl border border-white/5 bg-zinc-900/40 px-6 py-8 backdrop-blur-xl">
             <div className="flex items-center justify-center gap-2">
               <Trophy className="h-5 w-5 text-amber-400" />
@@ -169,7 +182,6 @@ function PeladaFixa() {
             <p className="mt-4 text-center text-xs text-zinc-500">Sem registros ainda</p>
           </div>
 
-          {/* Pódio */}
           <div className="mt-10">
             <div className="mb-5 flex items-center justify-center gap-2">
               <Trophy className="h-5 w-5 text-amber-400" />
@@ -178,25 +190,9 @@ function PeladaFixa() {
               </h2>
             </div>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:items-center">
-              <PodiumCard
-                icon={<Target className="h-6 w-6" />}
-                title="Matador"
-                subtitle="Gols"
-                color="#fb923c"
-              />
-              <PodiumCard
-                icon={<Sparkles className="h-6 w-6" />}
-                title="Maestro"
-                subtitle="Assists"
-                color="#60a5fa"
-                highlighted
-              />
-              <PodiumCard
-                icon={<Crown className="h-6 w-6" />}
-                title="Craque do Jogo"
-                subtitle="MVP"
-                color="#00FF00"
-              />
+              <PodiumCard icon={<Target className="h-6 w-6" />} title="Matador" subtitle="Gols" color="#fb923c" />
+              <PodiumCard icon={<Sparkles className="h-6 w-6" />} title="Maestro" subtitle="Assists" color="#60a5fa" highlighted />
+              <PodiumCard icon={<Crown className="h-6 w-6" />} title="Craque do Jogo" subtitle="MVP" color="#00FF00" />
             </div>
           </div>
         </section>
@@ -205,15 +201,7 @@ function PeladaFixa() {
   );
 }
 
-function NavItem({
-  icon,
-  label,
-  active,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  active?: boolean;
-}) {
+function NavItem({ icon, label, active }: { icon: React.ReactNode; label: string; active?: boolean }) {
   return (
     <button
       type="button"
@@ -229,15 +217,7 @@ function NavItem({
   );
 }
 
-function QuickCard({
-  icon,
-  label,
-  color,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  color: string;
-}) {
+function QuickCard({ icon, label, color }: { icon: React.ReactNode; label: string; color: string }) {
   return (
     <button
       type="button"
@@ -247,9 +227,7 @@ function QuickCard({
       <span style={{ color }} className="transition group-hover:drop-shadow-[0_0_10px_currentColor]">
         {icon}
       </span>
-      <span className="text-sm font-semibold uppercase tracking-wider text-zinc-200">
-        {label}
-      </span>
+      <span className="text-sm font-semibold uppercase tracking-wider text-zinc-200">{label}</span>
     </button>
   );
 }
@@ -270,9 +248,7 @@ function PodiumCard({
   return (
     <div
       className={`flex flex-col items-center gap-3 rounded-2xl border bg-zinc-900/50 px-5 backdrop-blur-xl transition ${
-        highlighted
-          ? "border-[var(--pc-color)] py-10 shadow-[0_0_40px_-10px_var(--pc-color)]"
-          : "border-white/10 py-8"
+        highlighted ? "border-[var(--pc-color)] py-10 shadow-[0_0_40px_-10px_var(--pc-color)]" : "border-white/10 py-8"
       }`}
       style={{ ["--pc-color" as string]: color }}
     >
