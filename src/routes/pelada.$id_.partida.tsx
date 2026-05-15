@@ -193,7 +193,7 @@ function PartidaPage() {
   const peladaLogo = match?.logo_url ?? null;
 
   return (
-    <main className="relative min-h-screen w-full bg-zinc-950 text-zinc-100 font-sans antialiased">
+    <main className="relative min-h-screen w-full bg-zinc-950 text-zinc-100 font-sans antialiased pb-24">
       <div aria-hidden className="pointer-events-none fixed -top-40 left-1/3 h-[480px] w-[480px] rounded-full bg-[var(--pelada-accent)]/10 blur-[160px]" />
       <div className="relative z-10 flex min-h-screen">
         <aside className="sticky top-0 hidden h-screen w-[280px] shrink-0 flex-col border-r border-white/5 bg-zinc-900/40 px-5 py-5 backdrop-blur-xl md:flex">
