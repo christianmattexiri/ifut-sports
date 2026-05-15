@@ -1030,6 +1030,149 @@ function AddPlayerForm({ onAdd }: { onAdd: (name: string, isGK: boolean) => void
 
 type EditField = { key: string; label: string; value: string; type?: string; placeholder?: string };
 
+function ModeCard({
+  icon,
+  title,
+  desc,
+  onClick,
+  highlighted,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  desc: string;
+  onClick: () => void;
+  highlighted?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex flex-col items-center gap-3 rounded-2xl border bg-zinc-900/60 p-6 text-center transition hover:scale-[1.02] hover:bg-zinc-900 ${
+        highlighted
+          ? "border-[#00FF00] shadow-[0_0_30px_-5px_rgba(0,255,0,0.6)]"
+          : "border-white/10 hover:border-[#00FF00]/40"
+      }`}
+    >
+      <span className="text-[#00FF00] drop-shadow-[0_0_10px_rgba(0,255,0,0.7)]">{icon}</span>
+      <p className="text-base font-black uppercase tracking-wider text-zinc-100">{title}</p>
+      <p className="text-xs leading-relaxed text-zinc-400">{desc}</p>
+    </button>
+  );
+}
+
+function TeamColumn({
+  title,
+  players,
+  max,
+  accent,
+  onPlayerClick,
+}: {
+  title: string;
+  players: Player[];
+  max: number;
+  accent: string;
+  onPlayerClick: (pid: string) => void;
+}) {
+  return (
+    <div
+      className="flex min-h-[400px] flex-col gap-2 rounded-2xl border bg-zinc-900/60 p-4"
+      style={{ borderColor: `${accent}66`, boxShadow: `0 0 30px -10px ${accent}66` }}
+    >
+      <div className="flex items-center justify-between pb-2">
+        <p className="text-sm font-bold uppercase tracking-wider text-zinc-200">{title}</p>
+        <span
+          className="rounded-md px-2 py-0.5 text-[11px] font-black tabular-nums text-zinc-950"
+          style={{ backgroundColor: accent }}
+        >
+          {String(players.length).padStart(2, "0")} / {String(max).padStart(2, "0")}
+        </span>
+      </div>
+      {players.map((p) => (
+        <button
+          key={p.id}
+          type="button"
+          onClick={() => onPlayerClick(p.id)}
+          className="flex items-center justify-between rounded-lg border border-white/10 bg-zinc-950/70 px-3 py-2 text-left transition hover:border-[#00FF00]/40"
+          title="Clique para devolver à coluna Disponíveis"
+        >
+          <span className="flex items-center gap-2 truncate">
+            <span style={{ color: p.isGoalkeeper ? "#60a5fa" : "#00FF00" }} className="text-xs">●</span>
+            <span className="truncate text-sm text-zinc-100">{p.name}</span>
+          </span>
+          <span className="text-xs font-bold tabular-nums text-zinc-500">
+            {(p.rating ?? 5).toFixed(1)}
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function PoolColumn({
+  players,
+  onMove,
+}: {
+  players: Player[];
+  onMove: (pid: string, target: "A" | "B") => void;
+}) {
+  const [openId, setOpenId] = useState<string | null>(null);
+  return (
+    <div className="flex min-h-[400px] flex-col gap-2 rounded-2xl border border-white/10 bg-zinc-900/60 p-4">
+      <div className="flex items-center justify-between pb-2">
+        <p className="text-sm font-bold uppercase tracking-wider text-zinc-200">Disponíveis</p>
+        <span className="rounded-md bg-zinc-800 px-2 py-0.5 text-[11px] font-black tabular-nums text-zinc-300">
+          {String(players.length).padStart(2, "0")}
+        </span>
+      </div>
+      {players.length === 0 ? (
+        <p className="py-10 text-center text-xs text-zinc-500">Todos os jogadores foram distribuídos.</p>
+      ) : (
+        players.map((p) => (
+          <div key={p.id} className="rounded-lg border border-white/10 bg-zinc-950/70">
+            <button
+              type="button"
+              onClick={() => setOpenId((cur) => (cur === p.id ? null : p.id))}
+              className="flex w-full items-center justify-between px-3 py-2 text-left"
+            >
+              <span className="flex items-center gap-2 truncate">
+                <span style={{ color: p.isGoalkeeper ? "#60a5fa" : "#00FF00" }} className="text-xs">||</span>
+                <span className="truncate text-sm text-zinc-100">{p.name}</span>
+              </span>
+              <span className="text-xs font-bold tabular-nums text-zinc-500">
+                {(p.rating ?? 5).toFixed(1)}
+              </span>
+            </button>
+            {openId === p.id && (
+              <div className="flex gap-2 border-t border-white/10 p-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onMove(p.id, "A");
+                    setOpenId(null);
+                  }}
+                  className="flex-1 rounded-md border border-[#00FF00]/40 bg-[#00FF00]/10 px-2 py-1.5 text-xs font-bold uppercase tracking-wider text-[#00FF00] transition hover:bg-[#00FF00]/20"
+                >
+                  → Time A
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onMove(p.id, "B");
+                    setOpenId(null);
+                  }}
+                  className="flex-1 rounded-md border border-[#00FF00]/40 bg-[#00FF00]/10 px-2 py-1.5 text-xs font-bold uppercase tracking-wider text-[#00FF00] transition hover:bg-[#00FF00]/20"
+                >
+                  Time B →
+                </button>
+              </div>
+            )}
+          </div>
+        ))
+      )}
+    </div>
+  );
+}
+
 function EditDialog({
   open,
   onOpenChange,
