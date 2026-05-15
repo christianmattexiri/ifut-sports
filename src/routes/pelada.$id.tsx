@@ -40,6 +40,31 @@ function PeladaPage() {
   const [firstName, setFirstName] = useState("Jogador");
   const [match, setMatch] = useState<Match | null>(null);
   const [loading, setLoading] = useState(true);
+  const [counts, setCounts] = useState<{
+    line: number;
+    lineLimit: number;
+    gks: number;
+    gkLimit: number;
+  }>({ line: 0, lineLimit: 16, gks: 0, gkLimit: 2 });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const key = `pelada:${id}:counts`;
+    const read = () => {
+      try {
+        const raw = localStorage.getItem(key);
+        if (raw) setCounts((c) => ({ ...c, ...JSON.parse(raw) }));
+      } catch {
+        /* ignore */
+      }
+    };
+    read();
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === key) read();
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [id]);
 
   useEffect(() => {
     (async () => {
@@ -155,7 +180,15 @@ function PeladaPage() {
 
           <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
             <Link to="/pelada/$id/lista" params={{ id }}>
-              <QuickCard icon={<Users className="h-6 w-6" />} label="Presença" color="#00FF00" />
+              <QuickCard
+                icon={<Users className="h-6 w-6" />}
+                label="Presença"
+                color="#00FF00"
+                badges={[
+                  `${counts.line}/${counts.lineLimit} Linha`,
+                  `${counts.gks}/${counts.gkLimit} GK`,
+                ]}
+              />
             </Link>
             <QuickCard icon={<BarChart className="h-6 w-6" />} label="Ranking" color="#fb923c" />
             <QuickCard icon={<UserIcon className="h-6 w-6" />} label="Stats" color="#60a5fa" />
@@ -221,17 +254,42 @@ function NavItem({ icon, label, active }: { icon: React.ReactNode; label: string
   );
 }
 
-function QuickCard({ icon, label, color }: { icon: React.ReactNode; label: string; color: string }) {
+function QuickCard({
+  icon,
+  label,
+  color,
+  badges,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  color: string;
+  badges?: string[];
+}) {
   return (
     <button
       type="button"
-      className="group flex items-center justify-center gap-3 rounded-2xl border border-white/10 bg-zinc-900/40 px-5 py-6 backdrop-blur-xl transition-all duration-200 hover:scale-[1.02] hover:border-[var(--qc-color)] hover:shadow-[0_0_30px_-8px_var(--qc-color)]"
+      className="group flex w-full flex-col items-center justify-center gap-2 rounded-2xl border border-white/10 bg-zinc-900/40 px-5 py-6 backdrop-blur-xl transition-all duration-200 hover:scale-[1.02] hover:border-[var(--qc-color)] hover:shadow-[0_0_30px_-8px_var(--qc-color)]"
       style={{ ["--qc-color" as string]: color }}
     >
-      <span style={{ color }} className="transition group-hover:drop-shadow-[0_0_10px_currentColor]">
-        {icon}
-      </span>
-      <span className="text-sm font-semibold uppercase tracking-wider text-zinc-200">{label}</span>
+      <div className="flex items-center gap-3">
+        <span style={{ color }} className="transition group-hover:drop-shadow-[0_0_10px_currentColor]">
+          {icon}
+        </span>
+        <span className="text-sm font-semibold uppercase tracking-wider text-zinc-200">{label}</span>
+      </div>
+      {badges && badges.length > 0 && (
+        <div className="flex flex-wrap items-center justify-center gap-1.5">
+          {badges.map((b) => (
+            <span
+              key={b}
+              className="rounded-md border px-2 py-0.5 text-[11px] font-bold tabular-nums"
+              style={{ borderColor: `${color}55`, color }}
+            >
+              {b}
+            </span>
+          ))}
+        </div>
+      )}
     </button>
   );
 }
