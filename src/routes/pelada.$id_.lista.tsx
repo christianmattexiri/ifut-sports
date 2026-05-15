@@ -477,6 +477,7 @@ Bora pro jogo! 🔥
             </div>
 
             {/* Botões de Ação - Admin */}
+            {isAdmin && (
             <button
               type="button"
               onClick={() => setAddOpen(true)}
@@ -485,6 +486,7 @@ Bora pro jogo! 🔥
               <Plus className="mr-2 inline h-4 w-4" />
               Adicionar Jogador
             </button>
+            )}
 
             <div className="grid grid-cols-2 gap-3">
               <button
@@ -505,15 +507,7 @@ Bora pro jogo! 🔥
               </button>
             </div>
 
-            <button
-              type="button"
-              onClick={() => toast.info("Sorteio em breve")}
-              className="w-full rounded-xl border border-amber-400/60 bg-amber-400/5 px-4 py-3 text-sm font-bold uppercase tracking-wider text-amber-300 transition hover:bg-amber-400/10 shadow-[0_0_20px_-10px_rgba(251,191,36,0.6)]"
-            >
-              <Shuffle className="mr-2 inline h-4 w-4" />
-              Sortear Times
-            </button>
-
+            {isAdmin && (
             <button
               type="button"
               onClick={handleSaveAll}
@@ -522,7 +516,9 @@ Bora pro jogo! 🔥
               <Save className="mr-2 inline h-5 w-5" />
               💾 Salvar Lista
             </button>
+            )}
 
+            {isAdmin && (
             <button
               type="button"
               onClick={() => {
@@ -535,6 +531,7 @@ Bora pro jogo! 🔥
               <Trash2 className="mr-2 inline h-4 w-4" />
               Limpar Lista
             </button>
+            )}
 
             {/* Lista de Jogadores */}
             <div className="space-y-2 pt-2">
