@@ -10,6 +10,7 @@ import {
 import { Toaster } from "sonner";
 
 import appCss from "../styles.css?url";
+import { PeladaGlobalShell } from "@/components/PeladaGlobalShell";
 
 function NotFoundComponent() {
   return (
@@ -121,6 +122,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
+      <PeladaGlobalShell />
       <Toaster richColors position="top-center" theme="dark" />
     </QueryClientProvider>
   );
