@@ -687,34 +687,19 @@ function PeladaPage() {
           onForceClose={() => votes && closeAndPersist(votes)}
         />
       )}
-      {(modules.musica || modules.somMvp) && (() => {
-        if (modules.musica) {
-          return (
-            <AudioFooterPlayer
-              peladaId={id}
-              mode="musica"
-              canEdit={isAdmin}
-              titlePrefix="Música da Pelada"
-            />
-          );
-        }
-        // Som do MVP — last MVP only can edit
-        const mvpId = latest?.mvp ?? null;
-        const all = latest ? [...latest.teamA.players, ...latest.teamB.players] : [];
-        const mvpPlayer = mvpId ? all.find((p) => p.id === mvpId) : null;
-        return (
-          <AudioFooterPlayer
-            peladaId={id}
-            mode="somMvp"
-            canEdit={!!mvpPlayer && viewerId === mvpId}
-            titlePrefix={mvpPlayer ? `Som do MVP: ${mvpPlayer.name}` : "Som do MVP"}
-            disabled={!mvpPlayer}
-            disabledHint="Aguardando o primeiro MVP"
-            scopeKey={mvpId ?? "none"}
-          />
-        );
-      })()}
+      {/* Audio player & accent are mounted globally in PeladaGlobalShell so
+          they persist while navigating between sub-routes. */}
     </main>
+  );
+}
+
+export function ProTag({ className = "" }: { className?: string }) {
+  return (
+    <span
+      className={`inline-flex items-center justify-center rounded-md bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-600 px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-amber-950 shadow-[0_0_12px_-2px_rgba(251,191,36,0.9)] ring-1 ring-amber-200/80 ${className}`}
+    >
+      PRO
+    </span>
   );
 }
 
