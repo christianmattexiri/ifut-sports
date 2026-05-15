@@ -279,6 +279,11 @@ function PeladaPage() {
               ? all.find((p) => p.id === latest.topAssists[0])?.assists ?? 0
               : 0;
             const mvpPlayer = findPlayer(latest?.mvp ?? null);
+            const podiumIds = [
+              ...matadorPlayers.map((p) => p.id),
+              ...maestroPlayers.map((p) => p.id),
+              ...(mvpPlayer ? [mvpPlayer.id] : []),
+            ];
             return (
               <>
                 <div className="mt-10 rounded-2xl border border-white/5 bg-zinc-900/40 px-6 py-8 backdrop-blur-xl">
@@ -321,29 +326,32 @@ function PeladaPage() {
                   </div>
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:items-center">
                     <PodiumCard
-                      matchId={id}
+                      onPick={(p) => setModalUser(p)}
                       icon={<Target className="h-6 w-6" />}
                       title="Matador"
                       subtitle={matadorGoals > 0 ? `${matadorGoals} Gol${matadorGoals > 1 ? "s" : ""}` : "Gols"}
                       color="#fb923c"
                       players={matadorPlayers}
+                      podiumIds={podiumIds}
                     />
                     <PodiumCard
-                      matchId={id}
+                      onPick={(p) => setModalUser(p)}
                       icon={<Crown className="h-6 w-6" />}
                       title="Craque do Jogo"
                       subtitle="MVP"
                       color="#00FF00"
                       players={mvpPlayer ? [mvpPlayer] : []}
                       highlighted
+                      podiumIds={podiumIds}
                     />
                     <PodiumCard
-                      matchId={id}
+                      onPick={(p) => setModalUser(p)}
                       icon={<Sparkles className="h-6 w-6" />}
                       title="Maestro"
                       subtitle={maestroAssists > 0 ? `${maestroAssists} Assist${maestroAssists > 1 ? "s" : ""}` : "Assists"}
                       color="#60a5fa"
                       players={maestroPlayers}
+                      podiumIds={podiumIds}
                     />
                   </div>
                 </div>
@@ -352,6 +360,13 @@ function PeladaPage() {
           })()}
         </section>
       </div>
+      <PlayerProfileModal
+        open={!!modalUser}
+        onOpenChange={(o) => !o && setModalUser(null)}
+        matchId={id}
+        userId={modalUser?.id ?? null}
+        fallbackName={modalUser?.name}
+      />
     </main>
   );
 }
