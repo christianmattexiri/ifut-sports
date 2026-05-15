@@ -99,16 +99,6 @@ function aggregate(history: HistMatch[]): PlayerStats[] {
   return Array.from(map.values());
 }
 
-const MOCK: PlayerStats[] = [
-  { id: "m1", name: "Xiri", gols: 24, assistencias: 35, mvps: 3, vitorias: 9, derrotas: 4, jogos: 14 },
-  { id: "m2", name: "Jarbas", gols: 18, assistencias: 12, mvps: 2, vitorias: 8, derrotas: 5, jogos: 13 },
-  { id: "m3", name: "Gustavo", gols: 15, assistencias: 9, mvps: 1, vitorias: 7, derrotas: 6, jogos: 13 },
-  { id: "m4", name: "Pedro", gols: 12, assistencias: 14, mvps: 2, vitorias: 6, derrotas: 7, jogos: 13 },
-  { id: "m5", name: "Rafael", gols: 9, assistencias: 7, mvps: 0, vitorias: 5, derrotas: 8, jogos: 13 },
-  { id: "m6", name: "Lucas", gols: 6, assistencias: 5, mvps: 0, vitorias: 4, derrotas: 9, jogos: 13 },
-  { id: "m7", name: "Tiago", gols: 4, assistencias: 3, mvps: 0, vitorias: 3, derrotas: 10, jogos: 13 },
-];
-
 function RankingsPage() {
   const navigate = useNavigate();
   const { id } = useParams({ from: "/pelada/$id_/rankings" });
@@ -128,9 +118,10 @@ function RankingsPage() {
   // TODO: Consumir dados reais agregados do histórico de partidas no Supabase
   useEffect(() => {
     const refresh = () => {
+      // Strict per-pelada isolation: only show stats aggregated from this
+      // pelada's match history. New peladas start empty.
       const hist = loadHistory(id);
-      const agg = aggregate(hist);
-      setPlayers(agg.length > 0 ? agg : MOCK);
+      setPlayers(aggregate(hist));
     };
     refresh();
     return onProfileUpdate(() => refresh());
