@@ -394,12 +394,14 @@ function PodiumCard({
   subtitle,
   color,
   highlighted,
+  names,
 }: {
   icon: React.ReactNode;
   title: string;
   subtitle: string;
   color: string;
   highlighted?: boolean;
+  names?: string[];
 }) {
   return (
     <div
@@ -414,7 +416,13 @@ function PodiumCard({
       >
         <UserCircle2 className="h-10 w-10" />
       </div>
-      <p className="text-sm text-zinc-500">Aguardando partida</p>
+      {names && names.length > 0 ? (
+        <p className="px-2 text-center text-sm font-semibold text-zinc-100">
+          {names.join(", ")}
+        </p>
+      ) : (
+        <p className="text-sm text-zinc-500">Aguardando partida</p>
+      )}
       <div className="flex items-center gap-2" style={{ color }}>
         {icon}
         <p className="text-base font-bold uppercase tracking-wider">{title}</p>
