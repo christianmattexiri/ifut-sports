@@ -58,18 +58,18 @@ export interface FileRoutesByFullPath {
   '/convites': typeof ConvitesRoute
   '/dashboard': typeof DashboardRoute
   '/pelada/$id': typeof PeladaIdRoute
+  '/pelada/$id/historico': typeof PeladaIdHistoricoRoute
   '/pelada/$id/lista': typeof PeladaIdListaRoute
   '/pelada/$id/usuarios': typeof PeladaIdUsuariosRoute
-  '/pelada/$id/historico': typeof PeladaIdHistoricoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/convites': typeof ConvitesRoute
   '/dashboard': typeof DashboardRoute
   '/pelada/$id': typeof PeladaIdRoute
+  '/pelada/$id/historico': typeof PeladaIdHistoricoRoute
   '/pelada/$id/lista': typeof PeladaIdListaRoute
   '/pelada/$id/usuarios': typeof PeladaIdUsuariosRoute
-  '/pelada/$id/historico': typeof PeladaIdHistoricoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -77,9 +77,9 @@ export interface FileRoutesById {
   '/convites': typeof ConvitesRoute
   '/dashboard': typeof DashboardRoute
   '/pelada/$id': typeof PeladaIdRoute
+  '/pelada/$id_/historico': typeof PeladaIdHistoricoRoute
   '/pelada/$id_/lista': typeof PeladaIdListaRoute
   '/pelada/$id_/usuarios': typeof PeladaIdUsuariosRoute
-  '/pelada/$id_/historico': typeof PeladaIdHistoricoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -88,27 +88,27 @@ export interface FileRouteTypes {
     | '/convites'
     | '/dashboard'
     | '/pelada/$id'
+    | '/pelada/$id/historico'
     | '/pelada/$id/lista'
     | '/pelada/$id/usuarios'
-    | '/pelada/$id/historico'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/convites'
     | '/dashboard'
     | '/pelada/$id'
+    | '/pelada/$id/historico'
     | '/pelada/$id/lista'
     | '/pelada/$id/usuarios'
-    | '/pelada/$id/historico'
   id:
     | '__root__'
     | '/'
     | '/convites'
     | '/dashboard'
     | '/pelada/$id'
+    | '/pelada/$id_/historico'
     | '/pelada/$id_/lista'
     | '/pelada/$id_/usuarios'
-    | '/pelada/$id_/historico'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -116,9 +116,9 @@ export interface RootRouteChildren {
   ConvitesRoute: typeof ConvitesRoute
   DashboardRoute: typeof DashboardRoute
   PeladaIdRoute: typeof PeladaIdRoute
+  PeladaIdHistoricoRoute: typeof PeladaIdHistoricoRoute
   PeladaIdListaRoute: typeof PeladaIdListaRoute
   PeladaIdUsuariosRoute: typeof PeladaIdUsuariosRoute
-  PeladaIdHistoricoRoute: typeof PeladaIdHistoricoRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -180,20 +180,10 @@ const rootRouteChildren: RootRouteChildren = {
   ConvitesRoute: ConvitesRoute,
   DashboardRoute: DashboardRoute,
   PeladaIdRoute: PeladaIdRoute,
+  PeladaIdHistoricoRoute: PeladaIdHistoricoRoute,
   PeladaIdListaRoute: PeladaIdListaRoute,
   PeladaIdUsuariosRoute: PeladaIdUsuariosRoute,
-  PeladaIdHistoricoRoute: PeladaIdHistoricoRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
