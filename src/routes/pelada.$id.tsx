@@ -686,6 +686,32 @@ function PeladaPage() {
           onForceClose={() => votes && closeAndPersist(votes)}
         />
       )}
+      {(modules.musica || modules.somMvp) && (() => {
+        if (modules.musica) {
+          return (
+            <AudioFooterPlayer
+              peladaId={id}
+              mode="musica"
+              canEdit={isAdmin}
+              titlePrefix="Música da Pelada"
+            />
+          );
+        }
+        // Som do MVP — last MVP only can edit
+        const mvpId = latest?.mvp ?? null;
+        const all = latest ? [...latest.teamA.players, ...latest.teamB.players] : [];
+        const mvpPlayer = mvpId ? all.find((p) => p.id === mvpId) : null;
+        return (
+          <AudioFooterPlayer
+            peladaId={id}
+            mode="somMvp"
+            canEdit={!!mvpPlayer && viewerId === mvpId}
+            titlePrefix={mvpPlayer ? `Som do MVP: ${mvpPlayer.name}` : "Som do MVP"}
+            disabled={!mvpPlayer}
+            disabledHint="Aguardando o primeiro MVP"
+          />
+        );
+      })()}
     </main>
   );
 }
