@@ -60,6 +60,7 @@ function UsuariosPage() {
   const [members, setMembers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [pendingInviteIds, setPendingInviteIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     (async () => {
@@ -82,48 +83,77 @@ function UsuariosPage() {
       }
       setMatch(match);
 
-      // TODO: substituir por SELECT na tabela associativa match_players (com JOIN em profiles)
-      // Por enquanto, mostramos apenas o admin como membro inicial.
-      try {
-        const raw = localStorage.getItem(`pelada:${id}:members`);
-        if (raw) {
-          setMembers(JSON.parse(raw));
-        } else {
-          const { data: adminProf } = await supabase
-            .from("profiles")
-            .select("id, full_name, username, avatar_url")
-            .eq("id", uid)
-            .maybeSingle();
-          if (adminProf) setMembers([adminProf as Profile]);
-        }
-      } catch {
-        /* ignore */
+      // Carrega admin + membros confirmados (match_members)
+      const [{ data: adminProf }, { data: memberRows }, { data: invs }] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("id, full_name, username, avatar_url")
+          .eq("id", uid)
+          .maybeSingle(),
+        supabase
+          .from("match_members")
+          .select("user:profiles!match_members_user_id_fkey(id, full_name, username, avatar_url)")
+          .eq("match_id", id),
+        supabase
+          .from("match_invitations")
+          .select("invitee_id")
+          .eq("match_id", id)
+          .eq("status", "pending"),
+      ]);
+      const list: Profile[] = [];
+      if (adminProf) list.push(adminProf as Profile);
+      for (const row of (memberRows ?? []) as any[]) {
+        const u = row.user;
+        if (u && !list.some((p) => p.id === u.id)) list.push(u as Profile);
       }
+      setMembers(list);
+      setPendingInviteIds(new Set((invs ?? []).map((i: any) => i.invitee_id)));
       setLoading(false);
     })();
   }, [navigate, id]);
 
-  // Persist members locally (mock até a tabela match_players existir)
-  useEffect(() => {
-    if (loading || typeof window === "undefined") return;
-    localStorage.setItem(`pelada:${id}:members`, JSON.stringify(members));
-  }, [members, id, loading]);
-
-  const removeMember = (pid: string) => {
+  const removeMember = async (pid: string) => {
     if (!confirm("Remover este jogador da pelada?")) return;
-    // TODO: DELETE FROM match_players WHERE match_id = :id AND user_id = :pid
+    const { error } = await supabase
+      .from("match_members")
+      .delete()
+      .eq("match_id", id)
+      .eq("user_id", pid);
+    if (error) {
+      toast.error("Erro ao remover");
+      return;
+    }
     setMembers((prev) => prev.filter((m) => m.id !== pid));
     toast.success("Jogador removido");
   };
 
-  const addMember = (p: Profile) => {
+  const inviteMember = async (p: Profile) => {
+    const { data: sess } = await supabase.auth.getSession();
+    const uid = sess.session?.user.id;
+    if (!uid) {
+      toast.error("Faça login novamente");
+      return;
+    }
     if (members.some((m) => m.id === p.id)) {
       toast.info("Esse jogador já está na pelada");
       return;
     }
-    // TODO: INSERT INTO match_players (match_id, user_id) VALUES (:id, :p.id)
-    setMembers((prev) => [...prev, p]);
-    toast.success(`${p.full_name || p.username} adicionado!`);
+    if (pendingInviteIds.has(p.id)) {
+      toast.info("Esse jogador já tem um convite pendente");
+      return;
+    }
+    const { error } = await supabase.from("match_invitations").insert({
+      match_id: id,
+      inviter_id: uid,
+      invitee_id: p.id,
+      status: "pending",
+    });
+    if (error) {
+      toast.error("Erro ao enviar convite");
+      return;
+    }
+    setPendingInviteIds((s) => new Set(s).add(p.id));
+    toast.success(`Convite enviado para ${p.full_name || p.username}!`);
   };
 
   const peladaName = match?.name ?? "Minha Pelada";
@@ -230,8 +260,9 @@ function UsuariosPage() {
         open={open}
         onOpenChange={setOpen}
         existingIds={members.map((m) => m.id)}
+        pendingIds={Array.from(pendingInviteIds)}
         onPick={(p) => {
-          addMember(p);
+          inviteMember(p);
           setOpen(false);
         }}
       />
@@ -301,11 +332,13 @@ function AddPlayerDialog({
   open,
   onOpenChange,
   existingIds,
+  pendingIds,
   onPick,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   existingIds: string[];
+  pendingIds?: string[];
   onPick: (p: Profile) => void;
 }) {
   const [query, setQuery] = useState("");
@@ -378,6 +411,7 @@ function AddPlayerDialog({
             ) : (
               results.map((p) => {
                 const already = existingIds.includes(p.id);
+                const pending = pendingIds?.includes(p.id) ?? false;
                 const display = p.full_name?.trim() || p.username;
                 return (
                   <div
@@ -397,15 +431,15 @@ function AddPlayerDialog({
                     </div>
                     <button
                       type="button"
-                      disabled={already}
+                      disabled={already || pending}
                       onClick={() => onPick(p)}
                       className={`rounded-lg border px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition ${
-                        already
+                        already || pending
                           ? "cursor-not-allowed border-white/10 bg-zinc-900 text-zinc-600"
                           : "border-[#00FF00]/50 bg-[#00FF00]/10 text-[#00FF00] hover:bg-[#00FF00]/20"
                       }`}
                     >
-                      {already ? "Já incluso" : "Adicionar"}
+                      {already ? "Já incluso" : pending ? "Convite enviado" : "Convidar"}
                     </button>
                   </div>
                 );

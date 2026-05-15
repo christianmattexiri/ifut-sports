@@ -14,6 +14,67 @@ export type Database = {
   }
   public: {
     Tables: {
+      match_invitations: {
+        Row: {
+          created_at: string | null
+          id: string
+          invitee_id: string | null
+          inviter_id: string | null
+          match_id: string | null
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          invitee_id?: string | null
+          inviter_id?: string | null
+          match_id?: string | null
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          invitee_id?: string | null
+          inviter_id?: string | null
+          match_id?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_invitations_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      match_members: {
+        Row: {
+          created_at: string
+          match_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          match_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          match_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_members_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       matches: {
         Row: {
           admin_id: string
