@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PeladaIdRouteImport } from './routes/pelada.$id'
+import { Route as PeladaIdListaRouteImport } from './routes/pelada.$id.lista'
 
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
@@ -28,35 +29,43 @@ const PeladaIdRoute = PeladaIdRouteImport.update({
   path: '/pelada/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PeladaIdListaRoute = PeladaIdListaRouteImport.update({
+  id: '/lista',
+  path: '/lista',
+  getParentRoute: () => PeladaIdRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
-  '/pelada/$id': typeof PeladaIdRoute
+  '/pelada/$id': typeof PeladaIdRouteWithChildren
+  '/pelada/$id/lista': typeof PeladaIdListaRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
-  '/pelada/$id': typeof PeladaIdRoute
+  '/pelada/$id': typeof PeladaIdRouteWithChildren
+  '/pelada/$id/lista': typeof PeladaIdListaRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
-  '/pelada/$id': typeof PeladaIdRoute
+  '/pelada/$id': typeof PeladaIdRouteWithChildren
+  '/pelada/$id/lista': typeof PeladaIdListaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/pelada/$id'
+  fullPaths: '/' | '/dashboard' | '/pelada/$id' | '/pelada/$id/lista'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/pelada/$id'
-  id: '__root__' | '/' | '/dashboard' | '/pelada/$id'
+  to: '/' | '/dashboard' | '/pelada/$id' | '/pelada/$id/lista'
+  id: '__root__' | '/' | '/dashboard' | '/pelada/$id' | '/pelada/$id/lista'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRoute: typeof DashboardRoute
-  PeladaIdRoute: typeof PeladaIdRoute
+  PeladaIdRoute: typeof PeladaIdRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -82,24 +91,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PeladaIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pelada/$id/lista': {
+      id: '/pelada/$id/lista'
+      path: '/lista'
+      fullPath: '/pelada/$id/lista'
+      preLoaderRoute: typeof PeladaIdListaRouteImport
+      parentRoute: typeof PeladaIdRoute
+    }
   }
 }
+
+interface PeladaIdRouteChildren {
+  PeladaIdListaRoute: typeof PeladaIdListaRoute
+}
+
+const PeladaIdRouteChildren: PeladaIdRouteChildren = {
+  PeladaIdListaRoute: PeladaIdListaRoute,
+}
+
+const PeladaIdRouteWithChildren = PeladaIdRoute._addFileChildren(
+  PeladaIdRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRoute,
-  PeladaIdRoute: PeladaIdRoute,
+  PeladaIdRoute: PeladaIdRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
