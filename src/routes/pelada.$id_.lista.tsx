@@ -27,6 +27,7 @@ import {
   UserCog,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { isSuperAdminUsername } from "@/lib/admin";
 import {
   Dialog,
   DialogContent,
@@ -37,6 +38,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
+import {
+  Hand as HandPointer,
+  Scale,
+  Dices,
+  RefreshCw,
+  ArrowLeft as ArrowLeftIcon,
+} from "lucide-react";
 
 export const Route = createFileRoute("/pelada/$id_/lista")({
   component: ListaPresencaPage,
@@ -145,7 +153,8 @@ function ListaPresencaPage() {
       ]);
       const match = m as Match | null;
       setMatch(match);
-      setIsAdmin(((m as { admin_id?: string } | null)?.admin_id ?? null) === uid);
+      const owner = ((m as { admin_id?: string } | null)?.admin_id ?? null) === uid;
+      setIsAdmin(owner || isSuperAdminUsername(prof?.username));
       setMe({ id: uid, fullName: prof?.full_name?.trim() || prof?.username || "Você" });
       setSettings((s) => ({
         ...s,
