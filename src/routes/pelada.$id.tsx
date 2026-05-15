@@ -314,12 +314,28 @@ function PeladaPage() {
             const maestroAssists = latest?.topAssists[0]
               ? all.find((p) => p.id === latest.topAssists[0])?.assists ?? 0
               : 0;
-            const mvpPlayer = findPlayer(latest?.mvp ?? null);
+            // MVP: prefer admin-set, fallback to vote winner
+            const voteMvpId = votes ? computeWinner(votes.mvpVotes).id : null;
+            const mvpPlayer = findPlayer(latest?.mvp ?? voteMvpId);
+            // Pereba: from votes
+            const perebaWinner = votes ? computeWinner(votes.perebaVotes) : { id: null as string | null, count: 0 };
+            const perebaPlayer = findPlayer(perebaWinner.id);
+            const apittoMode = voteSettings.apitto;
+            const perebaMode = voteSettings.pereba;
             const podiumIds = [
               ...matadorPlayers.map((p) => p.id),
               ...maestroPlayers.map((p) => p.id),
               ...(mvpPlayer ? [mvpPlayer.id] : []),
+              ...(perebaPlayer ? [perebaPlayer.id] : []),
             ];
+            const isParticipant = !!latest && !!viewerId && all.some((p) => p.id === viewerId);
+            const anyMode = voteSettings.mvp || voteSettings.pereba || voteSettings.apitto;
+            const canVote =
+              anyMode &&
+              !!votes &&
+              !votes.closed &&
+              isParticipant &&
+              !userHasVoted(votes, viewerId, voteSettings);
             return (
               <>
                 <div className="mt-10 rounded-2xl border border-white/5 bg-zinc-900/40 px-6 py-8 backdrop-blur-xl">
@@ -353,6 +369,42 @@ function PeladaPage() {
                   </p>
                 </div>
 
+                {/* Voting status & admin controls */}
+                {latest && anyMode && (
+                  <div className="mt-4 flex flex-wrap items-center justify-center gap-3 rounded-xl border border-amber-400/20 bg-amber-400/5 px-4 py-3 text-xs">
+                    {votes?.closed ? (
+                      <span className="inline-flex items-center gap-1.5 text-zinc-400">
+                        <Lock className="h-3.5 w-3.5" /> Votação encerrada
+                      </span>
+                    ) : canVote ? (
+                      <button
+                        type="button"
+                        onClick={() => setVotingOpen(true)}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-[#00FF00]/40 bg-[#00FF00]/10 px-3 py-1.5 font-bold uppercase tracking-wider text-[#00FF00] transition hover:bg-[#00FF00]/20"
+                      >
+                        <Star className="h-3.5 w-3.5" /> Votar agora
+                      </button>
+                    ) : isParticipant && votes && userHasVoted(votes, viewerId, voteSettings) ? (
+                      <span className="text-[#00FF00]">✓ Você já votou</span>
+                    ) : (
+                      <span className="text-zinc-500">Votação aberta</span>
+                    )}
+                    {isAdmin && !votes?.closed && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!latest) return;
+                          const v = loadVotes(id, latest.id);
+                          saveVotes(id, latest.id, { ...v, closed: true, closedAt: new Date().toISOString() });
+                        }}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-1.5 font-bold uppercase tracking-wider text-red-400 transition hover:bg-red-500/20"
+                      >
+                        <Lock className="h-3.5 w-3.5" /> Encerrar Votação (Admin)
+                      </button>
+                    )}
+                  </div>
+                )}
+
                 <div className="mt-10">
                   <div className="mb-5 flex items-center justify-center gap-2">
                     <Trophy className="h-5 w-5 text-amber-400" />
@@ -360,7 +412,9 @@ function PeladaPage() {
                       Pódio da Última Partida
                     </h2>
                   </div>
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:items-center">
+                  <div className={`grid grid-cols-1 gap-4 md:items-center ${
+                    apittoMode ? "md:grid-cols-3" : perebaMode ? "md:grid-cols-4" : "md:grid-cols-3"
+                  }`}>
                     <PodiumCard
                       onPick={(p) => setModalUser(p)}
                       icon={<Target className="h-6 w-6" />}
@@ -370,16 +424,30 @@ function PeladaPage() {
                       players={matadorPlayers}
                       podiumIds={podiumIds}
                     />
-                    <PodiumCard
-                      onPick={(p) => setModalUser(p)}
-                      icon={<Crown className="h-6 w-6" />}
-                      title="Craque do Jogo"
-                      subtitle="MVP"
-                      color="#00FF00"
-                      players={mvpPlayer ? [mvpPlayer] : []}
-                      highlighted
-                      podiumIds={podiumIds}
-                    />
+                    {apittoMode ? (
+                      <button
+                        type="button"
+                        onClick={() => setApittoResultsOpen(true)}
+                        className="flex flex-col items-center gap-3 rounded-2xl border border-amber-400 bg-gradient-to-br from-amber-400/15 to-amber-400/5 px-5 py-10 backdrop-blur-xl shadow-[0_0_40px_-10px_rgba(251,191,36,0.7)] transition hover:scale-[1.02]"
+                      >
+                        <Star className="h-10 w-10 fill-amber-400 text-amber-400" />
+                        <p className="text-base font-black uppercase tracking-wider text-amber-400">
+                          Notas da Galera
+                        </p>
+                        <p className="text-xs text-zinc-400">Ver resultados</p>
+                      </button>
+                    ) : (
+                      <PodiumCard
+                        onPick={(p) => setModalUser(p)}
+                        icon={<Crown className="h-6 w-6" />}
+                        title="Craque do Jogo"
+                        subtitle="MVP"
+                        color="#00FF00"
+                        players={mvpPlayer ? [mvpPlayer] : []}
+                        highlighted
+                        podiumIds={podiumIds}
+                      />
+                    )}
                     <PodiumCard
                       onPick={(p) => setModalUser(p)}
                       icon={<Sparkles className="h-6 w-6" />}
@@ -389,6 +457,34 @@ function PeladaPage() {
                       players={maestroPlayers}
                       podiumIds={podiumIds}
                     />
+                    {perebaMode && !apittoMode && (
+                      <div
+                        className="flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-red-500/60 bg-red-500/5 px-5 py-8 backdrop-blur-xl shadow-[0_0_30px_-10px_rgba(239,68,68,0.6)]"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => perebaPlayer && setModalUser(perebaPlayer)}
+                          disabled={!perebaPlayer}
+                          className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-red-500 bg-zinc-900 transition hover:scale-105"
+                        >
+                          {perebaPlayer ? (
+                            <span className="text-2xl font-black text-zinc-300">{perebaPlayer.name[0]?.toUpperCase()}</span>
+                          ) : (
+                            <Skull className="h-10 w-10 text-red-500/60" />
+                          )}
+                        </button>
+                        <p className="px-2 text-center text-sm font-semibold text-zinc-100">
+                          {perebaPlayer ? perebaPlayer.name : "Aguardando votos"}
+                        </p>
+                        <div className="flex items-center gap-2 text-red-500">
+                          <Skull className="h-6 w-6" />
+                          <p className="text-base font-black uppercase tracking-wider">Pereba</p>
+                        </div>
+                        <p className="text-xs uppercase tracking-wider text-zinc-500">
+                          {perebaWinner.count > 0 ? `${perebaWinner.count} voto${perebaWinner.count > 1 ? "s" : ""}` : "Da Rodada"}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </>
@@ -403,6 +499,26 @@ function PeladaPage() {
         userId={modalUser?.id ?? null}
         fallbackName={modalUser?.name}
       />
+      {latest && viewerId && (
+        <VotingModal
+          open={votingOpen}
+          onOpenChange={setVotingOpen}
+          peladaId={id}
+          histId={latest.id}
+          voterId={viewerId}
+          players={[...latest.teamA.players, ...latest.teamB.players].map((p) => ({ id: p.id, name: p.name }))}
+          modes={voteSettings}
+        />
+      )}
+      {latest && (
+        <ApittoResultsModal
+          open={apittoResultsOpen}
+          onOpenChange={setApittoResultsOpen}
+          peladaId={id}
+          histId={latest.id}
+          players={[...latest.teamA.players, ...latest.teamB.players].map((p) => ({ id: p.id, name: p.name }))}
+        />
+      )}
     </main>
   );
 }
