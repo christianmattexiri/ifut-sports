@@ -363,14 +363,16 @@ Bora pro jogo! 🔥
           <div className="mx-auto max-w-3xl space-y-4">
             {/* Painel 1 — Próxima Pelada */}
             <div className="relative rounded-2xl border border-[#00FF00]/40 bg-zinc-900/50 p-5 backdrop-blur-xl shadow-[0_0_30px_-12px_rgba(0,255,0,0.6)]">
-              <button
-                type="button"
-                aria-label="Editar"
-                onClick={() => setEditMatchOpen(true)}
-                className="absolute right-3 top-3 rounded-lg p-1.5 text-zinc-400 transition hover:bg-white/5 hover:text-[#00FF00]"
-              >
-                <Pencil className="h-4 w-4" />
-              </button>
+              {isAdmin && (
+                <button
+                  type="button"
+                  aria-label="Editar"
+                  onClick={() => setEditMatchOpen(true)}
+                  className="absolute right-3 top-3 rounded-lg p-1.5 text-zinc-400 transition hover:bg-white/5 hover:text-[#00FF00]"
+                >
+                  <Pencil className="h-4 w-4" />
+                </button>
+              )}
               <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-[#00FF00]">
                 Próxima Pelada
               </h3>
@@ -390,14 +392,16 @@ Bora pro jogo! 🔥
 
             {/* Painel 2 — Valores */}
             <div className="relative rounded-2xl border border-amber-400/30 bg-zinc-900/40 p-5 backdrop-blur-xl">
-              <button
-                type="button"
-                aria-label="Editar valores"
-                onClick={() => setEditValuesOpen(true)}
-                className="absolute right-3 top-3 rounded-lg p-1.5 text-zinc-400 transition hover:bg-white/5 hover:text-amber-300"
-              >
-                <Pencil className="h-4 w-4" />
-              </button>
+              {isAdmin && (
+                <button
+                  type="button"
+                  aria-label="Editar valores"
+                  onClick={() => setEditValuesOpen(true)}
+                  className="absolute right-3 top-3 rounded-lg p-1.5 text-zinc-400 transition hover:bg-white/5 hover:text-amber-300"
+                >
+                  <Pencil className="h-4 w-4" />
+                </button>
+              )}
               <h3 className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-amber-300">
                 <DollarSign className="h-4 w-4" />
                 Valores
@@ -417,14 +421,16 @@ Bora pro jogo! 🔥
 
             {/* Painel 3 — Vagas */}
             <div className="relative">
-              <button
-                type="button"
-                aria-label="Editar limites"
-                onClick={() => setEditLimitsOpen(true)}
-                className="absolute -top-2 right-0 z-10 rounded-lg border border-white/10 bg-zinc-900/80 p-1.5 text-zinc-400 transition hover:bg-white/5 hover:text-[#00FF00]"
-              >
-                <Pencil className="h-4 w-4" />
-              </button>
+              {isAdmin && (
+                <button
+                  type="button"
+                  aria-label="Editar limites"
+                  onClick={() => setEditLimitsOpen(true)}
+                  className="absolute -top-2 right-0 z-10 rounded-lg border border-white/10 bg-zinc-900/80 p-1.5 text-zinc-400 transition hover:bg-white/5 hover:text-[#00FF00]"
+                >
+                  <Pencil className="h-4 w-4" />
+                </button>
+              )}
               <div className="grid grid-cols-3 gap-3">
                 <SlotCard
                   icon={<Users className="h-4 w-4" />}
