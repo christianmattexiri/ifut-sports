@@ -66,7 +66,9 @@ function PeladaPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [modalUser, setModalUser] = useState<{ id: string; name: string } | null>(null);
   const [viewerId, setViewerId] = useState<string>("");
-  const [voteSettings, setVoteSettings] = useState(() => loadAdminSettings(id).voteModes);
+  const [adminSettings, setAdminSettings] = useState(() => loadAdminSettings(id));
+  const voteSettings = adminSettings.voteModes;
+  const podiumDisplay = adminSettings.podium;
   const [votes, setVotes] = useState<MatchVotes | null>(null);
   const [votingOpen, setVotingOpen] = useState(false);
   const [apittoResultsOpen, setApittoResultsOpen] = useState(false);
@@ -162,7 +164,7 @@ function PeladaPage() {
 
   // Reload admin vote settings if changed in another tab/page.
   useEffect(() => {
-    const reload = () => setVoteSettings(loadAdminSettings(id).voteModes);
+    const reload = () => setAdminSettings(loadAdminSettings(id));
     window.addEventListener("storage", reload);
     return () => window.removeEventListener("storage", reload);
   }, [id]);
@@ -423,6 +425,108 @@ function PeladaPage() {
               !votes.closed &&
               isParticipant &&
               !userHasVoted(votes, viewerId, voteSettings);
+            // Build the dynamic podium card list based on admin display toggles.
+            const podiumCards: React.ReactNode[] = [];
+            if (podiumDisplay.matador) {
+              podiumCards.push(
+                <PodiumCard key="matador"
+                  onPick={(p) => setModalUser(p)}
+                  icon={<Target className="h-6 w-6" />}
+                  title="Matador"
+                  subtitle={matadorGoals > 0 ? `${matadorGoals} Gol${matadorGoals > 1 ? "s" : ""}` : "Gols"}
+                  color="#fb923c"
+                  players={matadorPlayers}
+                  podiumIds={podiumIds}
+                />,
+              );
+            }
+            if (podiumDisplay.mvp && !apittoMode) {
+              podiumCards.push(
+                mvpVotingActive && !mvpPlayer ? (
+                  <div key="mvp-wait" className="flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-[#00FF00]/60 bg-[#00FF00]/5 px-5 py-10 backdrop-blur-xl shadow-[0_0_30px_-10px_rgba(0,255,0,0.6)]">
+                    <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-[#00FF00] bg-zinc-900">
+                      <Crown className="h-10 w-10 text-[#00FF00]/70 animate-pulse" />
+                    </div>
+                    <p className="px-2 text-center text-sm font-semibold text-zinc-100">Aguardando votação</p>
+                    <div className="flex items-center gap-2 text-[#00FF00]">
+                      <Crown className="h-6 w-6" />
+                      <p className="text-base font-black uppercase tracking-wider">MVP</p>
+                    </div>
+                    <p className="text-xs uppercase tracking-wider text-zinc-500">Craque do Jogo</p>
+                  </div>
+                ) : (
+                  <PodiumCard key="mvp"
+                    onPick={(p) => setModalUser(p)}
+                    icon={<Crown className="h-6 w-6" />}
+                    title="Craque do Jogo"
+                    subtitle="MVP"
+                    color="#00FF00"
+                    players={showMvpWinner ? [mvpPlayer!] : []}
+                    highlighted
+                    podiumIds={podiumIds}
+                  />
+                ),
+              );
+            }
+            if (podiumDisplay.apitto && apittoMode) {
+              podiumCards.push(
+                <button key="apitto" type="button"
+                  onClick={() => { if (!pollOpen) setApittoResultsOpen(true); }}
+                  disabled={pollOpen}
+                  className={`flex flex-col items-center gap-3 rounded-2xl border px-5 py-10 backdrop-blur-xl transition ${
+                    pollOpen
+                      ? "cursor-not-allowed border-dashed border-amber-400/50 bg-amber-400/5"
+                      : "border-amber-400 bg-gradient-to-br from-amber-400/15 to-amber-400/5 shadow-[0_0_40px_-10px_rgba(251,191,36,0.7)] hover:scale-[1.02]"
+                  }`}
+                >
+                  <Star className={`h-10 w-10 ${pollOpen ? "text-amber-400/60 animate-pulse" : "fill-amber-400 text-amber-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.9)]"}`} />
+                  <p className="text-base font-black uppercase tracking-wider text-amber-400">Notas da Galera</p>
+                  <p className="text-xs text-zinc-400">{pollOpen ? "Aguardando votação..." : "Ver resultados"}</p>
+                </button>,
+              );
+            }
+            if (podiumDisplay.maestro) {
+              podiumCards.push(
+                <PodiumCard key="maestro"
+                  onPick={(p) => setModalUser(p)}
+                  icon={<Sparkles className="h-6 w-6" />}
+                  title="Maestro"
+                  subtitle={maestroAssists > 0 ? `${maestroAssists} Assist${maestroAssists > 1 ? "s" : ""}` : "Assists"}
+                  color="#60a5fa"
+                  players={maestroPlayers}
+                  podiumIds={podiumIds}
+                />,
+              );
+            }
+            if (podiumDisplay.pereba && perebaMode && !apittoMode) {
+              podiumCards.push(
+                <div key="pereba" className="flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-red-500/60 bg-red-500/5 px-5 py-8 backdrop-blur-xl shadow-[0_0_30px_-10px_rgba(239,68,68,0.6)]">
+                  <button type="button"
+                    onClick={() => showPerebaWinner && setModalUser(perebaPlayer!)}
+                    disabled={!showPerebaWinner}
+                    className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-red-500 bg-zinc-900 transition hover:scale-105"
+                  >
+                    {showPerebaWinner ? (
+                      <PerebaAvatar player={perebaPlayer!} />
+                    ) : (
+                      <Skull className={`h-10 w-10 text-red-500/60 ${pollOpen ? "animate-pulse" : ""}`} />
+                    )}
+                  </button>
+                  <p className="px-2 text-center text-sm font-semibold text-zinc-100">
+                    {showPerebaWinner ? perebaPlayer!.name : pollOpen ? "Aguardando votação" : "Aguardando votos"}
+                  </p>
+                  <div className="flex items-center gap-2 text-red-500">
+                    <Skull className="h-6 w-6" />
+                    <p className="text-base font-black uppercase tracking-wider">Pereba</p>
+                  </div>
+                  <p className="text-xs uppercase tracking-wider text-zinc-500">
+                    {showPerebaWinner && perebaWinner.count > 0
+                      ? `${perebaWinner.count} voto${perebaWinner.count > 1 ? "s" : ""}`
+                      : "Da Rodada"}
+                  </p>
+                </div>,
+              );
+            }
             return (
               <>
                 <div className="mt-10 rounded-2xl border border-white/5 bg-zinc-900/40 px-6 py-8 backdrop-blur-xl">
@@ -507,110 +611,15 @@ function PeladaPage() {
                       Pódio da Última Partida
                     </h2>
                   </div>
-                  <div className={`grid grid-cols-1 gap-4 md:items-center ${
-                    apittoMode ? "md:grid-cols-3" : perebaMode ? "md:grid-cols-4" : "md:grid-cols-3"
-                  }`}>
-                    <PodiumCard
-                      onPick={(p) => setModalUser(p)}
-                      icon={<Target className="h-6 w-6" />}
-                      title="Matador"
-                      subtitle={matadorGoals > 0 ? `${matadorGoals} Gol${matadorGoals > 1 ? "s" : ""}` : "Gols"}
-                      color="#fb923c"
-                      players={matadorPlayers}
-                      podiumIds={podiumIds}
-                    />
-                    {apittoMode ? (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (pollOpen) return;
-                          setApittoResultsOpen(true);
-                        }}
-                        disabled={pollOpen}
-                        className={`flex flex-col items-center gap-3 rounded-2xl border px-5 py-10 backdrop-blur-xl transition ${
-                          pollOpen
-                            ? "cursor-not-allowed border-dashed border-amber-400/50 bg-amber-400/5"
-                            : "border-amber-400 bg-gradient-to-br from-amber-400/15 to-amber-400/5 shadow-[0_0_40px_-10px_rgba(251,191,36,0.7)] hover:scale-[1.02]"
-                        }`}
-                      >
-                        <Star className={`h-10 w-10 ${pollOpen ? "text-amber-400/60 animate-pulse" : "fill-amber-400 text-amber-400"}`} />
-                        <p className="text-base font-black uppercase tracking-wider text-amber-400">
-                          Notas da Galera
-                        </p>
-                        <p className="text-xs text-zinc-400">
-                          {pollOpen ? "Aguardando votação..." : "Ver resultados"}
-                        </p>
-                      </button>
-                    ) : (
-                      mvpVotingActive && !mvpPlayer ? (
-                        <div className="flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-[#00FF00]/60 bg-[#00FF00]/5 px-5 py-10 backdrop-blur-xl shadow-[0_0_30px_-10px_rgba(0,255,0,0.6)]">
-                          <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-[#00FF00] bg-zinc-900">
-                            <Crown className="h-10 w-10 text-[#00FF00]/70 animate-pulse" />
-                          </div>
-                          <p className="px-2 text-center text-sm font-semibold text-zinc-100">
-                            Aguardando votação
-                          </p>
-                          <div className="flex items-center gap-2 text-[#00FF00]">
-                            <Crown className="h-6 w-6" />
-                            <p className="text-base font-black uppercase tracking-wider">MVP</p>
-                          </div>
-                          <p className="text-xs uppercase tracking-wider text-zinc-500">
-                            Craque do Jogo
-                          </p>
-                        </div>
-                      ) : (
-                        <PodiumCard
-                          onPick={(p) => setModalUser(p)}
-                          icon={<Crown className="h-6 w-6" />}
-                          title="Craque do Jogo"
-                          subtitle="MVP"
-                          color="#00FF00"
-                          players={showMvpWinner ? [mvpPlayer!] : []}
-                          highlighted
-                          podiumIds={podiumIds}
-                        />
-                      )
-                    )}
-                    <PodiumCard
-                      onPick={(p) => setModalUser(p)}
-                      icon={<Sparkles className="h-6 w-6" />}
-                      title="Maestro"
-                      subtitle={maestroAssists > 0 ? `${maestroAssists} Assist${maestroAssists > 1 ? "s" : ""}` : "Assists"}
-                      color="#60a5fa"
-                      players={maestroPlayers}
-                      podiumIds={podiumIds}
-                    />
-                    {perebaMode && !apittoMode && (
-                      <div
-                        className="flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-red-500/60 bg-red-500/5 px-5 py-8 backdrop-blur-xl shadow-[0_0_30px_-10px_rgba(239,68,68,0.6)]"
-                      >
-                        <button
-                          type="button"
-                          onClick={() => showPerebaWinner && setModalUser(perebaPlayer!)}
-                          disabled={!showPerebaWinner}
-                          className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-red-500 bg-zinc-900 transition hover:scale-105"
-                        >
-                          {showPerebaWinner ? (
-                            <span className="text-2xl font-black text-zinc-300">{perebaPlayer!.name[0]?.toUpperCase()}</span>
-                          ) : (
-                            <Skull className={`h-10 w-10 text-red-500/60 ${pollOpen ? "animate-pulse" : ""}`} />
-                          )}
-                        </button>
-                        <p className="px-2 text-center text-sm font-semibold text-zinc-100">
-                          {showPerebaWinner ? perebaPlayer!.name : pollOpen ? "Aguardando votação" : "Aguardando votos"}
-                        </p>
-                        <div className="flex items-center gap-2 text-red-500">
-                          <Skull className="h-6 w-6" />
-                          <p className="text-base font-black uppercase tracking-wider">Pereba</p>
-                        </div>
-                        <p className="text-xs uppercase tracking-wider text-zinc-500">
-                          {showPerebaWinner && perebaWinner.count > 0
-                            ? `${perebaWinner.count} voto${perebaWinner.count > 1 ? "s" : ""}`
-                            : "Da Rodada"}
-                        </p>
-                      </div>
-                    )}
-                  </div>
+                  {podiumCards.length === 0 ? (
+                    <p className="text-center text-sm text-zinc-500">Nenhum card do pódio ativo. Habilite em Administrador.</p>
+                  ) : (
+                    <div className="flex flex-wrap items-stretch justify-center gap-4">
+                      {podiumCards.map((c, i) => (
+                        <div key={i} className="w-full sm:w-[280px] md:w-[300px]">{c}</div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </>
             );
