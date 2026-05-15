@@ -48,7 +48,7 @@ type AdminSettings = {
 
 const DEFAULT_SETTINGS: AdminSettings = {
   accent: "#00FF00",
-  modules: { rankings: true, somMvp: true, financas: true, votacoes: true, musica: false },
+  modules: { rankings: true, somMvp: false, financas: true, votacoes: true, musica: false },
   voteModes: { mvp: true, pereba: false, apitto: false },
   podium: { matador: true, maestro: true, mvp: true, pereba: true, apitto: true },
 };
