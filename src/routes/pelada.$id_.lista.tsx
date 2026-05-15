@@ -795,7 +795,8 @@ Bora pro jogo! 🔥
               <input
                 type="range"
                 min={1}
-                max={5}
+                max={10}
+                step={0.5}
                 value={friendRating}
                 onChange={(e) => setFriendRating(Number(e.target.value))}
                 className="w-full accent-[#00FF00]"
