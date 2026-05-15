@@ -329,23 +329,26 @@ function PeladaPage() {
               <Link to="/pelada/$id/rankings" params={{ id }} className="block"><NavItem icon={<BarChart3 className="h-4 w-4" />} label="Rankings" /></Link>
             )}
             <Link to="/pelada/$id/perfil" params={{ id }} className="block"><NavItem icon={<UserCircle2 className="h-4 w-4" />} label="Meu perfil na pelada" /></Link>
+          </nav>
+
+          <div className="mt-auto space-y-1.5 pt-6">
             {isAdmin && (
               <Link to="/pelada/$id/usuarios" params={{ id }} className="block">
                 <NavItem icon={<UserCog className="h-4 w-4" />} label="Gerenciamento de Usuários" />
               </Link>
             )}
             {isAdmin && (
-            <Link to="/pelada/$id/admin" params={{ id }} className="block">
-              <button
-                type="button"
-                className="flex w-full items-center gap-2.5 rounded-xl border border-amber-400/30 bg-amber-400/5 px-3 py-2.5 text-sm font-semibold text-amber-300 transition hover:bg-amber-400/10"
-              >
-                <ShieldCheck className="h-4 w-4" />
-                Administrador
-              </button>
-            </Link>
+              <Link to="/pelada/$id/admin" params={{ id }} className="block">
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-2.5 rounded-xl border border-amber-400/30 bg-amber-400/5 px-3 py-2.5 text-sm font-semibold text-amber-300 transition hover:bg-amber-400/10"
+                >
+                  <ShieldCheck className="h-4 w-4" />
+                  Administrador
+                </button>
+              </Link>
             )}
-          </nav>
+          </div>
         </aside>
 
         <section className="flex-1 px-5 py-8 md:px-10 md:py-10">
