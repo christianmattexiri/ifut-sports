@@ -18,6 +18,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
 import { loadHistory, type HistMatch } from "./pelada.$id_.historico";
+import { onProfileUpdate } from "@/lib/profile-sync";
 
 export const Route = createFileRoute("/pelada/$id_/rankings")({
   component: RankingsPage,
