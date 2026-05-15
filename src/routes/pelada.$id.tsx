@@ -430,22 +430,28 @@ function QuickCard({
 }
 
 function PodiumCard({
-  matchId,
+  onPick,
   icon,
   title,
   subtitle,
   color,
   highlighted,
   players,
+  podiumIds,
 }: {
-  matchId: string;
+  onPick: (p: { id: string; name: string }) => void;
   icon: React.ReactNode;
   title: string;
   subtitle: string;
   color: string;
   highlighted?: boolean;
   players?: { id: string; name: string }[];
+  podiumIds?: string[];
 }) {
+  const ids = podiumIds ?? (players?.map((p) => p.id) ?? []);
+  const avMap = useAvatars(ids);
+  const first = players?.[0];
+  const av = first ? avMap[first.id]?.avatar_url : null;
   return (
     <div
       className={`flex flex-col items-center gap-3 rounded-2xl border bg-zinc-900/50 px-5 backdrop-blur-xl transition ${
@@ -453,24 +459,33 @@ function PodiumCard({
       }`}
       style={{ ["--pc-color" as string]: color }}
     >
-      <div
-        className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-dashed bg-zinc-900 text-zinc-700"
-        style={{ borderColor: `${color}55` }}
+      <button
+        type="button"
+        onClick={() => first && onPick(first)}
+        disabled={!first}
+        className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 bg-zinc-900 transition hover:scale-105"
+        style={{ borderColor: color }}
       >
-        <UserCircle2 className="h-10 w-10" />
-      </div>
+        {av ? (
+          <img src={av} alt={first?.name ?? ""} className="h-full w-full object-cover" />
+        ) : first ? (
+          <span className="text-2xl font-black text-zinc-300">{first.name[0]?.toUpperCase()}</span>
+        ) : (
+          <UserCircle2 className="h-10 w-10 text-zinc-700" />
+        )}
+      </button>
       {players && players.length > 0 ? (
         <p className="px-2 text-center text-sm font-semibold text-zinc-100">
           {players.map((p, i) => (
             <span key={p.id}>
               {i > 0 && ", "}
-              <Link
-                to="/pelada/$id/perfil/$userId"
-                params={{ id: matchId, userId: p.id }}
+              <button
+                type="button"
+                onClick={() => onPick(p)}
                 className="hover:text-[#00FF00] hover:underline"
               >
                 {p.name}
-              </Link>
+              </button>
             </span>
           ))}
         </p>
