@@ -68,21 +68,21 @@ type Match = {
   admin_id?: string | null;
 };
 
-const storageKey = (id: string) => `pelada:${id}:historico`;
+export const histStorageKey = (id: string) => `pelada:${id}:historico`;
 
-function loadHistory(id: string): HistMatch[] {
+export function loadHistory(id: string): HistMatch[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = localStorage.getItem(storageKey(id));
+    const raw = localStorage.getItem(histStorageKey(id));
     return raw ? (JSON.parse(raw) as HistMatch[]) : [];
   } catch {
     return [];
   }
 }
 
-function saveHistory(id: string, list: HistMatch[]) {
+export function saveHistory(id: string, list: HistMatch[]) {
   if (typeof window === "undefined") return;
-  localStorage.setItem(storageKey(id), JSON.stringify(list));
+  localStorage.setItem(histStorageKey(id), JSON.stringify(list));
 }
 
 function teamScore(t: HistTeam) {
@@ -446,7 +446,7 @@ function TeamColumn({
   );
 }
 
-function EditMatchDialog({
+export function EditMatchDialog({
   match,
   onClose,
   onSave,
