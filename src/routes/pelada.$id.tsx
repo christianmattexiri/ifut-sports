@@ -75,7 +75,7 @@ function PeladaPage() {
     : { mvp: false, pereba: false, apitto: false };
   const podiumDisplay = adminSettings.podium;
   const modules = adminSettings.modules;
-  const accent = adminSettings.accent || "#00FF00";
+  const accent = adminSettings.accent || "var(--pelada-accent)";
   const [votes, setVotes] = useState<MatchVotes | null>(null);
   const [votingOpen, setVotingOpen] = useState(false);
   const [apittoResultsOpen, setApittoResultsOpen] = useState(false);
@@ -288,7 +288,7 @@ function PeladaPage() {
       />
 
       <div className="relative z-10 flex min-h-screen">
-        <aside className="hidden w-[280px] shrink-0 flex-col border-r border-white/5 bg-zinc-900/40 px-5 py-5 backdrop-blur-xl md:flex">
+        <aside className="sticky top-0 hidden h-screen w-[280px] shrink-0 flex-col border-r border-white/5 bg-zinc-900/40 px-5 py-5 backdrop-blur-xl md:flex">
           <button
             type="button"
             onClick={() => navigate({ to: "/dashboard" })}
@@ -300,7 +300,7 @@ function PeladaPage() {
 
           <div className="flex flex-col items-center gap-2 pb-6">
             <div className="relative">
-              <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-[var(--pelada-accent)]/40 bg-zinc-900 shadow-[0_0_30px_-8px_rgba(0,255,0,0.7)]">
+              <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-[var(--pelada-accent)]/40 bg-zinc-900 shadow-[0_0_30px_-8px_color-mix(in_oklab,var(--pelada-accent)_70%,transparent)]">
                 {peladaLogo ? (
                   <img src={peladaLogo} alt={peladaName} className="h-full w-full object-cover" />
                 ) : (
@@ -329,23 +329,26 @@ function PeladaPage() {
               <Link to="/pelada/$id/rankings" params={{ id }} className="block"><NavItem icon={<BarChart3 className="h-4 w-4" />} label="Rankings" /></Link>
             )}
             <Link to="/pelada/$id/perfil" params={{ id }} className="block"><NavItem icon={<UserCircle2 className="h-4 w-4" />} label="Meu perfil na pelada" /></Link>
+          </nav>
+
+          <div className="mt-auto space-y-1.5 pt-6">
             {isAdmin && (
               <Link to="/pelada/$id/usuarios" params={{ id }} className="block">
                 <NavItem icon={<UserCog className="h-4 w-4" />} label="Gerenciamento de Usuários" />
               </Link>
             )}
             {isAdmin && (
-            <Link to="/pelada/$id/admin" params={{ id }} className="block">
-              <button
-                type="button"
-                className="flex w-full items-center gap-2.5 rounded-xl border border-amber-400/30 bg-amber-400/5 px-3 py-2.5 text-sm font-semibold text-amber-300 transition hover:bg-amber-400/10"
-              >
-                <ShieldCheck className="h-4 w-4" />
-                Administrador
-              </button>
-            </Link>
+              <Link to="/pelada/$id/admin" params={{ id }} className="block">
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-2.5 rounded-xl border border-amber-400/30 bg-amber-400/5 px-3 py-2.5 text-sm font-semibold text-amber-300 transition hover:bg-amber-400/10"
+                >
+                  <ShieldCheck className="h-4 w-4" />
+                  Administrador
+                </button>
+              </Link>
             )}
-          </nav>
+          </div>
         </aside>
 
         <section className="flex-1 px-5 py-8 md:px-10 md:py-10">
@@ -353,7 +356,7 @@ function PeladaPage() {
             Bem-vindo, {firstName}! <span className="inline-block">👋</span>
           </h1>
 
-          <div className="mt-8 flex items-center justify-between gap-4 rounded-2xl border border-[var(--pelada-accent)]/30 bg-zinc-900/50 px-6 py-5 backdrop-blur-xl shadow-[0_0_40px_-15px_rgba(0,255,0,0.5)]">
+          <div className="mt-8 flex items-center justify-between gap-4 rounded-2xl border border-[var(--pelada-accent)]/30 bg-zinc-900/50 px-6 py-5 backdrop-blur-xl shadow-[0_0_40px_-15px_color-mix(in_oklab,var(--pelada-accent)_50%,transparent)]">
             <div className="flex items-center gap-3">
               <MapPin className="h-5 w-5 text-[var(--pelada-accent)]" />
               {loading ? (
@@ -466,7 +469,7 @@ function PeladaPage() {
             if (podiumDisplay.mvp && !apittoMode) {
               podiumCards.push(
                 mvpVotingActive && !mvpPlayer ? (
-                  <div key="mvp-wait" className="flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-[var(--pelada-accent)]/60 bg-[var(--pelada-accent)]/5 px-5 py-10 backdrop-blur-xl shadow-[0_0_30px_-10px_rgba(0,255,0,0.6)]">
+                  <div key="mvp-wait" className="flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-[var(--pelada-accent)]/60 bg-[var(--pelada-accent)]/5 px-5 py-10 backdrop-blur-xl shadow-[0_0_30px_-10px_color-mix(in_oklab,var(--pelada-accent)_60%,transparent)]">
                     <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-[var(--pelada-accent)] bg-zinc-900">
                       <Crown className="h-10 w-10 text-[var(--pelada-accent)]/70 animate-pulse" />
                     </div>
@@ -564,7 +567,7 @@ function PeladaPage() {
                       <p className="text-xs uppercase tracking-wider text-zinc-500">
                         {latest?.teamA.label ?? "Time A"}
                       </p>
-                      <p className="mt-2 text-5xl font-black text-[var(--pelada-accent)] drop-shadow-[0_0_20px_rgba(0,255,0,0.6)]">
+                      <p className="mt-2 text-5xl font-black text-[var(--pelada-accent)] drop-shadow-[0_0_20px_color-mix(in_oklab,var(--pelada-accent)_60%,transparent)]">
                         {scoreA}
                       </p>
                     </div>
@@ -709,7 +712,7 @@ function NavItem({ icon, label, active, gold }: { icon: React.ReactNode; label: 
       type="button"
       className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
         active
-          ? "bg-[var(--pelada-accent)]/10 text-[var(--pelada-accent)] shadow-[inset_0_0_0_1px_rgba(0,255,0,0.25)]"
+          ? "bg-[var(--pelada-accent)]/10 text-[var(--pelada-accent)] shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--pelada-accent)_25%,transparent)]"
           : gold
           ? "text-yellow-500 hover:bg-yellow-500/10"
           : "text-zinc-300 hover:bg-white/5 hover:text-zinc-100"

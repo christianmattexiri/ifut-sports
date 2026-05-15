@@ -157,22 +157,26 @@ function RankingsPage() {
   });
 
   return (
-    <main className="min-h-dvh bg-zinc-950 text-zinc-100">
-      <div className="mx-auto flex min-h-dvh w-full max-w-[1400px] flex-col md:flex-row">
+    <main className="relative min-h-screen w-full bg-zinc-950 text-zinc-100 font-sans antialiased pb-24">
+      <div
+        aria-hidden
+        className="pointer-events-none fixed -top-40 left-1/3 h-[480px] w-[480px] rounded-full bg-[var(--pelada-accent)]/10 blur-[160px]"
+      />
+      <div className="relative z-10 flex min-h-screen">
         {/* Sidebar */}
-        <aside className="hidden w-72 shrink-0 flex-col border-r border-white/5 bg-zinc-950/80 px-5 py-7 md:flex">
+        <aside className="sticky top-0 hidden h-screen w-[280px] shrink-0 flex-col border-r border-white/5 bg-zinc-900/40 px-5 py-5 backdrop-blur-xl md:flex">
           <button
             onClick={() => navigate({ to: "/pelada/$id", params: { id } })}
-            className="mb-7 inline-flex items-center gap-2 self-start rounded-full border border-white/10 bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-200 transition hover:border-[#00FF00]/40 hover:text-[#00FF00]"
+            className="mb-7 inline-flex items-center gap-2 self-start rounded-full border border-white/10 bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-200 transition hover:border-[var(--pelada-accent)]/40 hover:text-[var(--pelada-accent)]"
           >
             <ArrowLeft className="h-3.5 w-3.5" /> Voltar
           </button>
           <div className="mb-6 flex items-center gap-3">
-            <div className="grid h-12 w-12 place-items-center overflow-hidden rounded-2xl border border-[#00FF00]/40 bg-zinc-900">
+            <div className="grid h-12 w-12 place-items-center overflow-hidden rounded-2xl border border-[var(--pelada-accent)]/40 bg-zinc-900">
               {match?.logo_url ? (
                 <img src={match.logo_url} alt="" className="h-full w-full object-cover" />
               ) : (
-                <Trophy className="h-5 w-5 text-[#00FF00]" />
+                <Trophy className="h-5 w-5 text-[var(--pelada-accent)]" />
               )}
             </div>
             <div>
@@ -215,8 +219,8 @@ function RankingsPage() {
         {/* Main */}
         <section className="flex-1 px-5 py-8 md:px-10 md:py-10">
           <div className="flex items-center gap-3">
-            <BarChart3 className="h-7 w-7 text-[#00FF00]" />
-            <h1 className="text-3xl font-black uppercase tracking-tight text-[#00FF00] md:text-4xl">
+            <BarChart3 className="h-7 w-7 text-[var(--pelada-accent)]" />
+            <h1 className="text-3xl font-black uppercase tracking-tight text-[var(--pelada-accent)] md:text-4xl">
               Ranking
             </h1>
           </div>
@@ -232,7 +236,7 @@ function RankingsPage() {
                   onClick={() => setActiveTab(t.key)}
                   className={`rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-wider transition ${
                     active
-                      ? "border-[#00FF00] bg-[#00FF00]/10 text-[#00FF00] shadow-[0_0_25px_-5px_rgba(0,255,0,0.7)]"
+                      ? "border-[var(--pelada-accent)] bg-[var(--pelada-accent)]/10 text-[var(--pelada-accent)] shadow-[0_0_25px_-5px_color-mix(in_oklab,var(--pelada-accent)_70%,transparent)]"
                       : "border-white/10 bg-zinc-900/60 text-zinc-400 hover:border-white/20 hover:text-zinc-200"
                   }`}
                 >
@@ -257,7 +261,7 @@ function RankingsPage() {
           </div>
 
           {/* List */}
-          <div className="mt-10 rounded-3xl border-2 border-[#00FF00]/60 bg-zinc-950/80 p-2 shadow-[0_0_50px_-15px_rgba(0,255,0,0.5)] md:p-3">
+          <div className="mt-10 rounded-3xl border-2 border-[var(--pelada-accent)]/60 bg-zinc-950/80 p-2 shadow-[0_0_50px_-15px_color-mix(in_oklab,var(--pelada-accent)_50%,transparent)] md:p-3">
             <div className="rounded-2xl bg-zinc-900/40">
               {rest.length === 0 ? (
                 <p className="py-10 text-center text-sm text-zinc-500">
@@ -408,7 +412,7 @@ function RankRow({
         {position}
       </span>
       {trend === "up" ? (
-        <ArrowUp className="h-4 w-4 text-[#00FF00]" />
+        <ArrowUp className="h-4 w-4 text-[var(--pelada-accent)]" />
       ) : trend === "down" ? (
         <ArrowDown className="h-4 w-4 text-red-400" />
       ) : (
@@ -426,7 +430,7 @@ function RankRow({
       <p className="flex-1 truncate text-sm font-semibold text-zinc-100 md:text-base">
         {player.name}
       </p>
-      <p className="text-lg font-black tabular-nums text-[#00FF00] drop-shadow-[0_0_8px_rgba(0,255,0,0.6)] md:text-xl">
+      <p className="text-lg font-black tabular-nums text-[var(--pelada-accent)] drop-shadow-[0_0_8px_color-mix(in_oklab,var(--pelada-accent)_60%,transparent)] md:text-xl">
         {player[stat] as number}
       </p>
     </div>
@@ -463,7 +467,7 @@ function NavItem({
     <div
       className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
         active
-          ? "bg-[#00FF00]/10 text-[#00FF00] shadow-[inset_0_0_0_1px_rgba(0,255,0,0.25)]"
+          ? "bg-[var(--pelada-accent)]/10 text-[var(--pelada-accent)] shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--pelada-accent)_25%,transparent)]"
           : gold
           ? "text-yellow-500 hover:bg-yellow-500/10"
           : "text-zinc-300 hover:bg-white/5 hover:text-zinc-100"

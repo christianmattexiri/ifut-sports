@@ -165,25 +165,25 @@ export function PeladaProfile({
     <main className="relative min-h-screen w-full bg-zinc-950 text-zinc-100 font-sans antialiased">
       <div
         aria-hidden
-        className="pointer-events-none fixed -top-40 left-1/3 h-[480px] w-[480px] rounded-full bg-[#00FF00]/10 blur-[160px]"
+        className="pointer-events-none fixed -top-40 left-1/3 h-[480px] w-[480px] rounded-full bg-[var(--pelada-accent)]/10 blur-[160px]"
       />
       <div className="relative z-10 flex min-h-screen">
         <aside className="hidden w-[280px] shrink-0 flex-col border-r border-white/5 bg-zinc-900/40 px-5 py-5 backdrop-blur-xl md:flex">
           <button
             type="button"
             onClick={() => navigate({ to: "/pelada/$id", params: { id: matchId } })}
-            className="mb-5 inline-flex items-center gap-1.5 self-start rounded-lg px-2 py-1 text-xs font-medium text-zinc-400 transition hover:text-[#00FF00]"
+            className="mb-5 inline-flex items-center gap-1.5 self-start rounded-lg px-2 py-1 text-xs font-medium text-zinc-400 transition hover:text-[var(--pelada-accent)]"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             Voltar à Pelada
           </button>
 
           <div className="flex flex-col items-center gap-2 pb-6">
-            <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-[#00FF00]/40 bg-zinc-900 shadow-[0_0_30px_-8px_rgba(0,255,0,0.7)]">
+            <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-[var(--pelada-accent)]/40 bg-zinc-900 shadow-[0_0_30px_-8px_color-mix(in_oklab,var(--pelada-accent)_70%,transparent)]">
               {peladaLogo ? (
                 <img src={peladaLogo} alt={peladaName} className="h-full w-full object-cover" />
               ) : (
-                <Trophy className="h-9 w-9 text-[#00FF00]" />
+                <Trophy className="h-9 w-9 text-[var(--pelada-accent)]" />
               )}
             </div>
             <p className="text-center text-base font-bold tracking-tight text-white">
@@ -240,7 +240,7 @@ export function PeladaProfile({
               <button
                 type="button"
                 onClick={() => setEditOpen(true)}
-                className="inline-flex items-center gap-2 rounded-xl border border-[#00FF00]/40 bg-transparent px-5 py-2.5 text-sm font-bold uppercase tracking-[0.2em] text-[#00FF00] transition hover:bg-[#00FF00]/10 hover:shadow-[0_0_20px_-5px_rgba(0,255,0,0.6)]"
+                className="inline-flex items-center gap-2 rounded-xl border border-[var(--pelada-accent)]/40 bg-transparent px-5 py-2.5 text-sm font-bold uppercase tracking-[0.2em] text-[var(--pelada-accent)] transition hover:bg-[var(--pelada-accent)]/10 hover:shadow-[0_0_20px_-5px_color-mix(in_oklab,var(--pelada-accent)_60%,transparent)]"
               >
                 <Pencil className="h-4 w-4" />
                 Editar Perfil
@@ -262,7 +262,7 @@ export function PeladaProfile({
                   {(fullName || "Jogador").toUpperCase()}
                 </h2>
                 {username && (
-                  <p className="text-sm font-medium text-[#00FF00]">@{username}</p>
+                  <p className="text-sm font-medium text-[var(--pelada-accent)]">@{username}</p>
                 )}
 
                 <div className="mt-4 inline-flex items-center gap-3 rounded-xl border-2 border-amber-400/60 bg-amber-400/5 px-6 py-3 shadow-[0_0_30px_-5px_rgba(251,191,36,0.5)]">
@@ -280,11 +280,11 @@ export function PeladaProfile({
               <StatCard icon={<Target className="h-5 w-5" />} value={stats.goals} label="Gols" color="#fb923c" />
               <StatCard icon={<Handshake className="h-5 w-5" />} value={stats.assists} label="Assists" color="#60a5fa" />
               <StatCard icon={<Trophy className="h-5 w-5" />} value={stats.mvp} label="MVP" color="#facc15" />
-              <StatCard icon={<Gamepad2 className="h-5 w-5" />} value={stats.games} label="Jogos" color="#00FF00" />
+              <StatCard icon={<Gamepad2 className="h-5 w-5" />} value={stats.games} label="Jogos" color="var(--pelada-accent)" />
             </div>
 
             <div className="mt-4 grid grid-cols-4 gap-2 rounded-2xl border border-white/10 bg-zinc-900/40 px-4 py-4 backdrop-blur-xl">
-              <RecordCell value={stats.wins} label="Vitórias" color="text-[#00FF00]" />
+              <RecordCell value={stats.wins} label="Vitórias" color="text-[var(--pelada-accent)]" />
               <RecordCell value={stats.draws} label="Empates" color="text-zinc-400" />
               <RecordCell value={stats.losses} label="Derrotas" color="text-red-500" />
               <RecordCell value={`${stats.winRate}%`} label="Win Rate" color="text-white" />
@@ -362,7 +362,7 @@ function NavItem({
     <div
       className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
         active
-          ? "bg-[#00FF00]/10 text-[#00FF00] shadow-[inset_0_0_0_1px_rgba(0,255,0,0.25)]"
+          ? "bg-[var(--pelada-accent)]/10 text-[var(--pelada-accent)] shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--pelada-accent)_25%,transparent)]"
           : gold
           ? "text-yellow-500 hover:bg-yellow-500/10"
           : "text-zinc-300 hover:bg-white/5 hover:text-zinc-100"
@@ -447,7 +447,7 @@ function MyMatchAccordion({
     <div
       className={`overflow-hidden rounded-2xl border bg-zinc-900/40 backdrop-blur-xl transition ${
         win
-          ? "border-[#00FF00]/30"
+          ? "border-[var(--pelada-accent)]/30"
           : draw
           ? "border-zinc-600/30"
           : "border-red-500/30"
@@ -461,7 +461,7 @@ function MyMatchAccordion({
         <span
           className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-sm font-black ${
             win
-              ? "bg-[#00FF00]/20 text-[#00FF00]"
+              ? "bg-[var(--pelada-accent)]/20 text-[var(--pelada-accent)]"
               : draw
               ? "bg-zinc-700/40 text-zinc-300"
               : "bg-red-500/20 text-red-500"
@@ -494,7 +494,7 @@ function MyMatchAccordion({
 
       {open && (
         <div className="grid grid-cols-1 gap-5 border-t border-white/5 bg-zinc-950/40 px-4 py-4 md:grid-cols-2">
-          <TeamColumn team={m.teamA} myUserId={myUserId} viewerId={viewerId} colorClass="text-[#00FF00]" />
+          <TeamColumn team={m.teamA} myUserId={myUserId} viewerId={viewerId} colorClass="text-[var(--pelada-accent)]" />
           <TeamColumn team={m.teamB} myUserId={myUserId} viewerId={viewerId} colorClass="text-red-500" />
         </div>
       )}
@@ -528,11 +528,11 @@ function TeamColumn({
               key={p.id}
               className={`flex items-center justify-between rounded-lg border px-3 py-2 text-sm transition ${
                 isTarget
-                  ? "border-[#00FF00]/60 bg-[#00FF00]/10 shadow-[0_0_15px_-5px_rgba(0,255,0,0.5)]"
+                  ? "border-[var(--pelada-accent)]/60 bg-[var(--pelada-accent)]/10 shadow-[0_0_15px_-5px_color-mix(in_oklab,var(--pelada-accent)_50%,transparent)]"
                   : "border-white/5 bg-zinc-900/60"
               }`}
             >
-              <span className={isTarget ? "font-bold text-[#00FF00]" : "text-zinc-200"}>
+              <span className={isTarget ? "font-bold text-[var(--pelada-accent)]" : "text-zinc-200"}>
                 {p.name}
                 {isViewer && <span className="ml-1 text-[10px] uppercase opacity-70">(Você)</span>}
               </span>
