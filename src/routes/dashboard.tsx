@@ -197,11 +197,13 @@ function Dashboard() {
                 />
               </Link>
               {isSuperAdmin && (
-                <NavItem
-                  icon={<ShieldCheck className="h-4 w-4" />}
-                  label="Painel Admin"
-                  badge="Super admin"
-                />
+                <Link to="/super-admin" className="block">
+                  <NavItem
+                    icon={<ShieldCheck className="h-4 w-4" />}
+                    label="Super Admin"
+                    badge="Global"
+                  />
+                </Link>
               )}
             </nav>
           </div>

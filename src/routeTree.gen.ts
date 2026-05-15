@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SuperAdminRouteImport } from './routes/super-admin'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ConvitesRouteImport } from './routes/convites'
 import { Route as IndexRouteImport } from './routes/index'
@@ -22,6 +23,11 @@ import { Route as PeladaIdHistoricoRouteImport } from './routes/pelada.$id_.hist
 import { Route as PeladaIdAdminRouteImport } from './routes/pelada.$id_.admin'
 import { Route as PeladaIdJogadorUserIdRouteImport } from './routes/pelada.$id_.jogador.$userId'
 
+const SuperAdminRoute = SuperAdminRouteImport.update({
+  id: '/super-admin',
+  path: '/super-admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -87,6 +93,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/convites': typeof ConvitesRoute
   '/dashboard': typeof DashboardRoute
+  '/super-admin': typeof SuperAdminRoute
   '/pelada/$id': typeof PeladaIdRoute
   '/pelada/$id/admin': typeof PeladaIdAdminRoute
   '/pelada/$id/historico': typeof PeladaIdHistoricoRoute
@@ -101,6 +108,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/convites': typeof ConvitesRoute
   '/dashboard': typeof DashboardRoute
+  '/super-admin': typeof SuperAdminRoute
   '/pelada/$id': typeof PeladaIdRoute
   '/pelada/$id/admin': typeof PeladaIdAdminRoute
   '/pelada/$id/historico': typeof PeladaIdHistoricoRoute
@@ -116,6 +124,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/convites': typeof ConvitesRoute
   '/dashboard': typeof DashboardRoute
+  '/super-admin': typeof SuperAdminRoute
   '/pelada/$id': typeof PeladaIdRoute
   '/pelada/$id_/admin': typeof PeladaIdAdminRoute
   '/pelada/$id_/historico': typeof PeladaIdHistoricoRoute
@@ -132,6 +141,7 @@ export interface FileRouteTypes {
     | '/'
     | '/convites'
     | '/dashboard'
+    | '/super-admin'
     | '/pelada/$id'
     | '/pelada/$id/admin'
     | '/pelada/$id/historico'
@@ -146,6 +156,7 @@ export interface FileRouteTypes {
     | '/'
     | '/convites'
     | '/dashboard'
+    | '/super-admin'
     | '/pelada/$id'
     | '/pelada/$id/admin'
     | '/pelada/$id/historico'
@@ -160,6 +171,7 @@ export interface FileRouteTypes {
     | '/'
     | '/convites'
     | '/dashboard'
+    | '/super-admin'
     | '/pelada/$id'
     | '/pelada/$id_/admin'
     | '/pelada/$id_/historico'
@@ -175,6 +187,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ConvitesRoute: typeof ConvitesRoute
   DashboardRoute: typeof DashboardRoute
+  SuperAdminRoute: typeof SuperAdminRoute
   PeladaIdRoute: typeof PeladaIdRoute
   PeladaIdAdminRoute: typeof PeladaIdAdminRoute
   PeladaIdHistoricoRoute: typeof PeladaIdHistoricoRoute
@@ -188,6 +201,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/super-admin': {
+      id: '/super-admin'
+      path: '/super-admin'
+      fullPath: '/super-admin'
+      preLoaderRoute: typeof SuperAdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
@@ -279,6 +299,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ConvitesRoute: ConvitesRoute,
   DashboardRoute: DashboardRoute,
+  SuperAdminRoute: SuperAdminRoute,
   PeladaIdRoute: PeladaIdRoute,
   PeladaIdAdminRoute: PeladaIdAdminRoute,
   PeladaIdHistoricoRoute: PeladaIdHistoricoRoute,
