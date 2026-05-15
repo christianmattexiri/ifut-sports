@@ -566,11 +566,13 @@ function NavItem({
   label,
   active,
   badge,
+  badgeCount,
 }: {
   icon: React.ReactNode;
   label: string;
   active?: boolean;
   badge?: string;
+  badgeCount?: number;
 }) {
   return (
     <button
@@ -588,6 +590,11 @@ function NavItem({
       {badge && (
         <span className="rounded-full border border-white/10 bg-white/5 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-zinc-400">
           {badge}
+        </span>
+      )}
+      {badgeCount !== undefined && badgeCount > 0 && (
+        <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-amber-400 px-1.5 text-[11px] font-bold text-zinc-900 shadow-[0_0_10px_-2px_rgba(251,191,36,0.7)]">
+          {badgeCount}
         </span>
       )}
     </button>
