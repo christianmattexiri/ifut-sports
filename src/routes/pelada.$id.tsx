@@ -747,33 +747,44 @@ function PodiumCard({
 }) {
   const ids = podiumIds ?? (players?.map((p) => p.id) ?? []);
   const avMap = useAvatars(ids);
-  const first = players?.[0];
-  const av = first ? avMap[first.id]?.avatar_url : null;
+  const list = players ?? [];
   return (
     <div
-      className={`flex flex-col items-center gap-3 rounded-2xl border bg-zinc-900/50 px-5 backdrop-blur-xl transition ${
+      className={`flex h-full flex-col items-center gap-3 rounded-2xl border bg-zinc-900/50 px-5 backdrop-blur-xl transition ${
         highlighted ? "border-[var(--pc-color)] py-10 shadow-[0_0_40px_-10px_var(--pc-color)]" : "border-white/10 py-8"
       }`}
       style={{ ["--pc-color" as string]: color }}
     >
-      <button
-        type="button"
-        onClick={() => first && onPick(first)}
-        disabled={!first}
-        className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 bg-zinc-900 transition hover:scale-105"
-        style={{ borderColor: color }}
-      >
-        {av ? (
-          <img src={av} alt={first?.name ?? ""} className="h-full w-full object-cover" />
-        ) : first ? (
-          <span className="text-2xl font-black text-zinc-300">{first.name[0]?.toUpperCase()}</span>
-        ) : (
+      {list.length > 0 ? (
+        <div className="flex max-w-full flex-wrap items-center justify-center gap-2">
+          {list.map((p) => {
+            const url = avMap[p.id]?.avatar_url;
+            return (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => onPick(p)}
+                className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 bg-zinc-900 transition hover:scale-105"
+                style={{ borderColor: color }}
+                title={p.name}
+              >
+                {url ? (
+                  <img src={url} alt={p.name} className="h-full w-full object-cover" />
+                ) : (
+                  <span className="text-2xl font-black text-zinc-300">{p.name[0]?.toUpperCase()}</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-white/10 bg-zinc-900">
           <UserCircle2 className="h-10 w-10 text-zinc-700" />
-        )}
-      </button>
-      {players && players.length > 0 ? (
+        </div>
+      )}
+      {list.length > 0 ? (
         <p className="px-2 text-center text-sm font-semibold text-zinc-100">
-          {players.map((p, i) => (
+          {list.map((p, i) => (
             <span key={p.id}>
               {i > 0 && ", "}
               <button
@@ -789,7 +800,7 @@ function PodiumCard({
       ) : (
         <p className="text-sm text-zinc-500">Aguardando partida</p>
       )}
-      <div className="flex items-center gap-2" style={{ color }}>
+      <div className="mt-auto flex items-center gap-2" style={{ color }}>
         {icon}
         <p className="text-base font-bold uppercase tracking-wider">{title}</p>
       </div>
