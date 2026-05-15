@@ -280,7 +280,7 @@ function UsuariosPage() {
                     key={m.id}
                     profile={m}
                     isAdmin={m.id === match?.admin_id}
-                    rating={ratings[m.id] ?? 5}
+                    rating={ratings[m.id]}
                     onRatingChange={(v) => updateRating(m.id, v)}
                     onRemove={() => removeMember(m.id)}
                   />
@@ -329,7 +329,7 @@ function MemberRow({
 }: {
   profile: Profile;
   isAdmin: boolean;
-  rating: number;
+  rating: number | undefined;
   onRatingChange: (v: number) => void;
   onRemove: () => void;
 }) {
