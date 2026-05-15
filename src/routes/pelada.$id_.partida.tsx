@@ -201,7 +201,7 @@ function PartidaPage() {
             <ArrowLeft className="h-3.5 w-3.5" /> Voltar ao Início do App
           </button>
           <div className="flex flex-col items-center gap-2 pb-6">
-            <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-[var(--pelada-accent)]/40 bg-zinc-900 shadow-[0_0_30px_-8px_rgba(0,255,0,0.7)]">
+            <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-[var(--pelada-accent)]/40 bg-zinc-900 shadow-[0_0_30px_-8px_color-mix(in_oklab,var(--pelada-accent)_70%,transparent)]">
               {peladaLogo ? <img src={peladaLogo} alt={peladaName} className="h-full w-full object-cover" /> : <Trophy className="h-9 w-9 text-[var(--pelada-accent)]" />}
             </div>
             <p className="text-center text-base font-bold tracking-tight text-white">{peladaName}</p>
@@ -233,7 +233,7 @@ function PartidaPage() {
               type="button"
               onClick={() => setSorteioOpen(true)}
               disabled={!isAdmin}
-              className="w-full rounded-2xl border-2 border-[var(--pelada-accent)] bg-[var(--pelada-accent)]/10 px-6 py-8 text-2xl font-black uppercase tracking-wider text-[var(--pelada-accent)] transition hover:bg-[var(--pelada-accent)]/20 hover:shadow-[0_0_50px_-8px_rgba(0,255,0,0.9)] disabled:cursor-not-allowed disabled:opacity-40"
+              className="w-full rounded-2xl border-2 border-[var(--pelada-accent)] bg-[var(--pelada-accent)]/10 px-6 py-8 text-2xl font-black uppercase tracking-wider text-[var(--pelada-accent)] transition hover:bg-[var(--pelada-accent)]/20 hover:shadow-[0_0_50px_-8px_color-mix(in_oklab,var(--pelada-accent)_90%,transparent)] disabled:cursor-not-allowed disabled:opacity-40"
             >
               ⚽ Sortear Times
             </button>
@@ -300,7 +300,7 @@ function PartidaPage() {
 function NavItem({ icon, label, active, gold }: { icon: React.ReactNode; label: string; active?: boolean; gold?: boolean }) {
   return (
     <div className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
-      active ? (gold ? "bg-yellow-500/10 text-yellow-400 shadow-[inset_0_0_0_1px_rgba(250,204,21,0.3)]" : "bg-[var(--pelada-accent)]/10 text-[var(--pelada-accent)] shadow-[inset_0_0_0_1px_rgba(0,255,0,0.25)]")
+      active ? (gold ? "bg-yellow-500/10 text-yellow-400 shadow-[inset_0_0_0_1px_rgba(250,204,21,0.3)]" : "bg-[var(--pelada-accent)]/10 text-[var(--pelada-accent)] shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--pelada-accent)_25%,transparent)]")
         : gold ? "text-yellow-500 hover:bg-yellow-500/10"
         : "text-zinc-300 hover:bg-white/5 hover:text-zinc-100"
     }`}>{icon}{label}</div>
@@ -326,7 +326,7 @@ function TeamView({ title, players, accent }: { title: string; players: Player[]
 function ModeCard({ icon, title, desc, onClick, highlighted }: { icon: React.ReactNode; title: string; desc: string; onClick: () => void; highlighted?: boolean }) {
   return (
     <button type="button" onClick={onClick} className={`flex flex-col items-center gap-3 rounded-2xl border bg-zinc-900/60 p-6 text-center transition hover:scale-[1.02] ${
-      highlighted ? "border-[var(--pelada-accent)] shadow-[0_0_30px_-5px_rgba(0,255,0,0.6)]" : "border-white/10 hover:border-[var(--pelada-accent)]/40"
+      highlighted ? "border-[var(--pelada-accent)] shadow-[0_0_30px_-5px_color-mix(in_oklab,var(--pelada-accent)_60%,transparent)]" : "border-white/10 hover:border-[var(--pelada-accent)]/40"
     }`}>
       <span className="text-[var(--pelada-accent)]">{icon}</span>
       <p className="text-base font-black uppercase tracking-wider text-zinc-100">{title}</p>

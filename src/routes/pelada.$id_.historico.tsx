@@ -209,7 +209,7 @@ function HistoricoPage() {
           </button>
 
           <div className="flex flex-col items-center gap-2 pb-6">
-            <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-[var(--pelada-accent)]/40 bg-zinc-900 shadow-[0_0_30px_-8px_rgba(0,255,0,0.7)]">
+            <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-[var(--pelada-accent)]/40 bg-zinc-900 shadow-[0_0_30px_-8px_color-mix(in_oklab,var(--pelada-accent)_70%,transparent)]">
               {peladaLogo ? (
                 <img src={peladaLogo} alt={peladaName} className="h-full w-full object-cover" />
               ) : (
@@ -254,14 +254,14 @@ function HistoricoPage() {
 
         <section className="flex-1 px-5 py-8 md:px-10 md:py-10">
           <div className="mb-8 flex items-center justify-between gap-4">
-            <h1 className="text-center text-2xl font-bold uppercase tracking-[0.3em] text-[var(--pelada-accent)] drop-shadow-[0_0_15px_rgba(0,255,0,0.6)] md:text-3xl flex-1">
+            <h1 className="text-center text-2xl font-bold uppercase tracking-[0.3em] text-[var(--pelada-accent)] drop-shadow-[0_0_15px_color-mix(in_oklab,var(--pelada-accent)_60%,transparent)] md:text-3xl flex-1">
               Histórico de Jogos
             </h1>
             {isAdmin && (
               <button
                 type="button"
                 onClick={handleNewMatch}
-                className="inline-flex items-center gap-2 rounded-xl border border-[var(--pelada-accent)]/40 bg-[var(--pelada-accent)]/10 px-4 py-2 text-sm font-bold uppercase tracking-wider text-[var(--pelada-accent)] transition hover:bg-[var(--pelada-accent)]/20 hover:shadow-[0_0_20px_-5px_rgba(0,255,0,0.6)]"
+                className="inline-flex items-center gap-2 rounded-xl border border-[var(--pelada-accent)]/40 bg-[var(--pelada-accent)]/10 px-4 py-2 text-sm font-bold uppercase tracking-wider text-[var(--pelada-accent)] transition hover:bg-[var(--pelada-accent)]/20 hover:shadow-[0_0_20px_-5px_color-mix(in_oklab,var(--pelada-accent)_60%,transparent)]"
               >
                 <Plus className="h-4 w-4" />
                 Nova Partida
@@ -360,7 +360,7 @@ function MatchAccordion({
         </button>
         <div className="flex items-center gap-3">
           <span className="flex items-center gap-2 font-mono text-base font-bold tabular-nums">
-            <span className={aWin ? "text-[var(--pelada-accent)] drop-shadow-[0_0_8px_rgba(0,255,0,0.7)]" : "text-zinc-400"}>
+            <span className={aWin ? "text-[var(--pelada-accent)] drop-shadow-[0_0_8px_color-mix(in_oklab,var(--pelada-accent)_70%,transparent)]" : "text-zinc-400"}>
               {sa}
             </span>
             <span className="text-zinc-600">x</span>
@@ -671,7 +671,7 @@ export function EditMatchDialog({
           <button
             type="button"
             onClick={() => onSave(draft)}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--pelada-accent)]/50 bg-[var(--pelada-accent)]/15 px-4 py-2 text-sm font-bold uppercase tracking-wider text-[var(--pelada-accent)] transition hover:bg-[var(--pelada-accent)]/25 hover:shadow-[0_0_20px_-5px_rgba(0,255,0,0.7)]"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--pelada-accent)]/50 bg-[var(--pelada-accent)]/15 px-4 py-2 text-sm font-bold uppercase tracking-wider text-[var(--pelada-accent)] transition hover:bg-[var(--pelada-accent)]/25 hover:shadow-[0_0_20px_-5px_color-mix(in_oklab,var(--pelada-accent)_70%,transparent)]"
           >
             <Save className="h-4 w-4" />
             Salvar
@@ -821,7 +821,7 @@ function NavItem({
       type="button"
       className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
         active
-          ? "bg-[var(--pelada-accent)]/10 text-[var(--pelada-accent)] shadow-[inset_0_0_0_1px_rgba(0,255,0,0.25)]"
+          ? "bg-[var(--pelada-accent)]/10 text-[var(--pelada-accent)] shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--pelada-accent)_25%,transparent)]"
           : gold
           ? "text-yellow-500 hover:bg-yellow-500/10"
           : "text-zinc-300 hover:bg-white/5 hover:text-zinc-100"

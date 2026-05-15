@@ -179,7 +179,7 @@ export function PeladaProfile({
           </button>
 
           <div className="flex flex-col items-center gap-2 pb-6">
-            <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-[var(--pelada-accent)]/40 bg-zinc-900 shadow-[0_0_30px_-8px_rgba(0,255,0,0.7)]">
+            <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-[var(--pelada-accent)]/40 bg-zinc-900 shadow-[0_0_30px_-8px_color-mix(in_oklab,var(--pelada-accent)_70%,transparent)]">
               {peladaLogo ? (
                 <img src={peladaLogo} alt={peladaName} className="h-full w-full object-cover" />
               ) : (
@@ -240,7 +240,7 @@ export function PeladaProfile({
               <button
                 type="button"
                 onClick={() => setEditOpen(true)}
-                className="inline-flex items-center gap-2 rounded-xl border border-[var(--pelada-accent)]/40 bg-transparent px-5 py-2.5 text-sm font-bold uppercase tracking-[0.2em] text-[var(--pelada-accent)] transition hover:bg-[var(--pelada-accent)]/10 hover:shadow-[0_0_20px_-5px_rgba(0,255,0,0.6)]"
+                className="inline-flex items-center gap-2 rounded-xl border border-[var(--pelada-accent)]/40 bg-transparent px-5 py-2.5 text-sm font-bold uppercase tracking-[0.2em] text-[var(--pelada-accent)] transition hover:bg-[var(--pelada-accent)]/10 hover:shadow-[0_0_20px_-5px_color-mix(in_oklab,var(--pelada-accent)_60%,transparent)]"
               >
                 <Pencil className="h-4 w-4" />
                 Editar Perfil
@@ -362,7 +362,7 @@ function NavItem({
     <div
       className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
         active
-          ? "bg-[var(--pelada-accent)]/10 text-[var(--pelada-accent)] shadow-[inset_0_0_0_1px_rgba(0,255,0,0.25)]"
+          ? "bg-[var(--pelada-accent)]/10 text-[var(--pelada-accent)] shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--pelada-accent)_25%,transparent)]"
           : gold
           ? "text-yellow-500 hover:bg-yellow-500/10"
           : "text-zinc-300 hover:bg-white/5 hover:text-zinc-100"
@@ -528,7 +528,7 @@ function TeamColumn({
               key={p.id}
               className={`flex items-center justify-between rounded-lg border px-3 py-2 text-sm transition ${
                 isTarget
-                  ? "border-[var(--pelada-accent)]/60 bg-[var(--pelada-accent)]/10 shadow-[0_0_15px_-5px_rgba(0,255,0,0.5)]"
+                  ? "border-[var(--pelada-accent)]/60 bg-[var(--pelada-accent)]/10 shadow-[0_0_15px_-5px_color-mix(in_oklab,var(--pelada-accent)_50%,transparent)]"
                   : "border-white/5 bg-zinc-900/60"
               }`}
             >

@@ -440,7 +440,7 @@ Bora pro jogo! 🔥
           </button>
 
           <div className="flex flex-col items-center gap-2 pb-6">
-            <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-[var(--pelada-accent)]/40 bg-zinc-900 shadow-[0_0_30px_-8px_rgba(0,255,0,0.7)]">
+            <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-[var(--pelada-accent)]/40 bg-zinc-900 shadow-[0_0_30px_-8px_color-mix(in_oklab,var(--pelada-accent)_70%,transparent)]">
               {peladaLogo ? (
                 <img src={peladaLogo} alt={peladaName} className="h-full w-full object-cover" />
               ) : (
@@ -489,7 +489,7 @@ Bora pro jogo! 🔥
         <section className="flex-1 px-4 py-6 md:px-10 md:py-10">
           <div className="mx-auto max-w-3xl space-y-4">
             {/* Painel 1 — Próxima Pelada */}
-            <div className="relative rounded-2xl border border-[var(--pelada-accent)]/40 bg-zinc-900/50 p-5 backdrop-blur-xl shadow-[0_0_30px_-12px_rgba(0,255,0,0.6)]">
+            <div className="relative rounded-2xl border border-[var(--pelada-accent)]/40 bg-zinc-900/50 p-5 backdrop-blur-xl shadow-[0_0_30px_-12px_color-mix(in_oklab,var(--pelada-accent)_60%,transparent)]">
               {isAdmin && (
                 <button
                   type="button"
@@ -638,7 +638,7 @@ Bora pro jogo! 🔥
             <button
               type="button"
               onClick={handleSaveAll}
-              className="w-full rounded-xl border-2 border-[var(--pelada-accent)] bg-[var(--pelada-accent)]/10 px-4 py-4 text-base font-black uppercase tracking-wider text-[var(--pelada-accent)] transition hover:bg-[var(--pelada-accent)]/20 shadow-[0_0_30px_-8px_rgba(0,255,0,0.8)]"
+              className="w-full rounded-xl border-2 border-[var(--pelada-accent)] bg-[var(--pelada-accent)]/10 px-4 py-4 text-base font-black uppercase tracking-wider text-[var(--pelada-accent)] transition hover:bg-[var(--pelada-accent)]/20 shadow-[0_0_30px_-8px_color-mix(in_oklab,var(--pelada-accent)_80%,transparent)]"
             >
               <Save className="mr-2 inline h-5 w-5" />
               💾 Salvar Lista
@@ -700,7 +700,7 @@ Bora pro jogo! 🔥
 
       {/* Modal: Modalidade de Sorteio */}
       <Dialog open={sorteioOpen} onOpenChange={setSorteioOpen}>
-        <DialogContent className="max-w-3xl border-[var(--pelada-accent)]/40 bg-zinc-950 text-zinc-100 shadow-[0_0_60px_-10px_rgba(0,255,0,0.5)]">
+        <DialogContent className="max-w-3xl border-[var(--pelada-accent)]/40 bg-zinc-950 text-zinc-100 shadow-[0_0_60px_-10px_color-mix(in_oklab,var(--pelada-accent)_50%,transparent)]">
           <DialogHeader>
             <DialogTitle className="text-2xl font-black uppercase tracking-wider text-[var(--pelada-accent)]">
               | Escolha o Modo de Sorteio
@@ -770,7 +770,7 @@ Bora pro jogo! 🔥
             <button
               type="button"
               onClick={saveTeams}
-              className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--pelada-accent)] bg-[var(--pelada-accent)] px-8 py-3 text-base font-black uppercase tracking-wider text-zinc-950 shadow-[0_0_40px_-5px_rgba(0,255,0,0.9)] transition hover:bg-[var(--pelada-accent)]/90"
+              className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--pelada-accent)] bg-[var(--pelada-accent)] px-8 py-3 text-base font-black uppercase tracking-wider text-zinc-950 shadow-[0_0_40px_-5px_color-mix(in_oklab,var(--pelada-accent)_90%,transparent)] transition hover:bg-[var(--pelada-accent)]/90"
             >
               <Save className="h-5 w-5" />
               Salvar Times
@@ -901,7 +901,7 @@ function NavItem({ icon, label, active, gold }: { icon: React.ReactNode; label: 
     <div
       className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
         active
-          ? "bg-[var(--pelada-accent)]/10 text-[var(--pelada-accent)] shadow-[inset_0_0_0_1px_rgba(0,255,0,0.25)]"
+          ? "bg-[var(--pelada-accent)]/10 text-[var(--pelada-accent)] shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--pelada-accent)_25%,transparent)]"
           : gold
           ? "text-yellow-500 hover:bg-yellow-500/10"
           : "text-zinc-300 hover:bg-white/5 hover:text-zinc-100"
@@ -1055,11 +1055,11 @@ function ModeCard({
       onClick={onClick}
       className={`flex flex-col items-center gap-3 rounded-2xl border bg-zinc-900/60 p-6 text-center transition hover:scale-[1.02] hover:bg-zinc-900 ${
         highlighted
-          ? "border-[var(--pelada-accent)] shadow-[0_0_30px_-5px_rgba(0,255,0,0.6)]"
+          ? "border-[var(--pelada-accent)] shadow-[0_0_30px_-5px_color-mix(in_oklab,var(--pelada-accent)_60%,transparent)]"
           : "border-white/10 hover:border-[var(--pelada-accent)]/40"
       }`}
     >
-      <span className="text-[var(--pelada-accent)] drop-shadow-[0_0_10px_rgba(0,255,0,0.7)]">{icon}</span>
+      <span className="text-[var(--pelada-accent)] drop-shadow-[0_0_10px_color-mix(in_oklab,var(--pelada-accent)_70%,transparent)]">{icon}</span>
       <p className="text-base font-black uppercase tracking-wider text-zinc-100">{title}</p>
       <p className="text-xs leading-relaxed text-zinc-400">{desc}</p>
     </button>

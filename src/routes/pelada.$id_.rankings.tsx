@@ -232,7 +232,7 @@ function RankingsPage() {
                   onClick={() => setActiveTab(t.key)}
                   className={`rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-wider transition ${
                     active
-                      ? "border-[var(--pelada-accent)] bg-[var(--pelada-accent)]/10 text-[var(--pelada-accent)] shadow-[0_0_25px_-5px_rgba(0,255,0,0.7)]"
+                      ? "border-[var(--pelada-accent)] bg-[var(--pelada-accent)]/10 text-[var(--pelada-accent)] shadow-[0_0_25px_-5px_color-mix(in_oklab,var(--pelada-accent)_70%,transparent)]"
                       : "border-white/10 bg-zinc-900/60 text-zinc-400 hover:border-white/20 hover:text-zinc-200"
                   }`}
                 >
@@ -257,7 +257,7 @@ function RankingsPage() {
           </div>
 
           {/* List */}
-          <div className="mt-10 rounded-3xl border-2 border-[var(--pelada-accent)]/60 bg-zinc-950/80 p-2 shadow-[0_0_50px_-15px_rgba(0,255,0,0.5)] md:p-3">
+          <div className="mt-10 rounded-3xl border-2 border-[var(--pelada-accent)]/60 bg-zinc-950/80 p-2 shadow-[0_0_50px_-15px_color-mix(in_oklab,var(--pelada-accent)_50%,transparent)] md:p-3">
             <div className="rounded-2xl bg-zinc-900/40">
               {rest.length === 0 ? (
                 <p className="py-10 text-center text-sm text-zinc-500">
@@ -426,7 +426,7 @@ function RankRow({
       <p className="flex-1 truncate text-sm font-semibold text-zinc-100 md:text-base">
         {player.name}
       </p>
-      <p className="text-lg font-black tabular-nums text-[var(--pelada-accent)] drop-shadow-[0_0_8px_rgba(0,255,0,0.6)] md:text-xl">
+      <p className="text-lg font-black tabular-nums text-[var(--pelada-accent)] drop-shadow-[0_0_8px_color-mix(in_oklab,var(--pelada-accent)_60%,transparent)] md:text-xl">
         {player[stat] as number}
       </p>
     </div>
@@ -463,7 +463,7 @@ function NavItem({
     <div
       className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
         active
-          ? "bg-[var(--pelada-accent)]/10 text-[var(--pelada-accent)] shadow-[inset_0_0_0_1px_rgba(0,255,0,0.25)]"
+          ? "bg-[var(--pelada-accent)]/10 text-[var(--pelada-accent)] shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--pelada-accent)_25%,transparent)]"
           : gold
           ? "text-yellow-500 hover:bg-yellow-500/10"
           : "text-zinc-300 hover:bg-white/5 hover:text-zinc-100"
