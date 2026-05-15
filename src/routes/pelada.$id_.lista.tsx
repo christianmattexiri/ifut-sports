@@ -99,12 +99,9 @@ const DEFAULT_SETTINGS: Settings = {
 function ListaPresencaPage() {
   const navigate = useNavigate();
   const { id } = useParams({ from: "/pelada/$id_/lista" });
-  const { data: match, isLoading: viewerLoading } = useQuery(viewerQuery()) as any;
   const { data: matchData } = useQuery(peladaMatchQuery(id));
-  const matchRecord = (matchData ?? null) as Match | null;
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [hydrated, setHydrated] = useState(false);
-  const { data: viewer } = useQuery(viewerQuery());
+  const match = (matchData ?? null) as Match | null;
+  const { data: viewer, isLoading: viewerLoading } = useQuery(viewerQuery());
   const me = viewer
     ? { id: viewer.id, fullName: viewer.full_name?.trim() || viewer.username || "Você" }
     : null;
@@ -114,6 +111,8 @@ function ListaPresencaPage() {
   useEffect(() => {
     if (!viewerLoading && viewer === null) navigate({ to: "/" });
   }, [viewer, viewerLoading, navigate]);
+  const [players, setPlayers] = useState<Player[]>([]);
+  const [hydrated, setHydrated] = useState(false);
   const [friendOpen, setFriendOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [friendName, setFriendName] = useState("");
@@ -167,35 +166,16 @@ function ListaPresencaPage() {
     localStorage.setItem(`pelada:${id}:settings`, JSON.stringify(settings));
   }, [settings, id, hydrated]);
 
+  // Hydrate match-derived defaults into settings once match arrives.
   useEffect(() => {
-    (async () => {
-      const { data: sess } = await supabase.auth.getSession();
-      if (!sess.session) {
-        navigate({ to: "/" });
-        return;
-      }
-      const uid = sess.session.user.id;
-      const [{ data: m }, { data: prof }] = await Promise.all([
-        supabase
-          .from("matches")
-          .select("id, name, day_of_week, match_time, location, logo_url, admin_id")
-          .eq("id", id)
-          .maybeSingle(),
-        supabase.from("profiles").select("full_name, username").eq("id", uid).maybeSingle(),
-      ]);
-      const match = m as Match | null;
-      setMatch(match);
-      const owner = ((m as { admin_id?: string } | null)?.admin_id ?? null) === uid;
-      setIsAdmin(owner || isSuperAdminUsername(prof?.username));
-      setMe({ id: uid, fullName: prof?.full_name?.trim() || prof?.username || "Você" });
-      setSettings((s) => ({
-        ...s,
-        dayOfWeek: s.dayOfWeek || match?.day_of_week || "",
-        matchTime: s.matchTime || match?.match_time || "",
-        location: s.location || match?.location || "",
-      }));
-    })();
-  }, [navigate, id]);
+    if (!match) return;
+    setSettings((s) => ({
+      ...s,
+      dayOfWeek: s.dayOfWeek || match.day_of_week || "",
+      matchTime: s.matchTime || match.match_time || "",
+      location: s.location || match.location || "",
+    }));
+  }, [match]);
 
   const { lineLimit, gkLimit, subLimit } = settings;
   const meInList = useMemo(() => (me ? players.some((p) => p.id === me.id) : false), [players, me]);
