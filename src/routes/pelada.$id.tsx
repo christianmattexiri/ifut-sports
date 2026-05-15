@@ -50,6 +50,18 @@ function PeladaPage() {
     gkLimit: number;
   }>({ line: 0, lineLimit: 16, gks: 0, gkLimit: 2 });
 
+  type LatestMatch = {
+    id: string;
+    date: string;
+    name: string;
+    teamA: { label: string; players: { id: string; name: string; goals: number; assists: number }[] };
+    teamB: { label: string; players: { id: string; name: string; goals: number; assists: number }[] };
+    mvp: string | null;
+    topScorers: string[];
+    topAssists: string[];
+  };
+  const [latest, setLatest] = useState<LatestMatch | null>(null);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     const key = `pelada:${id}:counts`;
@@ -64,6 +76,29 @@ function PeladaPage() {
     read();
     const onStorage = (e: StorageEvent) => {
       if (e.key === key) read();
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [id]);
+
+  // Read latest match from histórico
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const histKey = `pelada:${id}:historico`;
+    const read = () => {
+      try {
+        const raw = localStorage.getItem(histKey);
+        if (!raw) return setLatest(null);
+        const arr = JSON.parse(raw) as LatestMatch[];
+        const sorted = [...arr].sort((a, b) => (a.date < b.date ? 1 : -1));
+        setLatest(sorted[0] ?? null);
+      } catch {
+        setLatest(null);
+      }
+    };
+    read();
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === histKey) read();
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
@@ -136,7 +171,9 @@ function PeladaPage() {
             <Link to="/pelada/$id/lista" params={{ id }} className="block">
               <NavItem icon={<ClipboardList className="h-4 w-4" />} label="Lista de Presença" />
             </Link>
-            <NavItem icon={<History className="h-4 w-4" />} label="Histórico" />
+            <Link to="/pelada/$id/historico" params={{ id }} className="block">
+              <NavItem icon={<History className="h-4 w-4" />} label="Histórico" />
+            </Link>
             <NavItem icon={<BarChart3 className="h-4 w-4" />} label="Rankings" />
             <NavItem icon={<UserCircle2 className="h-4 w-4" />} label="Meu perfil na pelada" />
           </nav>
