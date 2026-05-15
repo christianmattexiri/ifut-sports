@@ -211,39 +211,38 @@ function Avatar({
 }
 
 function StarRating({ value, onChange }: { value: number; onChange: (v: number) => void }) {
-  // 10 half-steps from 0.5..5
   return (
-    <div className="flex items-center gap-0.5">
+    <div className="flex items-center gap-1.5 select-none touch-manipulation">
       {Array.from({ length: 5 }).map((_, i) => {
         const full = i + 1;
         const half = i + 0.5;
         const isFull = value >= full;
         const isHalf = value >= half && value < full;
         return (
-          <span key={i} className="relative inline-flex h-5 w-5">
+          <span key={i} className="relative inline-flex h-12 w-12">
             <button
               type="button"
               aria-label={`${half} estrelas`}
               onClick={() => onChange(half)}
-              className="absolute left-0 top-0 z-10 h-5 w-1/2"
+              className="absolute left-0 top-0 z-10 h-full w-1/2"
             />
             <button
               type="button"
               aria-label={`${full} estrelas`}
               onClick={() => onChange(full)}
-              className="absolute right-0 top-0 z-10 h-5 w-1/2"
+              className="absolute right-0 top-0 z-10 h-full w-1/2"
             />
             {isFull ? (
-              <Star className="h-5 w-5 fill-amber-400 text-amber-400" />
+              <Star className="h-12 w-12 fill-amber-400 text-amber-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.5)]" />
             ) : isHalf ? (
-              <StarHalf className="h-5 w-5 fill-amber-400 text-amber-400" />
+              <StarHalf className="h-12 w-12 fill-amber-400 text-amber-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.5)]" />
             ) : (
-              <Star className="h-5 w-5 text-zinc-600" />
+              <Star className="h-12 w-12 text-zinc-700" />
             )}
           </span>
         );
       })}
-      <span className="ml-1 w-7 text-right text-[11px] font-mono tabular-nums text-amber-400">
+      <span className="ml-2 w-10 text-right text-base font-mono font-bold tabular-nums text-amber-400">
         {value ? value.toFixed(1) : "—"}
       </span>
     </div>
