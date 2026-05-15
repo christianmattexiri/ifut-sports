@@ -141,7 +141,7 @@ function RankingsPage() {
   });
 
   return (
-    <main className="relative min-h-screen w-full bg-zinc-950 text-zinc-100 font-sans antialiased pb-24">
+    <main className="relative min-h-screen w-full bg-zinc-950 pt-14 text-zinc-100 font-sans antialiased pb-24">
       <div
         aria-hidden
         className="pointer-events-none fixed -top-40 left-1/3 h-[480px] w-[480px] rounded-full bg-[var(--pelada-accent)]/10 blur-[160px]"

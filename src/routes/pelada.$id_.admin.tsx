@@ -190,7 +190,7 @@ function AdminPage() {
   if (!isAdmin) return null;
 
   return (
-    <main className="min-h-dvh bg-zinc-950 text-zinc-100">
+    <main className="min-h-dvh bg-zinc-950 pt-14 text-zinc-100">
       <div className="mx-auto flex min-h-dvh w-full max-w-[1400px] flex-col md:flex-row">
         <aside className="hidden w-72 shrink-0 flex-col border-r border-white/5 bg-zinc-950/80 px-5 py-7 md:flex">
           <button

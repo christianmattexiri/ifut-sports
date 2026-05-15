@@ -16,6 +16,7 @@ export type ViewerProfile = {
   id: string;
   full_name: string | null;
   username: string | null;
+  avatar_url: string | null;
 };
 
 export const peladaMatchQuery = (id: string | undefined) =>
@@ -48,13 +49,14 @@ export const viewerQuery = () =>
       const uid = sess.session.user.id;
       const { data: prof } = await supabase
         .from("profiles")
-        .select("full_name, username")
+        .select("full_name, username, avatar_url")
         .eq("id", uid)
         .maybeSingle();
       return {
         id: uid,
         full_name: prof?.full_name ?? null,
         username: prof?.username ?? null,
+        avatar_url: prof?.avatar_url ?? null,
       } as ViewerProfile;
     },
   });

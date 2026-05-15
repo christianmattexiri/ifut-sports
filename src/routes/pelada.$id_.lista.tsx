@@ -220,7 +220,7 @@ function ListaPresencaPage() {
     );
   }, [id, categorized, lineLimit, gkLimit, subLimit]);
 
-  const addPlayer = (name: string, isGK = false, userId?: string) => {
+  const addPlayer = (name: string, isGK = false, userId?: string, rating?: number) => {
     if (!name.trim()) return;
     const totalConfirmed = categorized.line.length + categorized.gks.length;
     const totalSubs = categorized.subs.length;
@@ -228,9 +228,13 @@ function ListaPresencaPage() {
       toast.error("Lista cheia (incluindo suplentes)");
       return;
     }
+    const id = userId ?? crypto.randomUUID();
+    if (typeof rating === "number") {
+      setRatings((prev) => ({ ...prev, [id]: rating }));
+    }
     setPlayers((prev) => [
       ...prev,
-      { id: userId ?? crypto.randomUUID(), name: name.trim(), isGoalkeeper: isGK, paid: false },
+      { id, name: name.trim(), isGoalkeeper: isGK, paid: false, rating },
     ]);
   };
 
@@ -255,9 +259,9 @@ function ListaPresencaPage() {
   };
 
   const handleSubmitFriend = () => {
-    addPlayer(friendName, friendGK);
+    addPlayer(friendName, friendGK, undefined, friendRating);
     setFriendName("");
-    setFriendRating(3);
+    setFriendRating(5);
     setFriendGK(false);
     setFriendOpen(false);
   };
@@ -419,7 +423,7 @@ Bora pro jogo! 🔥
   const subCount = categorized.subs.length;
 
   return (
-    <main className="relative min-h-screen w-full bg-zinc-950 text-zinc-100 font-sans antialiased pb-24">
+    <main className="relative min-h-screen w-full bg-zinc-950 pt-14 text-zinc-100 font-sans antialiased pb-24">
       <div
         aria-hidden
         className="pointer-events-none fixed -top-40 left-1/3 h-[480px] w-[480px] rounded-full bg-[var(--pelada-accent)]/10 blur-[160px]"
