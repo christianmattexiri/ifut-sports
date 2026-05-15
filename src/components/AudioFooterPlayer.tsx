@@ -8,11 +8,11 @@ type Props = {
   peladaId: string;
   mode: "musica" | "somMvp";
   canEdit: boolean;
-  /** Display name override (e.g. "Som do MVP: João") */
   titlePrefix: string;
-  /** Disabled when no MVP yet */
   disabled?: boolean;
   disabledHint?: string;
+  /** When mode is somMvp, scope the saved song by MVP user id */
+  scopeKey?: string;
 };
 
 type Saved = { url: string; title: string };
@@ -32,9 +32,8 @@ function ytId(url: string): string | null {
   }
 }
 
-export function AudioFooterPlayer({ peladaId, mode, canEdit, titlePrefix, disabled, disabledHint }: Props) {
-  // For MVP mode, scope by MVP user id (passed via titlePrefix); else single global slot
-  const scope = mode === "musica" ? "global" : "current";
+export function AudioFooterPlayer({ peladaId, mode, canEdit, titlePrefix, disabled, disabledHint, scopeKey }: Props) {
+  const scope = mode === "musica" ? "global" : (scopeKey || "current");
   const key = storageKey(peladaId, mode, scope);
   const [saved, setSaved] = useState<Saved | null>(null);
   const [playing, setPlaying] = useState(false);
