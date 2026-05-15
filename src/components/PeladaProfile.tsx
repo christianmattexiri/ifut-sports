@@ -316,6 +316,7 @@ export function PeladaProfile({
                         key={m.id}
                         m={m}
                         myUserId={targetUserId}
+                        viewerId={viewerId}
                         open={openId === m.id}
                         onToggle={() => setOpenId(openId === m.id ? null : m.id)}
                       />
