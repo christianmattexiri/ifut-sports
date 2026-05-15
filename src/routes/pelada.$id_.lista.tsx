@@ -514,7 +514,6 @@ Bora pro jogo! 🔥
               onClick={() => {
                 if (confirm("Limpar toda a lista?")) {
                   setPlayers([]);
-                  setMeInList(false);
                 }
               }}
               className="w-full rounded-xl border border-red-700/60 bg-red-900/10 px-4 py-3 text-sm font-bold uppercase tracking-wider text-red-400 transition hover:bg-red-900/20"
