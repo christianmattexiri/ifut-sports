@@ -65,20 +65,52 @@ function ConvitesPage() {
       const name = (prof?.full_name?.trim() || prof?.username || "Jogador").split(" ")[0];
       setMe({ id: uid, firstName: name });
 
-      const { data, error } = await supabase
+      const { data: rows, error } = await supabase
         .from("match_invitations")
-        .select(
-          "id, match_id, inviter_id, status, created_at, match:matches(id, name, day_of_week, match_time, location, logo_url), inviter:profiles!match_invitations_inviter_id_fkey(id, full_name, username)",
-        )
+        .select("id, match_id, inviter_id, status, created_at")
         .eq("invitee_id", uid)
         .eq("status", "pending")
         .order("created_at", { ascending: false });
 
       if (error) {
+        console.error("[convites] load error", error);
         toast.error("Erro ao carregar convites");
-      } else {
-        setInvites((data ?? []) as unknown as Invitation[]);
+        setLoading(false);
+        return;
       }
+
+      const list = rows ?? [];
+      const matchIds = Array.from(new Set(list.map((r) => r.match_id).filter(Boolean))) as string[];
+      const inviterIds = Array.from(new Set(list.map((r) => r.inviter_id).filter(Boolean))) as string[];
+
+      const [matchesRes, invitersRes] = await Promise.all([
+        matchIds.length
+          ? supabase
+              .from("matches")
+              .select("id, name, day_of_week, match_time, location, logo_url")
+              .in("id", matchIds)
+          : Promise.resolve({ data: [], error: null } as const),
+        inviterIds.length
+          ? supabase
+              .from("profiles")
+              .select("id, full_name, username")
+              .in("id", inviterIds)
+          : Promise.resolve({ data: [], error: null } as const),
+      ]);
+
+      const matchMap = new Map((matchesRes.data ?? []).map((m: any) => [m.id, m]));
+      const inviterMap = new Map((invitersRes.data ?? []).map((p: any) => [p.id, p]));
+
+      const enriched: Invitation[] = list.map((r) => ({
+        id: r.id,
+        match_id: r.match_id as string,
+        inviter_id: r.inviter_id as string,
+        status: r.status as string,
+        created_at: r.created_at as string,
+        match: matchMap.get(r.match_id as string) ?? null,
+        inviter: inviterMap.get(r.inviter_id as string) ?? null,
+      }));
+      setInvites(enriched);
       setLoading(false);
     })();
   }, [navigate]);
