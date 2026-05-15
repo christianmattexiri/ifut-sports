@@ -114,7 +114,7 @@ export function VotingModal({
             type="button"
             disabled={!rating}
             onClick={goNext}
-            className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[#00FF00]/50 bg-[#00FF00]/15 px-4 py-3 text-sm font-bold uppercase tracking-wider text-[#00FF00] transition hover:bg-[#00FF00]/25 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[var(--pelada-accent)]/50 bg-[var(--pelada-accent)]/15 px-4 py-3 text-sm font-bold uppercase tracking-wider text-[var(--pelada-accent)] transition hover:bg-[var(--pelada-accent)]/25 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {isLast ? "Finalizar Avaliações" : (
               <>
@@ -132,7 +132,7 @@ export function VotingModal({
   const title = isMvp ? "🏆 Quem foi o Craque?" : "🤡 Quem foi o Pereba?";
   const selected = isMvp ? mvp : pereba;
   const setSelected = (id: string) => (isMvp ? setMvp(id) : setPereba(id));
-  const accent = isMvp ? "#00FF00" : "#ef4444";
+  const accent = isMvp ? "var(--pelada-accent)" : "#ef4444";
 
   function next() {
     if (isMvp && modes.pereba) setStep("pereba");

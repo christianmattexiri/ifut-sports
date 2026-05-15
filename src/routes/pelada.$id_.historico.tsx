@@ -195,25 +195,25 @@ function HistoricoPage() {
     <main className="relative min-h-screen w-full bg-zinc-950 text-zinc-100 font-sans antialiased">
       <div
         aria-hidden
-        className="pointer-events-none fixed -top-40 left-1/3 h-[480px] w-[480px] rounded-full bg-[#00FF00]/10 blur-[160px]"
+        className="pointer-events-none fixed -top-40 left-1/3 h-[480px] w-[480px] rounded-full bg-[var(--pelada-accent)]/10 blur-[160px]"
       />
       <div className="relative z-10 flex min-h-screen">
         <aside className="hidden w-[280px] shrink-0 flex-col border-r border-white/5 bg-zinc-900/40 px-5 py-5 backdrop-blur-xl md:flex">
           <button
             type="button"
             onClick={() => navigate({ to: "/pelada/$id", params: { id } })}
-            className="mb-5 inline-flex items-center gap-1.5 self-start rounded-lg px-2 py-1 text-xs font-medium text-zinc-400 transition hover:text-[#00FF00]"
+            className="mb-5 inline-flex items-center gap-1.5 self-start rounded-lg px-2 py-1 text-xs font-medium text-zinc-400 transition hover:text-[var(--pelada-accent)]"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             Voltar à Pelada
           </button>
 
           <div className="flex flex-col items-center gap-2 pb-6">
-            <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-[#00FF00]/40 bg-zinc-900 shadow-[0_0_30px_-8px_rgba(0,255,0,0.7)]">
+            <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-[var(--pelada-accent)]/40 bg-zinc-900 shadow-[0_0_30px_-8px_rgba(0,255,0,0.7)]">
               {peladaLogo ? (
                 <img src={peladaLogo} alt={peladaName} className="h-full w-full object-cover" />
               ) : (
-                <Trophy className="h-9 w-9 text-[#00FF00]" />
+                <Trophy className="h-9 w-9 text-[var(--pelada-accent)]" />
               )}
             </div>
             <p className="text-center text-base font-bold tracking-tight text-white">
@@ -254,14 +254,14 @@ function HistoricoPage() {
 
         <section className="flex-1 px-5 py-8 md:px-10 md:py-10">
           <div className="mb-8 flex items-center justify-between gap-4">
-            <h1 className="text-center text-2xl font-bold uppercase tracking-[0.3em] text-[#00FF00] drop-shadow-[0_0_15px_rgba(0,255,0,0.6)] md:text-3xl flex-1">
+            <h1 className="text-center text-2xl font-bold uppercase tracking-[0.3em] text-[var(--pelada-accent)] drop-shadow-[0_0_15px_rgba(0,255,0,0.6)] md:text-3xl flex-1">
               Histórico de Jogos
             </h1>
             {isAdmin && (
               <button
                 type="button"
                 onClick={handleNewMatch}
-                className="inline-flex items-center gap-2 rounded-xl border border-[#00FF00]/40 bg-[#00FF00]/10 px-4 py-2 text-sm font-bold uppercase tracking-wider text-[#00FF00] transition hover:bg-[#00FF00]/20 hover:shadow-[0_0_20px_-5px_rgba(0,255,0,0.6)]"
+                className="inline-flex items-center gap-2 rounded-xl border border-[var(--pelada-accent)]/40 bg-[var(--pelada-accent)]/10 px-4 py-2 text-sm font-bold uppercase tracking-wider text-[var(--pelada-accent)] transition hover:bg-[var(--pelada-accent)]/20 hover:shadow-[0_0_20px_-5px_rgba(0,255,0,0.6)]"
               >
                 <Plus className="h-4 w-4" />
                 Nova Partida
@@ -360,7 +360,7 @@ function MatchAccordion({
         </button>
         <div className="flex items-center gap-3">
           <span className="flex items-center gap-2 font-mono text-base font-bold tabular-nums">
-            <span className={aWin ? "text-[#00FF00] drop-shadow-[0_0_8px_rgba(0,255,0,0.7)]" : "text-zinc-400"}>
+            <span className={aWin ? "text-[var(--pelada-accent)] drop-shadow-[0_0_8px_rgba(0,255,0,0.7)]" : "text-zinc-400"}>
               {sa}
             </span>
             <span className="text-zinc-600">x</span>
@@ -401,7 +401,7 @@ function MatchAccordion({
 
       {open && (
         <div className="grid grid-cols-1 gap-5 border-t border-white/5 bg-zinc-950/40 px-5 py-5 md:grid-cols-2">
-          <TeamColumn team={m.teamA} winner={aWin} colorClass="text-[#00FF00]" Icon={Trophy} />
+          <TeamColumn team={m.teamA} winner={aWin} colorClass="text-[var(--pelada-accent)]" Icon={Trophy} />
           <TeamColumn team={m.teamB} winner={bWin} colorClass="text-red-500" Icon={bWin ? Trophy : Skull} />
         </div>
       )}
@@ -534,7 +534,7 @@ export function EditMatchDialog({
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto border-white/10 bg-zinc-950 text-zinc-100">
         <DialogHeader>
-          <DialogTitle className="text-[#00FF00]">Editar Partida</DialogTitle>
+          <DialogTitle className="text-[var(--pelada-accent)]">Editar Partida</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
@@ -568,7 +568,7 @@ export function EditMatchDialog({
               {(["teamA", "teamB"] as const).map((tk) => {
                 const t = draft[tk];
                 const Color = tk === "teamA" ? Trophy : Skull;
-                const colorClass = tk === "teamA" ? "text-[#00FF00]" : "text-red-500";
+                const colorClass = tk === "teamA" ? "text-[var(--pelada-accent)]" : "text-red-500";
                 return (
                   <div key={tk}>
                     <div className={`mb-2 flex items-center gap-2 ${colorClass}`}>
@@ -621,7 +621,7 @@ export function EditMatchDialog({
             <select
               value={draft.mvp ?? ""}
               onChange={(e) => setDraft({ ...draft, mvp: e.target.value || null })}
-              className="w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 focus:border-[#00FF00]/40 focus:outline-none"
+              className="w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 focus:border-[var(--pelada-accent)]/40 focus:outline-none"
             >
               <option value="">Selecione um jogador...</option>
               {allPlayers.map((p) => (
@@ -671,7 +671,7 @@ export function EditMatchDialog({
           <button
             type="button"
             onClick={() => onSave(draft)}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-[#00FF00]/50 bg-[#00FF00]/15 px-4 py-2 text-sm font-bold uppercase tracking-wider text-[#00FF00] transition hover:bg-[#00FF00]/25 hover:shadow-[0_0_20px_-5px_rgba(0,255,0,0.7)]"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--pelada-accent)]/50 bg-[var(--pelada-accent)]/15 px-4 py-2 text-sm font-bold uppercase tracking-wider text-[var(--pelada-accent)] transition hover:bg-[var(--pelada-accent)]/25 hover:shadow-[0_0_20px_-5px_rgba(0,255,0,0.7)]"
           >
             <Save className="h-4 w-4" />
             Salvar
@@ -711,7 +711,7 @@ function StatStepper({
         min={0}
         value={value}
         onChange={(e) => onChange(Number(e.target.value) || 0)}
-        className="w-12 rounded border border-white/10 bg-zinc-900 px-1.5 py-0.5 text-center text-sm tabular-nums text-zinc-100 focus:border-[#00FF00]/40 focus:outline-none"
+        className="w-12 rounded border border-white/10 bg-zinc-900 px-1.5 py-0.5 text-center text-sm tabular-nums text-zinc-100 focus:border-[var(--pelada-accent)]/40 focus:outline-none"
       />
       <button
         type="button"
@@ -821,7 +821,7 @@ function NavItem({
       type="button"
       className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
         active
-          ? "bg-[#00FF00]/10 text-[#00FF00] shadow-[inset_0_0_0_1px_rgba(0,255,0,0.25)]"
+          ? "bg-[var(--pelada-accent)]/10 text-[var(--pelada-accent)] shadow-[inset_0_0_0_1px_rgba(0,255,0,0.25)]"
           : gold
           ? "text-yellow-500 hover:bg-yellow-500/10"
           : "text-zinc-300 hover:bg-white/5 hover:text-zinc-100"

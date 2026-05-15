@@ -194,15 +194,15 @@ function PartidaPage() {
 
   return (
     <main className="relative min-h-screen w-full bg-zinc-950 text-zinc-100 font-sans antialiased">
-      <div aria-hidden className="pointer-events-none fixed -top-40 left-1/3 h-[480px] w-[480px] rounded-full bg-[#00FF00]/10 blur-[160px]" />
+      <div aria-hidden className="pointer-events-none fixed -top-40 left-1/3 h-[480px] w-[480px] rounded-full bg-[var(--pelada-accent)]/10 blur-[160px]" />
       <div className="relative z-10 flex min-h-screen">
         <aside className="hidden w-[280px] shrink-0 flex-col border-r border-white/5 bg-zinc-900/40 px-5 py-5 backdrop-blur-xl md:flex">
-          <button type="button" onClick={() => navigate({ to: "/dashboard" })} className="mb-5 inline-flex items-center gap-1.5 self-start rounded-lg px-2 py-1 text-xs font-medium text-zinc-400 transition hover:text-[#00FF00]">
+          <button type="button" onClick={() => navigate({ to: "/dashboard" })} className="mb-5 inline-flex items-center gap-1.5 self-start rounded-lg px-2 py-1 text-xs font-medium text-zinc-400 transition hover:text-[var(--pelada-accent)]">
             <ArrowLeft className="h-3.5 w-3.5" /> Voltar ao Início do App
           </button>
           <div className="flex flex-col items-center gap-2 pb-6">
-            <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-[#00FF00]/40 bg-zinc-900 shadow-[0_0_30px_-8px_rgba(0,255,0,0.7)]">
-              {peladaLogo ? <img src={peladaLogo} alt={peladaName} className="h-full w-full object-cover" /> : <Trophy className="h-9 w-9 text-[#00FF00]" />}
+            <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-[var(--pelada-accent)]/40 bg-zinc-900 shadow-[0_0_30px_-8px_rgba(0,255,0,0.7)]">
+              {peladaLogo ? <img src={peladaLogo} alt={peladaName} className="h-full w-full object-cover" /> : <Trophy className="h-9 w-9 text-[var(--pelada-accent)]" />}
             </div>
             <p className="text-center text-base font-bold tracking-tight text-white">{peladaName}</p>
           </div>
@@ -233,7 +233,7 @@ function PartidaPage() {
               type="button"
               onClick={() => setSorteioOpen(true)}
               disabled={!isAdmin}
-              className="w-full rounded-2xl border-2 border-[#00FF00] bg-[#00FF00]/10 px-6 py-8 text-2xl font-black uppercase tracking-wider text-[#00FF00] transition hover:bg-[#00FF00]/20 hover:shadow-[0_0_50px_-8px_rgba(0,255,0,0.9)] disabled:cursor-not-allowed disabled:opacity-40"
+              className="w-full rounded-2xl border-2 border-[var(--pelada-accent)] bg-[var(--pelada-accent)]/10 px-6 py-8 text-2xl font-black uppercase tracking-wider text-[var(--pelada-accent)] transition hover:bg-[var(--pelada-accent)]/20 hover:shadow-[0_0_50px_-8px_rgba(0,255,0,0.9)] disabled:cursor-not-allowed disabled:opacity-40"
             >
               ⚽ Sortear Times
             </button>
@@ -242,13 +242,13 @@ function PartidaPage() {
             {saved && (
               <>
                 <div className="flex items-center justify-between gap-3 pt-4">
-                  <h2 className="text-xl font-black uppercase tracking-wider text-[#00FF00]">Times Escalados</h2>
-                  <button type="button" onClick={copyTeams} className="inline-flex items-center gap-2 rounded-xl border border-[#00FF00]/50 bg-[#00FF00]/10 px-4 py-2 text-sm font-bold uppercase tracking-wider text-[#00FF00] transition hover:bg-[#00FF00]/20">
+                  <h2 className="text-xl font-black uppercase tracking-wider text-[var(--pelada-accent)]">Times Escalados</h2>
+                  <button type="button" onClick={copyTeams} className="inline-flex items-center gap-2 rounded-xl border border-[var(--pelada-accent)]/50 bg-[var(--pelada-accent)]/10 px-4 py-2 text-sm font-bold uppercase tracking-wider text-[var(--pelada-accent)] transition hover:bg-[var(--pelada-accent)]/20">
                     <ClipboardCopy className="h-4 w-4" /> Copiar Times
                   </button>
                 </div>
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <TeamView title="👕 Time A" players={saved.teamA} accent="#00FF00" />
+                  <TeamView title="👕 Time A" players={saved.teamA} accent="var(--pelada-accent)" />
                   <TeamView title="🎽 Time B" players={saved.teamB} accent="#fb923c" />
                 </div>
                 {isAdmin && (
@@ -263,8 +263,8 @@ function PartidaPage() {
       </div>
 
       <Dialog open={sorteioOpen} onOpenChange={setSorteioOpen}>
-        <DialogContent className="max-w-3xl border-[#00FF00]/40 bg-zinc-950 text-zinc-100">
-          <DialogHeader><DialogTitle className="text-2xl font-black uppercase tracking-wider text-[#00FF00]">Escolha o Modo de Sorteio</DialogTitle></DialogHeader>
+        <DialogContent className="max-w-3xl border-[var(--pelada-accent)]/40 bg-zinc-950 text-zinc-100">
+          <DialogHeader><DialogTitle className="text-2xl font-black uppercase tracking-wider text-[var(--pelada-accent)]">Escolha o Modo de Sorteio</DialogTitle></DialogHeader>
           <div className="grid grid-cols-1 gap-4 py-2 md:grid-cols-3">
             <ModeCard icon={<MousePointerClick className="h-10 w-10" />} title="Separar Manual" desc="Controle total, mova jogador a jogador." onClick={() => openSeparation("manual")} />
             <ModeCard icon={<Scale className="h-10 w-10" />} title="Sorteio Justo" desc="Equilibra os times por nível técnico." onClick={() => openSeparation("fair")} highlighted />
@@ -274,18 +274,18 @@ function PartidaPage() {
       </Dialog>
 
       <Dialog open={sepOpen} onOpenChange={setSepOpen}>
-        <DialogContent className="max-w-6xl border-[#00FF00]/40 bg-zinc-950 text-zinc-100">
-          <DialogHeader><DialogTitle className="text-2xl font-black uppercase tracking-wider text-[#00FF00]">Interface de Separação</DialogTitle></DialogHeader>
+        <DialogContent className="max-w-6xl border-[var(--pelada-accent)]/40 bg-zinc-950 text-zinc-100">
+          <DialogHeader><DialogTitle className="text-2xl font-black uppercase tracking-wider text-[var(--pelada-accent)]">Interface de Separação</DialogTitle></DialogHeader>
           <div className="grid grid-cols-1 gap-4 py-2 md:grid-cols-3">
-            <TeamColumn title="Time A" players={teamA} max={Math.ceil(enriched.length / 2)} accent="#00FF00" onClick={(pid) => backToPool(pid)} />
+            <TeamColumn title="Time A" players={teamA} max={Math.ceil(enriched.length / 2)} accent="var(--pelada-accent)" onClick={(pid) => backToPool(pid)} />
             <PoolColumn players={pool} onMove={moveTo} />
-            <TeamColumn title="Time B" players={teamB} max={Math.ceil(enriched.length / 2)} accent="#00FF00" onClick={(pid) => backToPool(pid)} />
+            <TeamColumn title="Time B" players={teamB} max={Math.ceil(enriched.length / 2)} accent="var(--pelada-accent)" onClick={(pid) => backToPool(pid)} />
           </div>
           <DialogFooter className="flex-row justify-center gap-3 sm:justify-center">
             <button type="button" onClick={() => runSorteio(sepMode)} className="inline-flex items-center gap-2 rounded-xl border border-zinc-500/40 bg-zinc-800/60 px-5 py-3 text-sm font-bold uppercase tracking-wider text-zinc-200">
               <RefreshCw className="h-4 w-4" /> Resortear
             </button>
-            <button type="button" onClick={saveTeams} className="inline-flex items-center gap-2 rounded-full border-2 border-[#00FF00] bg-[#00FF00] px-8 py-3 text-base font-black uppercase tracking-wider text-zinc-950">
+            <button type="button" onClick={saveTeams} className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--pelada-accent)] bg-[var(--pelada-accent)] px-8 py-3 text-base font-black uppercase tracking-wider text-zinc-950">
               <Save className="h-5 w-5" /> Salvar Times
             </button>
           </DialogFooter>
@@ -300,7 +300,7 @@ function PartidaPage() {
 function NavItem({ icon, label, active, gold }: { icon: React.ReactNode; label: string; active?: boolean; gold?: boolean }) {
   return (
     <div className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
-      active ? (gold ? "bg-yellow-500/10 text-yellow-400 shadow-[inset_0_0_0_1px_rgba(250,204,21,0.3)]" : "bg-[#00FF00]/10 text-[#00FF00] shadow-[inset_0_0_0_1px_rgba(0,255,0,0.25)]")
+      active ? (gold ? "bg-yellow-500/10 text-yellow-400 shadow-[inset_0_0_0_1px_rgba(250,204,21,0.3)]" : "bg-[var(--pelada-accent)]/10 text-[var(--pelada-accent)] shadow-[inset_0_0_0_1px_rgba(0,255,0,0.25)]")
         : gold ? "text-yellow-500 hover:bg-yellow-500/10"
         : "text-zinc-300 hover:bg-white/5 hover:text-zinc-100"
     }`}>{icon}{label}</div>
@@ -326,9 +326,9 @@ function TeamView({ title, players, accent }: { title: string; players: Player[]
 function ModeCard({ icon, title, desc, onClick, highlighted }: { icon: React.ReactNode; title: string; desc: string; onClick: () => void; highlighted?: boolean }) {
   return (
     <button type="button" onClick={onClick} className={`flex flex-col items-center gap-3 rounded-2xl border bg-zinc-900/60 p-6 text-center transition hover:scale-[1.02] ${
-      highlighted ? "border-[#00FF00] shadow-[0_0_30px_-5px_rgba(0,255,0,0.6)]" : "border-white/10 hover:border-[#00FF00]/40"
+      highlighted ? "border-[var(--pelada-accent)] shadow-[0_0_30px_-5px_rgba(0,255,0,0.6)]" : "border-white/10 hover:border-[var(--pelada-accent)]/40"
     }`}>
-      <span className="text-[#00FF00]">{icon}</span>
+      <span className="text-[var(--pelada-accent)]">{icon}</span>
       <p className="text-base font-black uppercase tracking-wider text-zinc-100">{title}</p>
       <p className="text-xs text-zinc-400">{desc}</p>
     </button>
@@ -345,8 +345,8 @@ function TeamColumn({ title, players, max, accent, onClick }: { title: string; p
         </span>
       </div>
       {players.map((p) => (
-        <button key={p.id} type="button" onClick={() => onClick(p.id)} className="flex items-center justify-between rounded-lg border border-white/10 bg-zinc-950/70 px-3 py-2 text-left transition hover:border-[#00FF00]/40">
-          <span className="flex items-center gap-2 truncate"><span style={{ color: p.isGoalkeeper ? "#60a5fa" : "#00FF00" }} className="text-xs">●</span><span className="truncate text-sm text-zinc-100">{p.name}</span></span>
+        <button key={p.id} type="button" onClick={() => onClick(p.id)} className="flex items-center justify-between rounded-lg border border-white/10 bg-zinc-950/70 px-3 py-2 text-left transition hover:border-[var(--pelada-accent)]/40">
+          <span className="flex items-center gap-2 truncate"><span style={{ color: p.isGoalkeeper ? "#60a5fa" : "var(--pelada-accent)" }} className="text-xs">●</span><span className="truncate text-sm text-zinc-100">{p.name}</span></span>
           <span className="text-xs font-bold tabular-nums text-zinc-500">{(p.rating ?? 5).toFixed(1)}</span>
         </button>
       ))}
@@ -365,13 +365,13 @@ function PoolColumn({ players, onMove }: { players: Player[]; onMove: (pid: stri
       {players.length === 0 ? <p className="py-10 text-center text-xs text-zinc-500">Todos distribuídos.</p> : players.map((p) => (
         <div key={p.id} className="rounded-lg border border-white/10 bg-zinc-950/70">
           <button type="button" onClick={() => setOpenId((c) => c === p.id ? null : p.id)} className="flex w-full items-center justify-between px-3 py-2 text-left">
-            <span className="flex items-center gap-2 truncate"><span style={{ color: p.isGoalkeeper ? "#60a5fa" : "#00FF00" }}>||</span><span className="truncate text-sm text-zinc-100">{p.name}</span></span>
+            <span className="flex items-center gap-2 truncate"><span style={{ color: p.isGoalkeeper ? "#60a5fa" : "var(--pelada-accent)" }}>||</span><span className="truncate text-sm text-zinc-100">{p.name}</span></span>
             <span className="text-xs font-bold tabular-nums text-zinc-500">{(p.rating ?? 5).toFixed(1)}</span>
           </button>
           {openId === p.id && (
             <div className="flex gap-2 border-t border-white/10 p-2">
-              <button type="button" onClick={() => { onMove(p.id, "A"); setOpenId(null); }} className="flex-1 rounded-md border border-[#00FF00]/40 bg-[#00FF00]/10 px-2 py-1.5 text-xs font-bold uppercase tracking-wider text-[#00FF00]">← Time A</button>
-              <button type="button" onClick={() => { onMove(p.id, "B"); setOpenId(null); }} className="flex-1 rounded-md border border-[#00FF00]/40 bg-[#00FF00]/10 px-2 py-1.5 text-xs font-bold uppercase tracking-wider text-[#00FF00]">Time B →</button>
+              <button type="button" onClick={() => { onMove(p.id, "A"); setOpenId(null); }} className="flex-1 rounded-md border border-[var(--pelada-accent)]/40 bg-[var(--pelada-accent)]/10 px-2 py-1.5 text-xs font-bold uppercase tracking-wider text-[var(--pelada-accent)]">← Time A</button>
+              <button type="button" onClick={() => { onMove(p.id, "B"); setOpenId(null); }} className="flex-1 rounded-md border border-[var(--pelada-accent)]/40 bg-[var(--pelada-accent)]/10 px-2 py-1.5 text-xs font-bold uppercase tracking-wider text-[var(--pelada-accent)]">Time B →</button>
             </div>
           )}
         </div>

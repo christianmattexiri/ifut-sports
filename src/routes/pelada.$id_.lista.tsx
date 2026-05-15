@@ -424,7 +424,7 @@ Bora pro jogo! 🔥
     <main className="relative min-h-screen w-full bg-zinc-950 text-zinc-100 font-sans antialiased">
       <div
         aria-hidden
-        className="pointer-events-none fixed -top-40 left-1/3 h-[480px] w-[480px] rounded-full bg-[#00FF00]/10 blur-[160px]"
+        className="pointer-events-none fixed -top-40 left-1/3 h-[480px] w-[480px] rounded-full bg-[var(--pelada-accent)]/10 blur-[160px]"
       />
 
       <div className="relative z-10 flex min-h-screen">
@@ -433,18 +433,18 @@ Bora pro jogo! 🔥
           <button
             type="button"
             onClick={() => navigate({ to: "/dashboard" })}
-            className="mb-5 inline-flex items-center gap-1.5 self-start rounded-lg px-2 py-1 text-xs font-medium text-zinc-400 transition hover:text-[#00FF00]"
+            className="mb-5 inline-flex items-center gap-1.5 self-start rounded-lg px-2 py-1 text-xs font-medium text-zinc-400 transition hover:text-[var(--pelada-accent)]"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             Voltar ao Início do App
           </button>
 
           <div className="flex flex-col items-center gap-2 pb-6">
-            <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-[#00FF00]/40 bg-zinc-900 shadow-[0_0_30px_-8px_rgba(0,255,0,0.7)]">
+            <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-[var(--pelada-accent)]/40 bg-zinc-900 shadow-[0_0_30px_-8px_rgba(0,255,0,0.7)]">
               {peladaLogo ? (
                 <img src={peladaLogo} alt={peladaName} className="h-full w-full object-cover" />
               ) : (
-                <Trophy className="h-9 w-9 text-[#00FF00]" />
+                <Trophy className="h-9 w-9 text-[var(--pelada-accent)]" />
               )}
             </div>
             <p className="text-center text-base font-bold tracking-tight text-white">{peladaName}</p>
@@ -489,29 +489,29 @@ Bora pro jogo! 🔥
         <section className="flex-1 px-4 py-6 md:px-10 md:py-10">
           <div className="mx-auto max-w-3xl space-y-4">
             {/* Painel 1 — Próxima Pelada */}
-            <div className="relative rounded-2xl border border-[#00FF00]/40 bg-zinc-900/50 p-5 backdrop-blur-xl shadow-[0_0_30px_-12px_rgba(0,255,0,0.6)]">
+            <div className="relative rounded-2xl border border-[var(--pelada-accent)]/40 bg-zinc-900/50 p-5 backdrop-blur-xl shadow-[0_0_30px_-12px_rgba(0,255,0,0.6)]">
               {isAdmin && (
                 <button
                   type="button"
                   aria-label="Editar"
                   onClick={() => setEditMatchOpen(true)}
-                  className="absolute right-3 top-3 rounded-lg p-1.5 text-zinc-400 transition hover:bg-white/5 hover:text-[#00FF00]"
+                  className="absolute right-3 top-3 rounded-lg p-1.5 text-zinc-400 transition hover:bg-white/5 hover:text-[var(--pelada-accent)]"
                 >
                   <Pencil className="h-4 w-4" />
                 </button>
               )}
-              <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-[#00FF00]">
+              <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-[var(--pelada-accent)]">
                 Próxima Pelada
               </h3>
               <div className="space-y-2 text-sm text-zinc-200">
                 <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-[#00FF00]" />
+                  <Calendar className="h-4 w-4 text-[var(--pelada-accent)]" />
                   <span>
                     {settings.dayOfWeek || "Domingo"} – {settings.matchTime || "9h"}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-[#00FF00]" />
+                  <MapPin className="h-4 w-4 text-[var(--pelada-accent)]" />
                   <span>{settings.location || "Local a definir"}</span>
                 </div>
               </div>
@@ -553,7 +553,7 @@ Bora pro jogo! 🔥
                   type="button"
                   aria-label="Editar limites"
                   onClick={() => setEditLimitsOpen(true)}
-                  className="absolute -top-2 right-0 z-10 rounded-lg border border-white/10 bg-zinc-900/80 p-1.5 text-zinc-400 transition hover:bg-white/5 hover:text-[#00FF00]"
+                  className="absolute -top-2 right-0 z-10 rounded-lg border border-white/10 bg-zinc-900/80 p-1.5 text-zinc-400 transition hover:bg-white/5 hover:text-[var(--pelada-accent)]"
                 >
                   <Pencil className="h-4 w-4" />
                 </button>
@@ -563,19 +563,19 @@ Bora pro jogo! 🔥
                   icon={<Users className="h-4 w-4" />}
                   label="Linha"
                   value={`${lineCount}/${lineLimit}`}
-                  color="#00FF00"
+                  color="var(--pelada-accent)"
                 />
                 <SlotCard
                   icon={<Hand className="h-4 w-4" />}
                   label="Goleiros"
                   value={`${gkCount}/${gkLimit}`}
-                  color="#00FF00"
+                  color="var(--pelada-accent)"
                 />
                 <SlotCard
                   icon={<ClipboardList className="h-4 w-4" />}
                   label="Suplentes"
                   value={`${subCount}/${subLimit}`}
-                  color="#00FF00"
+                  color="var(--pelada-accent)"
                 />
               </div>
             </div>
@@ -587,8 +587,8 @@ Bora pro jogo! 🔥
                 onClick={toggleMyName}
                 className={`rounded-xl border px-4 py-3 text-sm font-semibold uppercase tracking-wider transition ${
                   meInList
-                    ? "border-[#00FF00]/50 bg-[#00FF00]/10 text-[#00FF00]"
-                    : "border-white/10 bg-zinc-900/50 text-zinc-200 hover:border-[#00FF00]/40 hover:text-[#00FF00]"
+                    ? "border-[var(--pelada-accent)]/50 bg-[var(--pelada-accent)]/10 text-[var(--pelada-accent)]"
+                    : "border-white/10 bg-zinc-900/50 text-zinc-200 hover:border-[var(--pelada-accent)]/40 hover:text-[var(--pelada-accent)]"
                 }`}
               >
                 {meInList ? "Já na lista ✅" : "Colocar meu nome"}
@@ -619,7 +619,7 @@ Bora pro jogo! 🔥
               <button
                 type="button"
                 onClick={shareWhatsApp}
-                className="rounded-xl border border-[#00FF00]/40 bg-[#00FF00]/5 px-4 py-3 text-sm font-semibold uppercase tracking-wider text-[#00FF00] transition hover:bg-[#00FF00]/10"
+                className="rounded-xl border border-[var(--pelada-accent)]/40 bg-[var(--pelada-accent)]/5 px-4 py-3 text-sm font-semibold uppercase tracking-wider text-[var(--pelada-accent)] transition hover:bg-[var(--pelada-accent)]/10"
               >
                 <Share2 className="mr-2 inline h-4 w-4" />
                 WhatsApp
@@ -638,7 +638,7 @@ Bora pro jogo! 🔥
             <button
               type="button"
               onClick={handleSaveAll}
-              className="w-full rounded-xl border-2 border-[#00FF00] bg-[#00FF00]/10 px-4 py-4 text-base font-black uppercase tracking-wider text-[#00FF00] transition hover:bg-[#00FF00]/20 shadow-[0_0_30px_-8px_rgba(0,255,0,0.8)]"
+              className="w-full rounded-xl border-2 border-[var(--pelada-accent)] bg-[var(--pelada-accent)]/10 px-4 py-4 text-base font-black uppercase tracking-wider text-[var(--pelada-accent)] transition hover:bg-[var(--pelada-accent)]/20 shadow-[0_0_30px_-8px_rgba(0,255,0,0.8)]"
             >
               <Save className="mr-2 inline h-5 w-5" />
               💾 Salvar Lista
@@ -700,9 +700,9 @@ Bora pro jogo! 🔥
 
       {/* Modal: Modalidade de Sorteio */}
       <Dialog open={sorteioOpen} onOpenChange={setSorteioOpen}>
-        <DialogContent className="max-w-3xl border-[#00FF00]/40 bg-zinc-950 text-zinc-100 shadow-[0_0_60px_-10px_rgba(0,255,0,0.5)]">
+        <DialogContent className="max-w-3xl border-[var(--pelada-accent)]/40 bg-zinc-950 text-zinc-100 shadow-[0_0_60px_-10px_rgba(0,255,0,0.5)]">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-black uppercase tracking-wider text-[#00FF00]">
+            <DialogTitle className="text-2xl font-black uppercase tracking-wider text-[var(--pelada-accent)]">
               | Escolha o Modo de Sorteio
             </DialogTitle>
           </DialogHeader>
@@ -732,9 +732,9 @@ Bora pro jogo! 🔥
 
       {/* Modal: Interface de Separação */}
       <Dialog open={sepOpen} onOpenChange={setSepOpen}>
-        <DialogContent className="max-w-6xl border-[#00FF00]/40 bg-zinc-950 text-zinc-100">
+        <DialogContent className="max-w-6xl border-[var(--pelada-accent)]/40 bg-zinc-950 text-zinc-100">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-black uppercase tracking-wider text-[#00FF00]">
+            <DialogTitle className="text-2xl font-black uppercase tracking-wider text-[var(--pelada-accent)]">
               | Interface de Separação
             </DialogTitle>
           </DialogHeader>
@@ -743,7 +743,7 @@ Bora pro jogo! 🔥
               title="Time A"
               players={teamA}
               max={Math.ceil(confirmedPlayers.length / 2)}
-              accent="#00FF00"
+              accent="var(--pelada-accent)"
               onPlayerClick={(pid) => backToPool(pid)}
             />
             <PoolColumn
@@ -754,7 +754,7 @@ Bora pro jogo! 🔥
               title="Time B"
               players={teamB}
               max={Math.ceil(confirmedPlayers.length / 2)}
-              accent="#00FF00"
+              accent="var(--pelada-accent)"
               onPlayerClick={(pid) => backToPool(pid)}
             />
           </div>
@@ -770,7 +770,7 @@ Bora pro jogo! 🔥
             <button
               type="button"
               onClick={saveTeams}
-              className="inline-flex items-center gap-2 rounded-full border-2 border-[#00FF00] bg-[#00FF00] px-8 py-3 text-base font-black uppercase tracking-wider text-zinc-950 shadow-[0_0_40px_-5px_rgba(0,255,0,0.9)] transition hover:bg-[#00FF00]/90"
+              className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--pelada-accent)] bg-[var(--pelada-accent)] px-8 py-3 text-base font-black uppercase tracking-wider text-zinc-950 shadow-[0_0_40px_-5px_rgba(0,255,0,0.9)] transition hover:bg-[var(--pelada-accent)]/90"
             >
               <Save className="h-5 w-5" />
               Salvar Times
@@ -783,7 +783,7 @@ Bora pro jogo! 🔥
       <Dialog open={friendOpen} onOpenChange={setFriendOpen}>
         <DialogContent className="border-white/10 bg-zinc-950 text-zinc-100">
           <DialogHeader>
-            <DialogTitle className="text-[#00FF00]">Chamar amigo</DialogTitle>
+            <DialogTitle className="text-[var(--pelada-accent)]">Chamar amigo</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
@@ -797,7 +797,7 @@ Bora pro jogo! 🔥
             </div>
             <div className="space-y-2">
               <label className="text-xs font-medium uppercase tracking-wider text-zinc-400">
-                Nota: <span className="text-[#00FF00]">{friendRating}</span>
+                Nota: <span className="text-[var(--pelada-accent)]">{friendRating}</span>
               </label>
               <input
                 type="range"
@@ -806,7 +806,7 @@ Bora pro jogo! 🔥
                 step={0.5}
                 value={friendRating}
                 onChange={(e) => setFriendRating(Number(e.target.value))}
-                className="w-full accent-[#00FF00]"
+                className="w-full accent-[var(--pelada-accent)]"
               />
             </div>
             <label className="flex items-center gap-2 text-sm text-zinc-200">
@@ -821,7 +821,7 @@ Bora pro jogo! 🔥
             <button
               type="button"
               onClick={handleSubmitFriend}
-              className="w-full rounded-xl border border-[#00FF00]/50 bg-[#00FF00]/10 px-4 py-2.5 text-sm font-semibold uppercase tracking-wider text-[#00FF00] transition hover:bg-[#00FF00]/20"
+              className="w-full rounded-xl border border-[var(--pelada-accent)]/50 bg-[var(--pelada-accent)]/10 px-4 py-2.5 text-sm font-semibold uppercase tracking-wider text-[var(--pelada-accent)] transition hover:bg-[var(--pelada-accent)]/20"
             >
               Adicionar
             </button>
@@ -849,7 +849,7 @@ Bora pro jogo! 🔥
         open={editMatchOpen}
         onOpenChange={setEditMatchOpen}
         title="Editar Próxima Pelada"
-        accent="#00FF00"
+        accent="var(--pelada-accent)"
         fields={[
           { key: "dayOfWeek", label: "Dia da semana", value: settings.dayOfWeek },
           { key: "matchTime", label: "Horário", value: settings.matchTime },
@@ -877,7 +877,7 @@ Bora pro jogo! 🔥
         open={editLimitsOpen}
         onOpenChange={setEditLimitsOpen}
         title="Editar Limites de Vagas"
-        accent="#00FF00"
+        accent="var(--pelada-accent)"
         fields={[
           { key: "lineLimit", label: "Limite de Linha", value: String(settings.lineLimit), type: "number" },
           { key: "gkLimit", label: "Limite de Goleiros", value: String(settings.gkLimit), type: "number" },
@@ -901,7 +901,7 @@ function NavItem({ icon, label, active, gold }: { icon: React.ReactNode; label: 
     <div
       className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
         active
-          ? "bg-[#00FF00]/10 text-[#00FF00] shadow-[inset_0_0_0_1px_rgba(0,255,0,0.25)]"
+          ? "bg-[var(--pelada-accent)]/10 text-[var(--pelada-accent)] shadow-[inset_0_0_0_1px_rgba(0,255,0,0.25)]"
           : gold
           ? "text-yellow-500 hover:bg-yellow-500/10"
           : "text-zinc-300 hover:bg-white/5 hover:text-zinc-100"
@@ -952,7 +952,7 @@ function PlayerRow({
   onRemove: () => void;
 }) {
   const initial = player.name.charAt(0).toUpperCase();
-  const accent = isSub ? "border-l-orange-400" : player.isGoalkeeper ? "border-l-blue-400" : "border-l-[#00FF00]";
+  const accent = isSub ? "border-l-orange-400" : player.isGoalkeeper ? "border-l-blue-400" : "border-l-[var(--pelada-accent)]";
   return (
     <div
       className={`flex items-center gap-3 rounded-xl border border-white/10 border-l-2 ${accent} bg-zinc-900/40 py-2.5 pl-3 pr-2 backdrop-blur-xl`}
@@ -981,7 +981,7 @@ function PlayerRow({
         onClick={onTogglePaid}
         className={`flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wider transition ${
           player.paid
-            ? "bg-[#00FF00] text-zinc-950"
+            ? "bg-[var(--pelada-accent)] text-zinc-950"
             : "border border-white/10 bg-zinc-900/60 text-zinc-400 hover:text-zinc-200"
         }`}
       >
@@ -992,7 +992,7 @@ function PlayerRow({
         type="button"
         onClick={onTogglePaid}
         aria-label="Confirmar"
-        className="rounded-md p-1.5 text-[#00FF00] transition hover:bg-[#00FF00]/10"
+        className="rounded-md p-1.5 text-[var(--pelada-accent)] transition hover:bg-[var(--pelada-accent)]/10"
       >
         <Check className="h-4 w-4" />
       </button>
@@ -1055,11 +1055,11 @@ function ModeCard({
       onClick={onClick}
       className={`flex flex-col items-center gap-3 rounded-2xl border bg-zinc-900/60 p-6 text-center transition hover:scale-[1.02] hover:bg-zinc-900 ${
         highlighted
-          ? "border-[#00FF00] shadow-[0_0_30px_-5px_rgba(0,255,0,0.6)]"
-          : "border-white/10 hover:border-[#00FF00]/40"
+          ? "border-[var(--pelada-accent)] shadow-[0_0_30px_-5px_rgba(0,255,0,0.6)]"
+          : "border-white/10 hover:border-[var(--pelada-accent)]/40"
       }`}
     >
-      <span className="text-[#00FF00] drop-shadow-[0_0_10px_rgba(0,255,0,0.7)]">{icon}</span>
+      <span className="text-[var(--pelada-accent)] drop-shadow-[0_0_10px_rgba(0,255,0,0.7)]">{icon}</span>
       <p className="text-base font-black uppercase tracking-wider text-zinc-100">{title}</p>
       <p className="text-xs leading-relaxed text-zinc-400">{desc}</p>
     </button>
@@ -1098,11 +1098,11 @@ function TeamColumn({
           key={p.id}
           type="button"
           onClick={() => onPlayerClick(p.id)}
-          className="flex items-center justify-between rounded-lg border border-white/10 bg-zinc-950/70 px-3 py-2 text-left transition hover:border-[#00FF00]/40"
+          className="flex items-center justify-between rounded-lg border border-white/10 bg-zinc-950/70 px-3 py-2 text-left transition hover:border-[var(--pelada-accent)]/40"
           title="Clique para devolver à coluna Disponíveis"
         >
           <span className="flex items-center gap-2 truncate">
-            <span style={{ color: p.isGoalkeeper ? "#60a5fa" : "#00FF00" }} className="text-xs">●</span>
+            <span style={{ color: p.isGoalkeeper ? "#60a5fa" : "var(--pelada-accent)" }} className="text-xs">●</span>
             <span className="truncate text-sm text-zinc-100">{p.name}</span>
           </span>
           <span className="text-xs font-bold tabular-nums text-zinc-500">
@@ -1141,7 +1141,7 @@ function PoolColumn({
               className="flex w-full items-center justify-between px-3 py-2 text-left"
             >
               <span className="flex items-center gap-2 truncate">
-                <span style={{ color: p.isGoalkeeper ? "#60a5fa" : "#00FF00" }} className="text-xs">||</span>
+                <span style={{ color: p.isGoalkeeper ? "#60a5fa" : "var(--pelada-accent)" }} className="text-xs">||</span>
                 <span className="truncate text-sm text-zinc-100">{p.name}</span>
               </span>
               <span className="text-xs font-bold tabular-nums text-zinc-500">
@@ -1156,7 +1156,7 @@ function PoolColumn({
                     onMove(p.id, "A");
                     setOpenId(null);
                   }}
-                  className="flex-1 rounded-md border border-[#00FF00]/40 bg-[#00FF00]/10 px-2 py-1.5 text-xs font-bold uppercase tracking-wider text-[#00FF00] transition hover:bg-[#00FF00]/20"
+                  className="flex-1 rounded-md border border-[var(--pelada-accent)]/40 bg-[var(--pelada-accent)]/10 px-2 py-1.5 text-xs font-bold uppercase tracking-wider text-[var(--pelada-accent)] transition hover:bg-[var(--pelada-accent)]/20"
                 >
                   ← Time A
                 </button>
@@ -1166,7 +1166,7 @@ function PoolColumn({
                     onMove(p.id, "B");
                     setOpenId(null);
                   }}
-                  className="flex-1 rounded-md border border-[#00FF00]/40 bg-[#00FF00]/10 px-2 py-1.5 text-xs font-bold uppercase tracking-wider text-[#00FF00] transition hover:bg-[#00FF00]/20"
+                  className="flex-1 rounded-md border border-[var(--pelada-accent)]/40 bg-[var(--pelada-accent)]/10 px-2 py-1.5 text-xs font-bold uppercase tracking-wider text-[var(--pelada-accent)] transition hover:bg-[var(--pelada-accent)]/20"
                 >
                   Time B →
                 </button>

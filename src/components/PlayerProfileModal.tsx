@@ -93,7 +93,7 @@ export function PlayerProfileModal({
               )}
             </div>
             <h3 className="text-2xl font-black uppercase tracking-wider text-amber-400">{name}</h3>
-            {username && <p className="text-xs font-medium text-[#00FF00]">@{username}</p>}
+            {username && <p className="text-xs font-medium text-[var(--pelada-accent)]">@{username}</p>}
             <div className="mt-2 inline-flex items-center gap-2 rounded-xl border-2 border-amber-400/60 bg-amber-400/5 px-4 py-2">
               <span className="font-mono text-2xl font-black tabular-nums text-amber-400">
                 {stats.goals + stats.assists}
@@ -106,11 +106,11 @@ export function PlayerProfileModal({
             <Mini icon={<Target className="h-4 w-4" />} value={stats.goals} label="Gols" color="#fb923c" />
             <Mini icon={<Handshake className="h-4 w-4" />} value={stats.assists} label="Assists" color="#60a5fa" />
             <Mini icon={<Trophy className="h-4 w-4" />} value={stats.mvp} label="MVP" color="#facc15" />
-            <Mini icon={<Gamepad2 className="h-4 w-4" />} value={stats.games} label="Jogos" color="#00FF00" />
+            <Mini icon={<Gamepad2 className="h-4 w-4" />} value={stats.games} label="Jogos" color="var(--pelada-accent)" />
           </div>
 
           <div className="mt-3 grid grid-cols-4 gap-2 rounded-xl border border-white/10 bg-zinc-900/40 px-3 py-3">
-            <Cell value={stats.wins} label="V" color="text-[#00FF00]" />
+            <Cell value={stats.wins} label="V" color="text-[var(--pelada-accent)]" />
             <Cell value={stats.draws} label="E" color="text-zinc-400" />
             <Cell value={stats.losses} label="D" color="text-red-500" />
             <Cell value={`${stats.winRate}%`} label="Win" color="text-white" />
@@ -121,7 +121,7 @@ export function PlayerProfileModal({
               to="/pelada/$id/jogador/$userId"
               params={{ id: matchId, userId }}
               onClick={() => onOpenChange(false)}
-              className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[#00FF00]/40 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-[#00FF00] transition hover:bg-[#00FF00]/10"
+              className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[var(--pelada-accent)]/40 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-[var(--pelada-accent)] transition hover:bg-[var(--pelada-accent)]/10"
             >
               <ExternalLink className="h-3.5 w-3.5" /> Ver perfil completo
             </Link>

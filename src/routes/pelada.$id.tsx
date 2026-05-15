@@ -75,7 +75,7 @@ function PeladaPage() {
     : { mvp: false, pereba: false, apitto: false };
   const podiumDisplay = adminSettings.podium;
   const modules = adminSettings.modules;
-  const accent = adminSettings.accent || "#00FF00";
+  const accent = adminSettings.accent || "var(--pelada-accent)";
   const [votes, setVotes] = useState<MatchVotes | null>(null);
   const [votingOpen, setVotingOpen] = useState(false);
   const [apittoResultsOpen, setApittoResultsOpen] = useState(false);
