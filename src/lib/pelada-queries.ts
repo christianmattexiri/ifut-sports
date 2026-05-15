@@ -37,7 +37,10 @@ export const peladaMatchQuery = (id: string | undefined) =>
 export const viewerQuery = () =>
   queryOptions({
     queryKey: ["viewer-profile"],
-    staleTime: 5 * 60 * 1000,
+    // staleTime 0 → ensureQueryData always re-runs the query on the client.
+    // Without this an SSR-cached `null` (no session on the server) would
+    // make protected pages redirect to "/" right after navigation.
+    staleTime: 0,
     gcTime: 30 * 60 * 1000,
     queryFn: async () => {
       const { data: sess } = await supabase.auth.getSession();
