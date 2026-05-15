@@ -66,6 +66,7 @@ function PeladaPage() {
   const [votes, setVotes] = useState<MatchVotes | null>(null);
   const [votingOpen, setVotingOpen] = useState(false);
   const [apittoResultsOpen, setApittoResultsOpen] = useState(false);
+  const [validVoterIds, setValidVoterIds] = useState<string[]>([]);
   const [counts, setCounts] = useState<{
     line: number;
     lineLimit: number;
@@ -168,6 +169,33 @@ function PeladaPage() {
     const off = onVotesUpdated(() => setVotes(loadVotes(id, latest!.id)));
     return off;
   }, [id, latest]);
+
+  // Resolve which match players are real registered users (valid voters).
+  // Guests added via "Chamar amigo" get random UUIDs that don't exist in profiles.
+  useEffect(() => {
+    if (!latest) { setValidVoterIds([]); return; }
+    const ids = [...latest.teamA.players, ...latest.teamB.players].map((p) => p.id);
+    if (ids.length === 0) { setValidVoterIds([]); return; }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.from("profiles").select("id").in("id", ids);
+      if (cancelled) return;
+      setValidVoterIds((data ?? []).map((r) => r.id as string));
+    })();
+    return () => { cancelled = true; };
+  }, [latest]);
+
+  // Auto-close: when every valid voter has voted, lock the poll.
+  useEffect(() => {
+    if (!latest || !votes || votes.closed) return;
+    const anyMode = voteSettings.mvp || voteSettings.pereba || voteSettings.apitto;
+    if (!anyMode) return;
+    if (validVoterIds.length === 0) return;
+    const allDone = validVoterIds.every((vid) => userHasVoted(votes, vid, voteSettings));
+    if (allDone) {
+      saveVotes(id, latest.id, { ...votes, closed: true, closedAt: new Date().toISOString() });
+    }
+  }, [latest, votes, voteSettings, validVoterIds, id]);
 
   // Auto-open voting modal once per session if the viewer is eligible.
   const [autoShown, setAutoShown] = useState<string | null>(null);
@@ -336,16 +364,20 @@ function PeladaPage() {
             const perebaPlayer = findPlayer(perebaWinner.id);
             const apittoMode = voteSettings.apitto;
             const perebaMode = voteSettings.pereba;
+            const anyMode = voteSettings.mvp || voteSettings.pereba || voteSettings.apitto;
+            const pollOpen = anyMode && !!votes && !votes.closed;
             const mvpVotingActive =
-              voteSettings.mvp && !!votes && !votes.closed && !latest?.mvp;
+              voteSettings.mvp && pollOpen && !latest?.mvp;
+            // Hide partial results while the urn is open (blind voting).
+            const showMvpWinner = !!mvpPlayer && (!voteSettings.mvp || !pollOpen || !!latest?.mvp);
+            const showPerebaWinner = !!perebaPlayer && !pollOpen;
             const podiumIds = [
               ...matadorPlayers.map((p) => p.id),
               ...maestroPlayers.map((p) => p.id),
-              ...(mvpPlayer ? [mvpPlayer.id] : []),
-              ...(perebaPlayer ? [perebaPlayer.id] : []),
+              ...(showMvpWinner ? [mvpPlayer!.id] : []),
+              ...(showPerebaWinner ? [perebaPlayer!.id] : []),
             ];
             const isParticipant = !!latest && !!viewerId && all.some((p) => p.id === viewerId);
-            const anyMode = voteSettings.mvp || voteSettings.pereba || voteSettings.apitto;
             const canVote =
               anyMode &&
               !!votes &&
@@ -443,14 +475,24 @@ function PeladaPage() {
                     {apittoMode ? (
                       <button
                         type="button"
-                        onClick={() => setApittoResultsOpen(true)}
-                        className="flex flex-col items-center gap-3 rounded-2xl border border-amber-400 bg-gradient-to-br from-amber-400/15 to-amber-400/5 px-5 py-10 backdrop-blur-xl shadow-[0_0_40px_-10px_rgba(251,191,36,0.7)] transition hover:scale-[1.02]"
+                        onClick={() => {
+                          if (pollOpen) return;
+                          setApittoResultsOpen(true);
+                        }}
+                        disabled={pollOpen}
+                        className={`flex flex-col items-center gap-3 rounded-2xl border px-5 py-10 backdrop-blur-xl transition ${
+                          pollOpen
+                            ? "cursor-not-allowed border-dashed border-amber-400/50 bg-amber-400/5"
+                            : "border-amber-400 bg-gradient-to-br from-amber-400/15 to-amber-400/5 shadow-[0_0_40px_-10px_rgba(251,191,36,0.7)] hover:scale-[1.02]"
+                        }`}
                       >
-                        <Star className="h-10 w-10 fill-amber-400 text-amber-400" />
+                        <Star className={`h-10 w-10 ${pollOpen ? "text-amber-400/60 animate-pulse" : "fill-amber-400 text-amber-400"}`} />
                         <p className="text-base font-black uppercase tracking-wider text-amber-400">
                           Notas da Galera
                         </p>
-                        <p className="text-xs text-zinc-400">Ver resultados</p>
+                        <p className="text-xs text-zinc-400">
+                          {pollOpen ? "Aguardando votação..." : "Ver resultados"}
+                        </p>
                       </button>
                     ) : (
                       mvpVotingActive && !mvpPlayer ? (
@@ -476,7 +518,7 @@ function PeladaPage() {
                           title="Craque do Jogo"
                           subtitle="MVP"
                           color="#00FF00"
-                          players={mvpPlayer ? [mvpPlayer] : []}
+                          players={showMvpWinner ? [mvpPlayer!] : []}
                           highlighted
                           podiumIds={podiumIds}
                         />
@@ -497,25 +539,27 @@ function PeladaPage() {
                       >
                         <button
                           type="button"
-                          onClick={() => perebaPlayer && setModalUser(perebaPlayer)}
-                          disabled={!perebaPlayer}
+                          onClick={() => showPerebaWinner && setModalUser(perebaPlayer!)}
+                          disabled={!showPerebaWinner}
                           className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-red-500 bg-zinc-900 transition hover:scale-105"
                         >
-                          {perebaPlayer ? (
-                            <span className="text-2xl font-black text-zinc-300">{perebaPlayer.name[0]?.toUpperCase()}</span>
+                          {showPerebaWinner ? (
+                            <span className="text-2xl font-black text-zinc-300">{perebaPlayer!.name[0]?.toUpperCase()}</span>
                           ) : (
-                            <Skull className="h-10 w-10 text-red-500/60" />
+                            <Skull className={`h-10 w-10 text-red-500/60 ${pollOpen ? "animate-pulse" : ""}`} />
                           )}
                         </button>
                         <p className="px-2 text-center text-sm font-semibold text-zinc-100">
-                          {perebaPlayer ? perebaPlayer.name : "Aguardando votos"}
+                          {showPerebaWinner ? perebaPlayer!.name : pollOpen ? "Aguardando votação" : "Aguardando votos"}
                         </p>
                         <div className="flex items-center gap-2 text-red-500">
                           <Skull className="h-6 w-6" />
                           <p className="text-base font-black uppercase tracking-wider">Pereba</p>
                         </div>
                         <p className="text-xs uppercase tracking-wider text-zinc-500">
-                          {perebaWinner.count > 0 ? `${perebaWinner.count} voto${perebaWinner.count > 1 ? "s" : ""}` : "Da Rodada"}
+                          {showPerebaWinner && perebaWinner.count > 0
+                            ? `${perebaWinner.count} voto${perebaWinner.count > 1 ? "s" : ""}`
+                            : "Da Rodada"}
                         </p>
                       </div>
                     )}
