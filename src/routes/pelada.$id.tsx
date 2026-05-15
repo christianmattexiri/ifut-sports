@@ -507,7 +507,7 @@ function PeladaPage() {
                     className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-red-500 bg-zinc-900 transition hover:scale-105"
                   >
                     {showPerebaWinner ? (
-                      <PerebaAvatar player={perebaPlayer!} />
+                      <SinglePlayerAvatar player={perebaPlayer!} fallbackColor="#ef4444" />
                     ) : (
                       <Skull className={`h-10 w-10 text-red-500/60 ${pollOpen ? "animate-pulse" : ""}`} />
                     )}
