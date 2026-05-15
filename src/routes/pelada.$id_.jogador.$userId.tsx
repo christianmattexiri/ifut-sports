@@ -7,6 +7,6 @@ export const Route = createFileRoute("/pelada/$id_/jogador/$userId")({
 });
 
 function PerfilDoJogadorPage() {
-  const { id, userId } = useParams({ from: "/pelada/$id_/perfil/$userId" });
+  const { id, userId } = useParams({ from: "/pelada/$id_/jogador/$userId" });
   return <PeladaProfile matchId={id} targetUserId={userId} />;
 }
