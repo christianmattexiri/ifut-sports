@@ -323,10 +323,14 @@ function NavItem({ icon, label, active }: { icon: React.ReactNode; label: string
 function MemberRow({
   profile,
   isAdmin,
+  rating,
+  onRatingChange,
   onRemove,
 }: {
   profile: Profile;
   isAdmin: boolean;
+  rating: number;
+  onRatingChange: (v: number) => void;
   onRemove: () => void;
 }) {
   const display = profile.full_name?.trim() || profile.username;
@@ -344,6 +348,21 @@ function MemberRow({
       <div className="flex-1 min-w-0">
         <p className="truncate text-sm font-semibold text-zinc-100">{display}</p>
         <p className="truncate text-xs text-zinc-500">@{profile.username}</p>
+      </div>
+      <div className="flex shrink-0 items-center gap-1.5 rounded-lg border border-[#00FF00]/30 bg-zinc-900/60 px-2 py-1">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Nota</span>
+        <input
+          type="number"
+          min={1}
+          max={10}
+          step={0.1}
+          value={rating}
+          onChange={(e) => {
+            const n = Number(e.target.value);
+            if (!Number.isNaN(n)) onRatingChange(n);
+          }}
+          className="w-14 rounded-md border border-white/10 bg-zinc-950 px-1.5 py-0.5 text-center text-xs font-bold tabular-nums text-[#00FF00] outline-none focus:border-[#00FF00]/60"
+        />
       </div>
       {isAdmin ? (
         <span className="rounded-md border border-amber-400/40 bg-amber-400/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-300">
