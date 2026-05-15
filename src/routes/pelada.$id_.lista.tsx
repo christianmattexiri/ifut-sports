@@ -453,7 +453,12 @@ Bora pro jogo! 🔥
               <NavItem icon={<Home className="h-4 w-4" />} label="Início" />
             </Link>
             <NavItem icon={<ClipboardList className="h-4 w-4" />} label="Lista de Presença" active />
-            <NavItem icon={<History className="h-4 w-4" />} label="Histórico" />
+            <Link to="/pelada/$id/partida" params={{ id }} className="block">
+              <NavItem icon={<Trophy className="h-4 w-4" />} label="Partida" gold />
+            </Link>
+            <Link to="/pelada/$id/historico" params={{ id }} className="block">
+              <NavItem icon={<History className="h-4 w-4" />} label="Histórico" />
+            </Link>
             <NavItem icon={<BarChart3 className="h-4 w-4" />} label="Rankings" />
             <NavItem icon={<UserCircle2 className="h-4 w-4" />} label="Meu perfil na pelada" />
           </nav>
@@ -672,25 +677,16 @@ Bora pro jogo! 🔥
               )}
             </div>
 
-            {/* Partida — Sortear Times */}
-            <div className="mt-6 rounded-2xl border border-[#00FF00]/40 bg-zinc-900/50 p-5 backdrop-blur-xl shadow-[0_0_30px_-12px_rgba(0,255,0,0.6)]">
-              <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-[#00FF00]">
-                Partida
-              </h3>
-              <button
-                type="button"
-                onClick={() => setSorteioOpen(true)}
-                disabled={!isAdmin}
-                className="w-full rounded-2xl border-2 border-[#00FF00] bg-[#00FF00]/10 px-6 py-6 text-xl font-black uppercase tracking-wider text-[#00FF00] transition hover:bg-[#00FF00]/20 hover:shadow-[0_0_50px_-8px_rgba(0,255,0,0.9)] disabled:cursor-not-allowed disabled:opacity-40"
+            {/* Atalho para a tela de Partida */}
+            {isAdmin && (
+              <Link
+                to="/pelada/$id/partida"
+                params={{ id }}
+                className="mt-6 block rounded-2xl border-2 border-amber-400/70 bg-amber-400/10 px-6 py-5 text-center text-base font-black uppercase tracking-wider text-yellow-400 transition hover:bg-amber-400/20 hover:shadow-[0_0_30px_-8px_rgba(250,204,21,0.7)]"
               >
-                ⚽ Sortear Times
-              </button>
-              {!isAdmin && (
-                <p className="mt-2 text-center text-xs text-zinc-500">
-                  Somente o admin da pelada pode sortear os times.
-                </p>
-              )}
-            </div>
+                ⚽ Ir para Partida (Sortear Times)
+              </Link>
+            )}
           </div>
         </section>
       </div>
