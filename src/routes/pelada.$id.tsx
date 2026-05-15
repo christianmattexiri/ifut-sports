@@ -259,7 +259,6 @@ function PeladaPage() {
             const all = latest ? [...latest.teamA.players, ...latest.teamB.players] : [];
             const findPlayer = (pid: string | null) =>
               pid ? all.find((p) => p.id === pid) ?? null : null;
-            const findName = (pid: string | null) => findPlayer(pid)?.name ?? null;
             const scoreA = latest ? latest.teamA.players.reduce((a, p) => a + p.goals, 0) : 0;
             const scoreB = latest ? latest.teamB.players.reduce((a, p) => a + p.goals, 0) : 0;
             const matadorPlayers = (latest?.topScorers
