@@ -1,4 +1,5 @@
 import { Clock, CheckCircle2, Users } from "lucide-react";
+import { ProTag } from "@/routes/pelada.$id";
 
 export type Pelada = {
   id: string;
@@ -8,6 +9,7 @@ export type Pelada = {
   status: "Ativa" | "Confirmada";
   avatars: string[];
   logoUrl?: string | null;
+  isPro?: boolean;
 };
 
 export function MatchCard({ pelada, onClick }: { pelada: Pelada; onClick?: () => void }) {
@@ -20,17 +22,20 @@ export function MatchCard({ pelada, onClick }: { pelada: Pelada; onClick?: () =>
 
       <header className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-4">
-          {pelada.logoUrl ? (
-            <img
-              src={pelada.logoUrl}
-              alt={pelada.name}
-              className="h-20 w-20 rounded-full border-2 border-[#00FF00]/40 bg-zinc-800 object-cover shadow-[0_0_25px_-8px_rgba(0,255,0,0.55)]"
-            />
-          ) : (
-            <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-[#00FF00]/40 bg-zinc-800 text-2xl font-black text-[#00FF00] shadow-[0_0_25px_-8px_rgba(0,255,0,0.55)]">
-              {pelada.name.charAt(0).toUpperCase()}
-            </div>
-          )}
+          <div className="relative">
+            {pelada.logoUrl ? (
+              <img
+                src={pelada.logoUrl}
+                alt={pelada.name}
+                className="h-20 w-20 rounded-full border-2 border-[#00FF00]/40 bg-zinc-800 object-cover shadow-[0_0_25px_-8px_rgba(0,255,0,0.55)]"
+              />
+            ) : (
+              <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-[#00FF00]/40 bg-zinc-800 text-2xl font-black text-[#00FF00] shadow-[0_0_25px_-8px_rgba(0,255,0,0.55)]">
+                {pelada.name.charAt(0).toUpperCase()}
+              </div>
+            )}
+            {pelada.isPro && <ProTag className="absolute -right-1 -top-1" />}
+          </div>
           <div>
             <h3 className="text-2xl font-bold tracking-tight text-zinc-50">{pelada.name}</h3>
             <p className="mt-1.5 inline-flex items-center gap-1.5 text-sm text-zinc-400">

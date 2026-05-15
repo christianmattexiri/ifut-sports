@@ -72,12 +72,12 @@ function Dashboard() {
           .maybeSingle(),
         supabase
           .from("matches")
-          .select("id, name, day_of_week, match_time, location, logo_url")
+          .select("id, name, day_of_week, match_time, location, logo_url, is_pro")
           .eq("admin_id", uid)
           .order("created_at", { ascending: false }),
         supabase
           .from("match_members")
-          .select("match:matches(id, name, day_of_week, match_time, location, logo_url)")
+          .select("match:matches(id, name, day_of_week, match_time, location, logo_url, is_pro)")
           .eq("user_id", uid),
         supabase
           .from("match_invitations")
@@ -106,6 +106,7 @@ function Dashboard() {
           status: "Ativa" as const,
           avatars: [],
           logoUrl: m.logo_url ?? null,
+          isPro: !!m.is_pro,
         });
       }
       for (const row of (memberRows ?? []) as any[]) {
@@ -119,6 +120,7 @@ function Dashboard() {
           status: "Ativa" as const,
           avatars: [],
           logoUrl: m.logo_url ?? null,
+          isPro: !!m.is_pro,
         });
       }
 
@@ -195,11 +197,13 @@ function Dashboard() {
                 />
               </Link>
               {isSuperAdmin && (
-                <NavItem
-                  icon={<ShieldCheck className="h-4 w-4" />}
-                  label="Painel Admin"
-                  badge="Super admin"
-                />
+                <Link to="/super-admin" className="block">
+                  <NavItem
+                    icon={<ShieldCheck className="h-4 w-4" />}
+                    label="Super Admin"
+                    badge="Global"
+                  />
+                </Link>
               )}
             </nav>
           </div>
