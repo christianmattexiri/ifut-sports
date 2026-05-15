@@ -24,6 +24,7 @@ import {
   Check,
   X,
   Save,
+  UserCog,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -72,34 +73,13 @@ type Settings = {
   subLimit: number;
 };
 
-const MOCK_PLAYERS: Player[] = [
-  { id: "1", name: "Roger", isGoalkeeper: false, paid: true },
-  { id: "2", name: "Xiri", isGoalkeeper: false, paid: false },
-  { id: "3", name: "Sergio", isGoalkeeper: false, paid: false },
-  { id: "4", name: "Lucas", isGoalkeeper: false, paid: false },
-  { id: "5", name: "Tiago", isGoalkeeper: false, paid: false },
-  { id: "6", name: "Edson", isGoalkeeper: false, paid: false },
-  { id: "7", name: "Gui Torres", isGoalkeeper: false, paid: false },
-  { id: "8", name: "Bruno Venzon", isGoalkeeper: false, paid: false },
-  { id: "9", name: "Leo STR", isGoalkeeper: false, paid: false },
-  { id: "10", name: "Paul", isGoalkeeper: false, paid: false },
-  { id: "11", name: "Peleo", isGoalkeeper: false, paid: false },
-  { id: "12", name: "Kel", isGoalkeeper: false, paid: false },
-  { id: "13", name: "Sheik", isGoalkeeper: false, paid: false },
-  { id: "14", name: "Fael", isGoalkeeper: false, paid: false },
-  { id: "15", name: "Bolinho", isGoalkeeper: false, paid: false },
-  { id: "16", name: "Sandro", isGoalkeeper: true, paid: true },
-  { id: "17", name: "Orlandi", isGoalkeeper: false, paid: false },
-  { id: "18", name: "Manga", isGoalkeeper: false, paid: false },
-];
-
 const DEFAULT_SETTINGS: Settings = {
   dayOfWeek: "",
   matchTime: "",
   location: "",
-  valorLinha: "17,00",
-  valorGoleiro: "6,00",
-  pix: "04172316018",
+  valorLinha: "10,00",
+  valorGoleiro: "5,00",
+  pix: "",
   lineLimit: 16,
   gkLimit: 2,
   subLimit: 2,
@@ -109,8 +89,10 @@ function ListaPresencaPage() {
   const navigate = useNavigate();
   const { id } = useParams({ from: "/pelada/$id_/lista" });
   const [match, setMatch] = useState<Match | null>(null);
-  const [players, setPlayers] = useState<Player[]>(MOCK_PLAYERS);
-  const [meInList, setMeInList] = useState(false);
+  const [players, setPlayers] = useState<Player[]>([]);
+  const [hydrated, setHydrated] = useState(false);
+  const [me, setMe] = useState<{ id: string; fullName: string } | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [friendOpen, setFriendOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [friendName, setFriendName] = useState("");
@@ -122,6 +104,29 @@ function ListaPresencaPage() {
   const [editValuesOpen, setEditValuesOpen] = useState(false);
   const [editLimitsOpen, setEditLimitsOpen] = useState(false);
 
+  // Hydrate persisted state from localStorage
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const rawP = localStorage.getItem(`pelada:${id}:players`);
+      if (rawP) setPlayers(JSON.parse(rawP));
+      const rawS = localStorage.getItem(`pelada:${id}:settings`);
+      if (rawS) setSettings((s) => ({ ...s, ...JSON.parse(rawS) }));
+    } catch {
+      /* ignore */
+    }
+    setHydrated(true);
+  }, [id]);
+
+  useEffect(() => {
+    if (!hydrated || typeof window === "undefined") return;
+    localStorage.setItem(`pelada:${id}:players`, JSON.stringify(players));
+  }, [players, id, hydrated]);
+  useEffect(() => {
+    if (!hydrated || typeof window === "undefined") return;
+    localStorage.setItem(`pelada:${id}:settings`, JSON.stringify(settings));
+  }, [settings, id, hydrated]);
+
   useEffect(() => {
     (async () => {
       const { data: sess } = await supabase.auth.getSession();
@@ -129,23 +134,30 @@ function ListaPresencaPage() {
         navigate({ to: "/" });
         return;
       }
-      const { data: m } = await supabase
-        .from("matches")
-        .select("id, name, day_of_week, match_time, location, logo_url")
-        .eq("id", id)
-        .maybeSingle();
+      const uid = sess.session.user.id;
+      const [{ data: m }, { data: prof }] = await Promise.all([
+        supabase
+          .from("matches")
+          .select("id, name, day_of_week, match_time, location, logo_url, admin_id")
+          .eq("id", id)
+          .maybeSingle(),
+        supabase.from("profiles").select("full_name, username").eq("id", uid).maybeSingle(),
+      ]);
       const match = m as Match | null;
       setMatch(match);
+      setIsAdmin(((m as { admin_id?: string } | null)?.admin_id ?? null) === uid);
+      setMe({ id: uid, fullName: prof?.full_name?.trim() || prof?.username || "Você" });
       setSettings((s) => ({
         ...s,
-        dayOfWeek: match?.day_of_week ?? s.dayOfWeek,
-        matchTime: match?.match_time ?? s.matchTime,
-        location: match?.location ?? s.location,
+        dayOfWeek: s.dayOfWeek || match?.day_of_week || "",
+        matchTime: s.matchTime || match?.match_time || "",
+        location: s.location || match?.location || "",
       }));
     })();
   }, [navigate, id]);
 
   const { lineLimit, gkLimit, subLimit } = settings;
+  const meInList = useMemo(() => (me ? players.some((p) => p.id === me.id) : false), [players, me]);
 
   // Categorize players based on entry order: line / goalkeepers / suplentes
   const categorized = useMemo(() => {
@@ -209,15 +221,14 @@ function ListaPresencaPage() {
   };
 
   const toggleMyName = () => {
+    if (!me) return;
     if (meInList) {
-      setPlayers((prev) => prev.filter((p) => p.id !== "me"));
-      setMeInList(false);
+      setPlayers((prev) => prev.filter((p) => p.id !== me.id));
     } else {
       setPlayers((prev) => [
         ...prev,
-        { id: "me", name: "Você", isGoalkeeper: false, paid: false },
+        { id: me.id, name: me.fullName, isGoalkeeper: false, paid: false },
       ]);
-      setMeInList(true);
     }
   };
 
@@ -329,6 +340,11 @@ Bora pro jogo! 🔥
           </nav>
 
           <div className="mt-auto pt-6">
+            {isAdmin && (
+              <Link to="/pelada/$id/usuarios" params={{ id }} className="mb-2 block">
+                <NavItem icon={<UserCog className="h-4 w-4" />} label="Gerenciamento de Usuários" />
+              </Link>
+            )}
             <button
               type="button"
               className="flex w-full items-center gap-2.5 rounded-xl border border-amber-400/30 bg-amber-400/5 px-3 py-2.5 text-sm font-semibold text-amber-300 transition hover:bg-amber-400/10"
@@ -503,7 +519,6 @@ Bora pro jogo! 🔥
               onClick={() => {
                 if (confirm("Limpar toda a lista?")) {
                   setPlayers([]);
-                  setMeInList(false);
                 }
               }}
               className="w-full rounded-xl border border-red-700/60 bg-red-900/10 px-4 py-3 text-sm font-bold uppercase tracking-wider text-red-400 transition hover:bg-red-900/20"
@@ -625,7 +640,7 @@ Bora pro jogo! 🔥
         fields={[
           { key: "valorLinha", label: "Valor Linha (R$)", value: settings.valorLinha },
           { key: "valorGoleiro", label: "Valor Goleiro (R$)", value: settings.valorGoleiro },
-          { key: "pix", label: "Chave Pix", value: settings.pix },
+          { key: "pix", label: "Chave Pix", value: settings.pix, placeholder: "Sua chave pix AQUI" },
         ]}
         onSave={(vals) => setSettings((s) => ({ ...s, ...vals }))}
       />
@@ -790,7 +805,7 @@ function AddPlayerForm({ onAdd }: { onAdd: (name: string, isGK: boolean) => void
   );
 }
 
-type EditField = { key: string; label: string; value: string; type?: string };
+type EditField = { key: string; label: string; value: string; type?: string; placeholder?: string };
 
 function EditDialog({
   open,
@@ -834,6 +849,7 @@ function EditDialog({
                 type={f.type ?? "text"}
                 value={draft[f.key] ?? ""}
                 onChange={(e) => setDraft((d) => ({ ...d, [f.key]: e.target.value }))}
+                placeholder={f.placeholder}
                 className="border-white/10 bg-zinc-900 text-zinc-100"
               />
             </div>
