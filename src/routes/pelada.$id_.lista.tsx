@@ -671,9 +671,110 @@ Bora pro jogo! 🔥
                 })
               )}
             </div>
+
+            {/* Partida — Sortear Times */}
+            <div className="mt-6 rounded-2xl border border-[#00FF00]/40 bg-zinc-900/50 p-5 backdrop-blur-xl shadow-[0_0_30px_-12px_rgba(0,255,0,0.6)]">
+              <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-[#00FF00]">
+                Partida
+              </h3>
+              <button
+                type="button"
+                onClick={() => setSorteioOpen(true)}
+                disabled={!isAdmin}
+                className="w-full rounded-2xl border-2 border-[#00FF00] bg-[#00FF00]/10 px-6 py-6 text-xl font-black uppercase tracking-wider text-[#00FF00] transition hover:bg-[#00FF00]/20 hover:shadow-[0_0_50px_-8px_rgba(0,255,0,0.9)] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                ⚽ Sortear Times
+              </button>
+              {!isAdmin && (
+                <p className="mt-2 text-center text-xs text-zinc-500">
+                  Somente o admin da pelada pode sortear os times.
+                </p>
+              )}
+            </div>
           </div>
         </section>
       </div>
+
+      {/* Modal: Modalidade de Sorteio */}
+      <Dialog open={sorteioOpen} onOpenChange={setSorteioOpen}>
+        <DialogContent className="max-w-3xl border-[#00FF00]/40 bg-zinc-950 text-zinc-100 shadow-[0_0_60px_-10px_rgba(0,255,0,0.5)]">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black uppercase tracking-wider text-[#00FF00]">
+              | Escolha o Modo de Sorteio
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-1 gap-4 py-2 md:grid-cols-3">
+            <ModeCard
+              icon={<MousePointerClick className="h-10 w-10" />}
+              title="Separar Manual"
+              desc="Controle total. Arraste e solte ou clique para mover."
+              onClick={() => openSeparation("manual")}
+            />
+            <ModeCard
+              icon={<Scale className="h-10 w-10" />}
+              title="Sorteio Justo"
+              desc="Algoritmo inteligente que equilibra os times por nível técnico."
+              onClick={() => openSeparation("fair")}
+              highlighted
+            />
+            <ModeCard
+              icon={<Dices className="h-10 w-10" />}
+              title="Sorteio Aleatório"
+              desc="Pura sorte. Deixe o destino decidir."
+              onClick={() => openSeparation("random")}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal: Interface de Separação */}
+      <Dialog open={sepOpen} onOpenChange={setSepOpen}>
+        <DialogContent className="max-w-6xl border-[#00FF00]/40 bg-zinc-950 text-zinc-100">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black uppercase tracking-wider text-[#00FF00]">
+              | Interface de Separação
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-1 gap-4 py-2 md:grid-cols-3">
+            <TeamColumn
+              title="Time A"
+              players={teamA}
+              max={Math.ceil(confirmedPlayers.length / 2)}
+              accent="#00FF00"
+              onPlayerClick={(pid) => backToPool(pid)}
+            />
+            <PoolColumn
+              players={pool}
+              onMove={(pid, t) => moveTo(pid, t)}
+            />
+            <TeamColumn
+              title="Time B"
+              players={teamB}
+              max={Math.ceil(confirmedPlayers.length / 2)}
+              accent="#00FF00"
+              onPlayerClick={(pid) => backToPool(pid)}
+            />
+          </div>
+          <DialogFooter className="flex-row justify-center gap-3 sm:justify-center">
+            <button
+              type="button"
+              onClick={() => runSorteio(sepMode)}
+              className="inline-flex items-center gap-2 rounded-xl border border-zinc-500/40 bg-zinc-800/60 px-5 py-3 text-sm font-bold uppercase tracking-wider text-zinc-200 transition hover:bg-zinc-800"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Resortear
+            </button>
+            <button
+              type="button"
+              onClick={saveTeams}
+              className="inline-flex items-center gap-2 rounded-full border-2 border-[#00FF00] bg-[#00FF00] px-8 py-3 text-base font-black uppercase tracking-wider text-zinc-950 shadow-[0_0_40px_-5px_rgba(0,255,0,0.9)] transition hover:bg-[#00FF00]/90"
+            >
+              <Save className="h-5 w-5" />
+              Salvar Times
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Modal: Chamar Amigo */}
       <Dialog open={friendOpen} onOpenChange={setFriendOpen}>
