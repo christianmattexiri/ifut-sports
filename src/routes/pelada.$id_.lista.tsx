@@ -28,6 +28,8 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
+import { useQuery } from "@tanstack/react-query";
+import { peladaMatchQuery, viewerQuery } from "@/lib/pelada-queries";
 import { useAvatars } from "@/lib/avatars";
 import {
   Dialog,
@@ -44,6 +46,12 @@ import { MousePointerClick, Scale, Dices, RefreshCw } from "lucide-react";
 export const Route = createFileRoute("/pelada/$id_/lista")({
   component: ListaPresencaPage,
   head: () => ({ meta: [{ title: "iFut — Lista de Presença" }] }),
+  loader: async ({ params, context }) => {
+    await Promise.all([
+      context.queryClient.ensureQueryData(peladaMatchQuery(params.id)),
+      context.queryClient.ensureQueryData(viewerQuery()),
+    ]);
+  },
 });
 
 type Match = {
@@ -91,11 +99,21 @@ const DEFAULT_SETTINGS: Settings = {
 function ListaPresencaPage() {
   const navigate = useNavigate();
   const { id } = useParams({ from: "/pelada/$id_/lista" });
-  const [match, setMatch] = useState<Match | null>(null);
+  const { data: match, isLoading: viewerLoading } = useQuery(viewerQuery()) as any;
+  const { data: matchData } = useQuery(peladaMatchQuery(id));
+  const matchRecord = (matchData ?? null) as Match | null;
   const [players, setPlayers] = useState<Player[]>([]);
   const [hydrated, setHydrated] = useState(false);
-  const [me, setMe] = useState<{ id: string; fullName: string } | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { data: viewer } = useQuery(viewerQuery());
+  const me = viewer
+    ? { id: viewer.id, fullName: viewer.full_name?.trim() || viewer.username || "Você" }
+    : null;
+  const isAdmin =
+    !!viewer && !!matchData &&
+    (matchData.admin_id === viewer.id || isSuperAdminUsername(viewer.username));
+  useEffect(() => {
+    if (!viewerLoading && viewer === null) navigate({ to: "/" });
+  }, [viewer, viewerLoading, navigate]);
   const [friendOpen, setFriendOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [friendName, setFriendName] = useState("");
