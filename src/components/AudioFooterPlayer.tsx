@@ -70,7 +70,7 @@ export function AudioFooterPlayer({ peladaId, mode, canEdit, titlePrefix, disabl
 
   return (
     <>
-      <footer className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/10 bg-zinc-950/95 backdrop-blur-xl">
+      <footer className="fixed bottom-0 left-0 right-0 z-50 w-full border-t border-white/10 bg-zinc-950/95 backdrop-blur-xl">
         <div className="mx-auto flex max-w-[1400px] items-center gap-3 px-4 py-2.5">
           <div className="grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-amber-400/20 to-amber-600/10 text-amber-300 ring-1 ring-amber-400/30">
             {mode === "musica" ? <MusicIcon className="h-4 w-4" /> : <Headphones className="h-4 w-4" />}
