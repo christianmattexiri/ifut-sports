@@ -9,7 +9,6 @@ import {
   loadVotes,
   saveVotes,
   computeWinner,
-  computeApitto,
   userHasVoted,
   onVotesUpdated,
   type MatchVotes,
@@ -169,6 +168,21 @@ function PeladaPage() {
     const off = onVotesUpdated(() => setVotes(loadVotes(id, latest!.id)));
     return off;
   }, [id, latest]);
+
+  // Auto-open voting modal once per session if the viewer is eligible.
+  const [autoShown, setAutoShown] = useState<string | null>(null);
+  useEffect(() => {
+    if (!latest || !viewerId || !votes) return;
+    if (votes.closed) return;
+    if (autoShown === latest.id) return;
+    const anyMode = voteSettings.mvp || voteSettings.pereba || voteSettings.apitto;
+    if (!anyMode) return;
+    const all = [...latest.teamA.players, ...latest.teamB.players];
+    if (!all.some((p) => p.id === viewerId)) return;
+    if (userHasVoted(votes, viewerId, voteSettings)) return;
+    setVotingOpen(true);
+    setAutoShown(latest.id);
+  }, [latest, viewerId, votes, voteSettings, autoShown]);
 
   const peladaName = match?.name ?? "Minha Pelada";
   const peladaLogo = match?.logo_url ?? null;
