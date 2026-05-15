@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.get_match_member_counts(uuid[]) FROM anon;
