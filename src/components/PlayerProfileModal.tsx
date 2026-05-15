@@ -118,7 +118,7 @@ export function PlayerProfileModal({
 
           {userId && (
             <Link
-              to="/pelada/$id/perfil/$userId"
+              to="/pelada/$id/jogador/$userId"
               params={{ id: matchId, userId }}
               onClick={() => onOpenChange(false)}
               className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[#00FF00]/40 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-[#00FF00] transition hover:bg-[#00FF00]/10"
