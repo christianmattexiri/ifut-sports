@@ -38,13 +38,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import {
-  Hand as HandPointer,
-  Scale,
-  Dices,
-  RefreshCw,
-  ArrowLeft as ArrowLeftIcon,
-} from "lucide-react";
+import { MousePointerClick, Scale, Dices, RefreshCw } from "lucide-react";
 
 export const Route = createFileRoute("/pelada/$id_/lista")({
   component: ListaPresencaPage,
