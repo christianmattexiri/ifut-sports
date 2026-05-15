@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, useParams } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useParams, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   ArrowLeft,
@@ -103,7 +103,9 @@ function PeladaPage() {
 
           <nav className="space-y-1.5">
             <NavItem icon={<Home className="h-4 w-4" />} label="Início" active />
-            <NavItem icon={<ClipboardList className="h-4 w-4" />} label="Lista de Presença" />
+            <Link to="/pelada/$id/lista" params={{ id }} className="block">
+              <NavItem icon={<ClipboardList className="h-4 w-4" />} label="Lista de Presença" />
+            </Link>
             <NavItem icon={<History className="h-4 w-4" />} label="Histórico" />
             <NavItem icon={<BarChart3 className="h-4 w-4" />} label="Rankings" />
             <NavItem icon={<UserCircle2 className="h-4 w-4" />} label="Meu perfil na pelada" />
