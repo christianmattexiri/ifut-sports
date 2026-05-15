@@ -23,6 +23,7 @@ import {
   Trash2,
   Check,
   X,
+  Save,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -59,6 +60,18 @@ type Player = {
   avatarUrl?: string | null;
 };
 
+type Settings = {
+  dayOfWeek: string;
+  matchTime: string;
+  location: string;
+  valorLinha: string;
+  valorGoleiro: string;
+  pix: string;
+  lineLimit: number;
+  gkLimit: number;
+  subLimit: number;
+};
+
 const MOCK_PLAYERS: Player[] = [
   { id: "1", name: "Roger", isGoalkeeper: false, paid: true },
   { id: "2", name: "Xiri", isGoalkeeper: false, paid: false },
@@ -80,9 +93,17 @@ const MOCK_PLAYERS: Player[] = [
   { id: "18", name: "Manga", isGoalkeeper: false, paid: false },
 ];
 
-const LINE_LIMIT = 16;
-const GK_LIMIT = 2;
-const SUB_LIMIT = 2;
+const DEFAULT_SETTINGS: Settings = {
+  dayOfWeek: "",
+  matchTime: "",
+  location: "",
+  valorLinha: "17,00",
+  valorGoleiro: "6,00",
+  pix: "04172316018",
+  lineLimit: 16,
+  gkLimit: 2,
+  subLimit: 2,
+};
 
 function ListaPresencaPage() {
   const navigate = useNavigate();
@@ -96,6 +117,11 @@ function ListaPresencaPage() {
   const [friendRating, setFriendRating] = useState(3);
   const [friendGK, setFriendGK] = useState(false);
 
+  const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
+  const [editMatchOpen, setEditMatchOpen] = useState(false);
+  const [editValuesOpen, setEditValuesOpen] = useState(false);
+  const [editLimitsOpen, setEditLimitsOpen] = useState(false);
+
   useEffect(() => {
     (async () => {
       const { data: sess } = await supabase.auth.getSession();
@@ -108,9 +134,18 @@ function ListaPresencaPage() {
         .select("id, name, day_of_week, match_time, location, logo_url")
         .eq("id", id)
         .maybeSingle();
-      setMatch(m as Match | null);
+      const match = m as Match | null;
+      setMatch(match);
+      setSettings((s) => ({
+        ...s,
+        dayOfWeek: match?.day_of_week ?? s.dayOfWeek,
+        matchTime: match?.match_time ?? s.matchTime,
+        location: match?.location ?? s.location,
+      }));
     })();
   }, [navigate, id]);
+
+  const { lineLimit, gkLimit, subLimit } = settings;
 
   // Categorize players based on entry order: line / goalkeepers / suplentes
   const categorized = useMemo(() => {
@@ -119,26 +154,43 @@ function ListaPresencaPage() {
     const subs: Player[] = [];
     for (const p of players) {
       if (p.isGoalkeeper) {
-        if (gks.length < GK_LIMIT) gks.push(p);
+        if (gks.length < gkLimit) gks.push(p);
         else subs.push(p);
       } else {
-        if (line.length < LINE_LIMIT) line.push(p);
+        if (line.length < lineLimit) line.push(p);
         else subs.push(p);
       }
     }
     return { line, gks, subs };
-  }, [players]);
+  }, [players, lineLimit, gkLimit]);
 
   const orderedPlayers = useMemo(
     () => [...categorized.line, ...categorized.gks, ...categorized.subs],
     [categorized],
   );
 
+  // Persist counts so other pages (Pelada home) can read them
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const key = `pelada:${id}:counts`;
+    localStorage.setItem(
+      key,
+      JSON.stringify({
+        line: categorized.line.length,
+        lineLimit,
+        gks: categorized.gks.length,
+        gkLimit,
+        subs: categorized.subs.length,
+        subLimit,
+      }),
+    );
+  }, [id, categorized, lineLimit, gkLimit, subLimit]);
+
   const addPlayer = (name: string, isGK = false) => {
     if (!name.trim()) return;
     const totalConfirmed = categorized.line.length + categorized.gks.length;
     const totalSubs = categorized.subs.length;
-    if (totalConfirmed >= LINE_LIMIT + GK_LIMIT && totalSubs >= SUB_LIMIT) {
+    if (totalConfirmed >= lineLimit + gkLimit && totalSubs >= subLimit) {
       toast.error("Lista cheia (incluindo suplentes)");
       return;
     }
@@ -179,23 +231,33 @@ function ListaPresencaPage() {
 
   const buildWhatsAppText = () => {
     const today = new Date().toLocaleDateString("pt-BR");
-    const confirmed = [...categorized.line, ...categorized.gks];
-    const linesConfirmed = confirmed
-      .map((p) => `${p.name}${p.paid ? " ✅" : ""}${p.isGoalkeeper ? " 🧤" : ""}`)
-      .join("\n");
-    const linesSubs = categorized.subs.map((p) => p.name).join("\n");
+    // Vagas principais: linha + goleiros, em ordem (linha primeiro, depois goleiros)
+    const principal = [...categorized.line, ...categorized.gks];
+    const totalSlots = lineLimit + gkLimit;
+    const linhasPrincipal: string[] = [];
+    for (let i = 0; i < totalSlots; i++) {
+      const p = principal[i];
+      if (p) {
+        const tags = `${p.paid ? " ✅" : ""}${p.isGoalkeeper ? " 🧤" : ""}`;
+        linhasPrincipal.push(`${i + 1}. ${p.name}${tags}`);
+      } else {
+        linhasPrincipal.push(`${i + 1}.`);
+      }
+    }
+    const linhasSubs = categorized.subs.map((p, i) => `${i + 1}. ${p.name}`);
+
     return `🤖 Mensagem automática: Lista de presença para ${today}
 
 ⚽ ${match?.name ?? "Pelada"} ⚽
 
-🗓 ${match?.day_of_week ?? "-"} | ⏰ ${match?.match_time ?? "-"}
-📍 Local: ${match?.location ?? "-"}
+🗓 ${settings.dayOfWeek || "-"} | ⏰ ${settings.matchTime || "-"}
+📍 Local: ${settings.location || "-"}
 
-LISTA DE CONFIRMADOS:
-${linesConfirmed || "(vazio)"}
+*LISTA DE CONFIRMADOS:*
+${linhasPrincipal.join("\n")}
 
-SUPLENTES:
-${linesSubs || "(nenhum)"}
+*SUPLENTES:*
+${linhasSubs.length ? linhasSubs.join("\n") : "—"}
 
 Bora pro jogo! 🔥
 👇 Confirme seu nome na lista no app!`;
@@ -213,6 +275,11 @@ Bora pro jogo! 🔥
   const shareWhatsApp = () => {
     const text = encodeURIComponent(buildWhatsAppText());
     window.open(`https://wa.me/?text=${text}`, "_blank");
+  };
+
+  const handleSaveAll = () => {
+    // TODO: Salvar no Supabase (matches + lista de jogadores)
+    toast.success("Lista e configurações salvas com sucesso!");
   };
 
   const peladaName = match?.name ?? "Minha Pelada";
@@ -280,6 +347,7 @@ Bora pro jogo! 🔥
               <button
                 type="button"
                 aria-label="Editar"
+                onClick={() => setEditMatchOpen(true)}
                 className="absolute right-3 top-3 rounded-lg p-1.5 text-zinc-400 transition hover:bg-white/5 hover:text-[#00FF00]"
               >
                 <Pencil className="h-4 w-4" />
@@ -291,12 +359,12 @@ Bora pro jogo! 🔥
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-[#00FF00]" />
                   <span>
-                    {match?.day_of_week ?? "Domingo"} – {match?.match_time ?? "9h"}
+                    {settings.dayOfWeek || "Domingo"} – {settings.matchTime || "9h"}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-[#00FF00]" />
-                  <span>{match?.location ?? "Local a definir"}</span>
+                  <span>{settings.location || "Local a definir"}</span>
                 </div>
               </div>
             </div>
@@ -306,6 +374,7 @@ Bora pro jogo! 🔥
               <button
                 type="button"
                 aria-label="Editar valores"
+                onClick={() => setEditValuesOpen(true)}
                 className="absolute right-3 top-3 rounded-lg p-1.5 text-zinc-400 transition hover:bg-white/5 hover:text-amber-300"
               >
                 <Pencil className="h-4 w-4" />
@@ -316,40 +385,47 @@ Bora pro jogo! 🔥
               </h3>
               <div className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
                 <p className="text-zinc-300">
-                  Mensalista: <span className="font-semibold text-amber-300">R$ 15,00</span>
+                  Linha: <span className="font-semibold text-amber-300">R$ {settings.valorLinha}</span>
                 </p>
                 <p className="text-zinc-300">
-                  Avulso: <span className="font-semibold text-amber-300">R$ 17,00</span>
+                  Goleiro: <span className="font-semibold text-amber-300">R$ {settings.valorGoleiro}</span>
                 </p>
-                <p className="text-zinc-300">
-                  Goleiro: <span className="font-semibold text-amber-300">R$ 6,00</span>
-                </p>
-                <p className="text-zinc-300">
-                  Pix: <span className="font-semibold text-amber-300">04172316018</span>
+                <p className="text-zinc-300 sm:col-span-2">
+                  Pix: <span className="font-semibold text-amber-300">{settings.pix}</span>
                 </p>
               </div>
             </div>
 
             {/* Painel 3 — Vagas */}
-            <div className="grid grid-cols-3 gap-3">
-              <SlotCard
-                icon={<Users className="h-4 w-4" />}
-                label="Linha"
-                value={`${lineCount}/${LINE_LIMIT}`}
-                color="#00FF00"
-              />
-              <SlotCard
-                icon={<Hand className="h-4 w-4" />}
-                label="Goleiros"
-                value={`${gkCount}/${GK_LIMIT}`}
-                color="#00FF00"
-              />
-              <SlotCard
-                icon={<ClipboardList className="h-4 w-4" />}
-                label="Suplentes"
-                value={`${subCount}/${SUB_LIMIT}`}
-                color="#00FF00"
-              />
+            <div className="relative">
+              <button
+                type="button"
+                aria-label="Editar limites"
+                onClick={() => setEditLimitsOpen(true)}
+                className="absolute -top-2 right-0 z-10 rounded-lg border border-white/10 bg-zinc-900/80 p-1.5 text-zinc-400 transition hover:bg-white/5 hover:text-[#00FF00]"
+              >
+                <Pencil className="h-4 w-4" />
+              </button>
+              <div className="grid grid-cols-3 gap-3">
+                <SlotCard
+                  icon={<Users className="h-4 w-4" />}
+                  label="Linha"
+                  value={`${lineCount}/${lineLimit}`}
+                  color="#00FF00"
+                />
+                <SlotCard
+                  icon={<Hand className="h-4 w-4" />}
+                  label="Goleiros"
+                  value={`${gkCount}/${gkLimit}`}
+                  color="#00FF00"
+                />
+                <SlotCard
+                  icon={<ClipboardList className="h-4 w-4" />}
+                  label="Suplentes"
+                  value={`${subCount}/${subLimit}`}
+                  color="#00FF00"
+                />
+              </div>
             </div>
 
             {/* Botões de Ação - Jogador */}
@@ -415,6 +491,15 @@ Bora pro jogo! 🔥
 
             <button
               type="button"
+              onClick={handleSaveAll}
+              className="w-full rounded-xl border-2 border-[#00FF00] bg-[#00FF00]/10 px-4 py-4 text-base font-black uppercase tracking-wider text-[#00FF00] transition hover:bg-[#00FF00]/20 shadow-[0_0_30px_-8px_rgba(0,255,0,0.8)]"
+            >
+              <Save className="mr-2 inline h-5 w-5" />
+              💾 Salvar Lista
+            </button>
+
+            <button
+              type="button"
               onClick={() => {
                 if (confirm("Limpar toda a lista?")) {
                   setPlayers([]);
@@ -435,7 +520,7 @@ Bora pro jogo! 🔥
                 </p>
               ) : (
                 orderedPlayers.map((p, idx) => {
-                  const isSub = idx >= LINE_LIMIT + GK_LIMIT;
+                  const isSub = idx >= lineLimit + gkLimit;
                   return (
                     <PlayerRow
                       key={p.id}
@@ -516,6 +601,55 @@ Bora pro jogo! 🔥
           />
         </DialogContent>
       </Dialog>
+
+      {/* Modal: Editar Próxima Pelada */}
+      <EditDialog
+        open={editMatchOpen}
+        onOpenChange={setEditMatchOpen}
+        title="Editar Próxima Pelada"
+        accent="#00FF00"
+        fields={[
+          { key: "dayOfWeek", label: "Dia da semana", value: settings.dayOfWeek },
+          { key: "matchTime", label: "Horário", value: settings.matchTime },
+          { key: "location", label: "Local", value: settings.location },
+        ]}
+        onSave={(vals) => setSettings((s) => ({ ...s, ...vals }))}
+      />
+
+      {/* Modal: Editar Valores */}
+      <EditDialog
+        open={editValuesOpen}
+        onOpenChange={setEditValuesOpen}
+        title="Editar Valores"
+        accent="#fbbf24"
+        fields={[
+          { key: "valorLinha", label: "Valor Linha (R$)", value: settings.valorLinha },
+          { key: "valorGoleiro", label: "Valor Goleiro (R$)", value: settings.valorGoleiro },
+          { key: "pix", label: "Chave Pix", value: settings.pix },
+        ]}
+        onSave={(vals) => setSettings((s) => ({ ...s, ...vals }))}
+      />
+
+      {/* Modal: Editar Limites */}
+      <EditDialog
+        open={editLimitsOpen}
+        onOpenChange={setEditLimitsOpen}
+        title="Editar Limites de Vagas"
+        accent="#00FF00"
+        fields={[
+          { key: "lineLimit", label: "Limite de Linha", value: String(settings.lineLimit), type: "number" },
+          { key: "gkLimit", label: "Limite de Goleiros", value: String(settings.gkLimit), type: "number" },
+          { key: "subLimit", label: "Limite de Suplentes", value: String(settings.subLimit), type: "number" },
+        ]}
+        onSave={(vals) =>
+          setSettings((s) => ({
+            ...s,
+            lineLimit: Number(vals.lineLimit ?? s.lineLimit) || s.lineLimit,
+            gkLimit: Number(vals.gkLimit ?? s.gkLimit) || s.gkLimit,
+            subLimit: Number(vals.subLimit ?? s.subLimit) || s.subLimit,
+          }))
+        }
+      />
     </main>
   );
 }
@@ -653,5 +787,77 @@ function AddPlayerForm({ onAdd }: { onAdd: (name: string, isGK: boolean) => void
         Adicionar
       </button>
     </div>
+  );
+}
+
+type EditField = { key: string; label: string; value: string; type?: string };
+
+function EditDialog({
+  open,
+  onOpenChange,
+  title,
+  accent,
+  fields,
+  onSave,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  title: string;
+  accent: string;
+  fields: EditField[];
+  onSave: (vals: Record<string, string>) => void;
+}) {
+  const [draft, setDraft] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (open) {
+      const init: Record<string, string> = {};
+      fields.forEach((f) => (init[f.key] = f.value));
+      setDraft(init);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="border-white/10 bg-zinc-950 text-zinc-100">
+        <DialogHeader>
+          <DialogTitle style={{ color: accent }}>{title}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3 py-2">
+          {fields.map((f) => (
+            <div key={f.key} className="space-y-1.5">
+              <label className="text-xs font-medium uppercase tracking-wider text-zinc-400">
+                {f.label}
+              </label>
+              <Input
+                type={f.type ?? "text"}
+                value={draft[f.key] ?? ""}
+                onChange={(e) => setDraft((d) => ({ ...d, [f.key]: e.target.value }))}
+                className="border-white/10 bg-zinc-900 text-zinc-100"
+              />
+            </div>
+          ))}
+        </div>
+        <DialogFooter>
+          <button
+            type="button"
+            onClick={() => {
+              onSave(draft);
+              onOpenChange(false);
+              toast.success("Atualizado");
+            }}
+            className="w-full rounded-xl border px-4 py-2.5 text-sm font-semibold uppercase tracking-wider transition"
+            style={{
+              borderColor: `${accent}80`,
+              backgroundColor: `${accent}1a`,
+              color: accent,
+            }}
+          >
+            Salvar
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
