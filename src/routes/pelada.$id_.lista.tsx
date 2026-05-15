@@ -1152,7 +1152,7 @@ function PoolColumn({
                   }}
                   className="flex-1 rounded-md border border-[#00FF00]/40 bg-[#00FF00]/10 px-2 py-1.5 text-xs font-bold uppercase tracking-wider text-[#00FF00] transition hover:bg-[#00FF00]/20"
                 >
-                  → Time A
+                  ← Time A
                 </button>
                 <button
                   type="button"
