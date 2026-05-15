@@ -174,7 +174,7 @@ function ConvitesPage() {
   }
 
   return (
-    <main className="relative min-h-screen w-full bg-zinc-950 text-zinc-100 font-sans antialiased">
+    <main className="relative min-h-screen w-full bg-zinc-950 pt-14 text-zinc-100 font-sans antialiased">
       <div
         aria-hidden
         className="pointer-events-none fixed -top-40 left-1/3 h-[480px] w-[480px] rounded-full bg-[#00FF00]/10 blur-[160px]"

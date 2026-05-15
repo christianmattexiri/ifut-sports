@@ -270,7 +270,7 @@ function PeladaPage() {
 
   return (
     <main
-      className="relative min-h-screen w-full bg-zinc-950 text-zinc-100 font-sans antialiased pb-20"
+      className="relative min-h-screen w-full bg-zinc-950 pt-14 text-zinc-100 font-sans antialiased pb-20"
       style={{ ["--pelada-accent" as string]: accent }}
     >
       <div

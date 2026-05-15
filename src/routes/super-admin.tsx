@@ -79,7 +79,7 @@ function SuperAdminPage() {
   if (!allowed) return null;
 
   return (
-    <main className="min-h-screen bg-zinc-950 text-zinc-100">
+    <main className="min-h-screen bg-zinc-950 text-zinc-100 pt-14">
       <div className="mx-auto max-w-5xl px-5 py-8">
         <Link to="/dashboard" className="inline-flex items-center gap-1.5 text-xs font-medium text-zinc-400 hover:text-[#00FF00]">
           <ArrowLeft className="h-3.5 w-3.5" /> Voltar
