@@ -336,6 +336,8 @@ function PeladaPage() {
             const perebaPlayer = findPlayer(perebaWinner.id);
             const apittoMode = voteSettings.apitto;
             const perebaMode = voteSettings.pereba;
+            const mvpVotingActive =
+              voteSettings.mvp && !!votes && !votes.closed && !latest?.mvp;
             const podiumIds = [
               ...matadorPlayers.map((p) => p.id),
               ...maestroPlayers.map((p) => p.id),
@@ -451,16 +453,34 @@ function PeladaPage() {
                         <p className="text-xs text-zinc-400">Ver resultados</p>
                       </button>
                     ) : (
-                      <PodiumCard
-                        onPick={(p) => setModalUser(p)}
-                        icon={<Crown className="h-6 w-6" />}
-                        title="Craque do Jogo"
-                        subtitle="MVP"
-                        color="#00FF00"
-                        players={mvpPlayer ? [mvpPlayer] : []}
-                        highlighted
-                        podiumIds={podiumIds}
-                      />
+                      mvpVotingActive && !mvpPlayer ? (
+                        <div className="flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-[#00FF00]/60 bg-[#00FF00]/5 px-5 py-10 backdrop-blur-xl shadow-[0_0_30px_-10px_rgba(0,255,0,0.6)]">
+                          <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-[#00FF00] bg-zinc-900">
+                            <Crown className="h-10 w-10 text-[#00FF00]/70 animate-pulse" />
+                          </div>
+                          <p className="px-2 text-center text-sm font-semibold text-zinc-100">
+                            Aguardando votação
+                          </p>
+                          <div className="flex items-center gap-2 text-[#00FF00]">
+                            <Crown className="h-6 w-6" />
+                            <p className="text-base font-black uppercase tracking-wider">MVP</p>
+                          </div>
+                          <p className="text-xs uppercase tracking-wider text-zinc-500">
+                            Craque do Jogo
+                          </p>
+                        </div>
+                      ) : (
+                        <PodiumCard
+                          onPick={(p) => setModalUser(p)}
+                          icon={<Crown className="h-6 w-6" />}
+                          title="Craque do Jogo"
+                          subtitle="MVP"
+                          color="#00FF00"
+                          players={mvpPlayer ? [mvpPlayer] : []}
+                          highlighted
+                          podiumIds={podiumIds}
+                        />
+                      )
                     )}
                     <PodiumCard
                       onPick={(p) => setModalUser(p)}
