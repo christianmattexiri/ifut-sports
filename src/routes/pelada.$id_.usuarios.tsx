@@ -332,11 +332,13 @@ function AddPlayerDialog({
   open,
   onOpenChange,
   existingIds,
+  pendingIds,
   onPick,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   existingIds: string[];
+  pendingIds?: string[];
   onPick: (p: Profile) => void;
 }) {
   const [query, setQuery] = useState("");
@@ -409,6 +411,7 @@ function AddPlayerDialog({
             ) : (
               results.map((p) => {
                 const already = existingIds.includes(p.id);
+                const pending = pendingIds?.includes(p.id) ?? false;
                 const display = p.full_name?.trim() || p.username;
                 return (
                   <div
@@ -428,15 +431,15 @@ function AddPlayerDialog({
                     </div>
                     <button
                       type="button"
-                      disabled={already}
+                      disabled={already || pending}
                       onClick={() => onPick(p)}
                       className={`rounded-lg border px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition ${
-                        already
+                        already || pending
                           ? "cursor-not-allowed border-white/10 bg-zinc-900 text-zinc-600"
                           : "border-[#00FF00]/50 bg-[#00FF00]/10 text-[#00FF00] hover:bg-[#00FF00]/20"
                       }`}
                     >
-                      {already ? "Já incluso" : "Adicionar"}
+                      {already ? "Já incluso" : pending ? "Convite enviado" : "Convidar"}
                     </button>
                   </div>
                 );
