@@ -14,6 +14,7 @@ import { Route as ConvitesRouteImport } from './routes/convites'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PeladaIdRouteImport } from './routes/pelada.$id'
 import { Route as PeladaIdUsuariosRouteImport } from './routes/pelada.$id_.usuarios'
+import { Route as PeladaIdRankingsRouteImport } from './routes/pelada.$id_.rankings'
 import { Route as PeladaIdPartidaRouteImport } from './routes/pelada.$id_.partida'
 import { Route as PeladaIdListaRouteImport } from './routes/pelada.$id_.lista'
 import { Route as PeladaIdHistoricoRouteImport } from './routes/pelada.$id_.historico'
@@ -43,6 +44,11 @@ const PeladaIdUsuariosRoute = PeladaIdUsuariosRouteImport.update({
   path: '/pelada/$id/usuarios',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PeladaIdRankingsRoute = PeladaIdRankingsRouteImport.update({
+  id: '/pelada/$id_/rankings',
+  path: '/pelada/$id/rankings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PeladaIdPartidaRoute = PeladaIdPartidaRouteImport.update({
   id: '/pelada/$id_/partida',
   path: '/pelada/$id/partida',
@@ -67,6 +73,7 @@ export interface FileRoutesByFullPath {
   '/pelada/$id/historico': typeof PeladaIdHistoricoRoute
   '/pelada/$id/lista': typeof PeladaIdListaRoute
   '/pelada/$id/partida': typeof PeladaIdPartidaRoute
+  '/pelada/$id/rankings': typeof PeladaIdRankingsRoute
   '/pelada/$id/usuarios': typeof PeladaIdUsuariosRoute
 }
 export interface FileRoutesByTo {
@@ -77,6 +84,7 @@ export interface FileRoutesByTo {
   '/pelada/$id/historico': typeof PeladaIdHistoricoRoute
   '/pelada/$id/lista': typeof PeladaIdListaRoute
   '/pelada/$id/partida': typeof PeladaIdPartidaRoute
+  '/pelada/$id/rankings': typeof PeladaIdRankingsRoute
   '/pelada/$id/usuarios': typeof PeladaIdUsuariosRoute
 }
 export interface FileRoutesById {
@@ -88,6 +96,7 @@ export interface FileRoutesById {
   '/pelada/$id_/historico': typeof PeladaIdHistoricoRoute
   '/pelada/$id_/lista': typeof PeladaIdListaRoute
   '/pelada/$id_/partida': typeof PeladaIdPartidaRoute
+  '/pelada/$id_/rankings': typeof PeladaIdRankingsRoute
   '/pelada/$id_/usuarios': typeof PeladaIdUsuariosRoute
 }
 export interface FileRouteTypes {
@@ -100,6 +109,7 @@ export interface FileRouteTypes {
     | '/pelada/$id/historico'
     | '/pelada/$id/lista'
     | '/pelada/$id/partida'
+    | '/pelada/$id/rankings'
     | '/pelada/$id/usuarios'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -110,6 +120,7 @@ export interface FileRouteTypes {
     | '/pelada/$id/historico'
     | '/pelada/$id/lista'
     | '/pelada/$id/partida'
+    | '/pelada/$id/rankings'
     | '/pelada/$id/usuarios'
   id:
     | '__root__'
@@ -120,6 +131,7 @@ export interface FileRouteTypes {
     | '/pelada/$id_/historico'
     | '/pelada/$id_/lista'
     | '/pelada/$id_/partida'
+    | '/pelada/$id_/rankings'
     | '/pelada/$id_/usuarios'
   fileRoutesById: FileRoutesById
 }
@@ -131,6 +143,7 @@ export interface RootRouteChildren {
   PeladaIdHistoricoRoute: typeof PeladaIdHistoricoRoute
   PeladaIdListaRoute: typeof PeladaIdListaRoute
   PeladaIdPartidaRoute: typeof PeladaIdPartidaRoute
+  PeladaIdRankingsRoute: typeof PeladaIdRankingsRoute
   PeladaIdUsuariosRoute: typeof PeladaIdUsuariosRoute
 }
 
@@ -171,6 +184,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PeladaIdUsuariosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pelada/$id_/rankings': {
+      id: '/pelada/$id_/rankings'
+      path: '/pelada/$id/rankings'
+      fullPath: '/pelada/$id/rankings'
+      preLoaderRoute: typeof PeladaIdRankingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pelada/$id_/partida': {
       id: '/pelada/$id_/partida'
       path: '/pelada/$id/partida'
@@ -203,6 +223,7 @@ const rootRouteChildren: RootRouteChildren = {
   PeladaIdHistoricoRoute: PeladaIdHistoricoRoute,
   PeladaIdListaRoute: PeladaIdListaRoute,
   PeladaIdPartidaRoute: PeladaIdPartidaRoute,
+  PeladaIdRankingsRoute: PeladaIdRankingsRoute,
   PeladaIdUsuariosRoute: PeladaIdUsuariosRoute,
 }
 export const routeTree = rootRouteImport
