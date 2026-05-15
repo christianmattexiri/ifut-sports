@@ -274,7 +274,7 @@ function PeladaPage() {
     <main className="relative min-h-screen w-full bg-zinc-950 text-zinc-100 font-sans antialiased">
       <div
         aria-hidden
-        className="pointer-events-none fixed -top-40 left-1/3 h-[480px] w-[480px] rounded-full bg-[#00FF00]/10 blur-[160px]"
+        className="pointer-events-none fixed -top-40 left-1/3 h-[480px] w-[480px] rounded-full bg-[var(--pelada-accent)]/10 blur-[160px]"
       />
 
       <div className="relative z-10 flex min-h-screen">
@@ -282,18 +282,18 @@ function PeladaPage() {
           <button
             type="button"
             onClick={() => navigate({ to: "/dashboard" })}
-            className="mb-5 inline-flex items-center gap-1.5 self-start rounded-lg px-2 py-1 text-xs font-medium text-zinc-400 transition hover:text-[#00FF00]"
+            className="mb-5 inline-flex items-center gap-1.5 self-start rounded-lg px-2 py-1 text-xs font-medium text-zinc-400 transition hover:text-[var(--pelada-accent)]"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             Voltar ao Início do App
           </button>
 
           <div className="flex flex-col items-center gap-2 pb-6">
-            <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-[#00FF00]/40 bg-zinc-900 shadow-[0_0_30px_-8px_rgba(0,255,0,0.7)]">
+            <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-[var(--pelada-accent)]/40 bg-zinc-900 shadow-[0_0_30px_-8px_rgba(0,255,0,0.7)]">
               {peladaLogo ? (
                 <img src={peladaLogo} alt={peladaName} className="h-full w-full object-cover" />
               ) : (
-                <Trophy className="h-9 w-9 text-[#00FF00]" />
+                <Trophy className="h-9 w-9 text-[var(--pelada-accent)]" />
               )}
             </div>
             <p className="text-center text-base font-bold tracking-tight text-white">
@@ -337,24 +337,24 @@ function PeladaPage() {
         </aside>
 
         <section className="flex-1 px-5 py-8 md:px-10 md:py-10">
-          <h1 className="text-3xl font-bold uppercase tracking-tight text-[#00FF00] md:text-4xl">
+          <h1 className="text-3xl font-bold uppercase tracking-tight text-[var(--pelada-accent)] md:text-4xl">
             Bem-vindo, {firstName}! <span className="inline-block">👋</span>
           </h1>
 
-          <div className="mt-8 flex items-center justify-between gap-4 rounded-2xl border border-[#00FF00]/30 bg-zinc-900/50 px-6 py-5 backdrop-blur-xl shadow-[0_0_40px_-15px_rgba(0,255,0,0.5)]">
+          <div className="mt-8 flex items-center justify-between gap-4 rounded-2xl border border-[var(--pelada-accent)]/30 bg-zinc-900/50 px-6 py-5 backdrop-blur-xl shadow-[0_0_40px_-15px_rgba(0,255,0,0.5)]">
             <div className="flex items-center gap-3">
-              <MapPin className="h-5 w-5 text-[#00FF00]" />
+              <MapPin className="h-5 w-5 text-[var(--pelada-accent)]" />
               {loading ? (
                 <p className="text-sm text-zinc-400">Carregando...</p>
               ) : nextLine ? (
                 <p className="text-sm font-medium text-zinc-200 md:text-base">
-                  Próximo fut: <span className="text-[#00FF00]">{nextLine}</span>
+                  Próximo fut: <span className="text-[var(--pelada-accent)]">{nextLine}</span>
                 </p>
               ) : (
                 <p className="text-sm font-medium text-zinc-200 md:text-base">
-                  Adicione a <span className="text-[#00FF00]">data</span> /{" "}
-                  <span className="text-[#00FF00]">local</span> /{" "}
-                  <span className="text-[#00FF00]">horário</span> da próxima pelada.
+                  Adicione a <span className="text-[var(--pelada-accent)]">data</span> /{" "}
+                  <span className="text-[var(--pelada-accent)]">local</span> /{" "}
+                  <span className="text-[var(--pelada-accent)]">horário</span> da próxima pelada.
                 </p>
               )}
             </div>
@@ -362,7 +362,7 @@ function PeladaPage() {
               <button
                 type="button"
                 onClick={() => navigate({ to: "/pelada/$id/lista", params: { id } })}
-                className="rounded-lg p-2 text-zinc-400 transition hover:bg-white/5 hover:text-[#00FF00]"
+                className="rounded-lg p-2 text-zinc-400 transition hover:bg-white/5 hover:text-[var(--pelada-accent)]"
                 aria-label="Editar"
               >
                 <Pencil className="h-4 w-4" />
@@ -375,7 +375,7 @@ function PeladaPage() {
               <QuickCard
                 icon={<Users className="h-6 w-6" />}
                 label="Presença"
-                color="#00FF00"
+                color="var(--pelada-accent)"
                 badges={[
                   `${counts.line}/${counts.lineLimit} Linha`,
                   `${counts.gks}/${counts.gkLimit} GK`,
@@ -454,12 +454,12 @@ function PeladaPage() {
             if (podiumDisplay.mvp && !apittoMode) {
               podiumCards.push(
                 mvpVotingActive && !mvpPlayer ? (
-                  <div key="mvp-wait" className="flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-[#00FF00]/60 bg-[#00FF00]/5 px-5 py-10 backdrop-blur-xl shadow-[0_0_30px_-10px_rgba(0,255,0,0.6)]">
-                    <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-[#00FF00] bg-zinc-900">
-                      <Crown className="h-10 w-10 text-[#00FF00]/70 animate-pulse" />
+                  <div key="mvp-wait" className="flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-[var(--pelada-accent)]/60 bg-[var(--pelada-accent)]/5 px-5 py-10 backdrop-blur-xl shadow-[0_0_30px_-10px_rgba(0,255,0,0.6)]">
+                    <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-[var(--pelada-accent)] bg-zinc-900">
+                      <Crown className="h-10 w-10 text-[var(--pelada-accent)]/70 animate-pulse" />
                     </div>
                     <p className="px-2 text-center text-sm font-semibold text-zinc-100">Aguardando votação</p>
-                    <div className="flex items-center gap-2 text-[#00FF00]">
+                    <div className="flex items-center gap-2 text-[var(--pelada-accent)]">
                       <Crown className="h-6 w-6" />
                       <p className="text-base font-black uppercase tracking-wider">MVP</p>
                     </div>
@@ -471,7 +471,7 @@ function PeladaPage() {
                     icon={<Crown className="h-6 w-6" />}
                     title="Craque do Jogo"
                     subtitle="MVP"
-                    color="#00FF00"
+                    color="var(--pelada-accent)"
                     players={showMvpWinner ? [mvpPlayer!] : []}
                     highlighted
                     podiumIds={podiumIds}
@@ -552,7 +552,7 @@ function PeladaPage() {
                       <p className="text-xs uppercase tracking-wider text-zinc-500">
                         {latest?.teamA.label ?? "Time A"}
                       </p>
-                      <p className="mt-2 text-5xl font-black text-[#00FF00] drop-shadow-[0_0_20px_rgba(0,255,0,0.6)]">
+                      <p className="mt-2 text-5xl font-black text-[var(--pelada-accent)] drop-shadow-[0_0_20px_rgba(0,255,0,0.6)]">
                         {scoreA}
                       </p>
                     </div>
@@ -582,12 +582,12 @@ function PeladaPage() {
                       <button
                         type="button"
                         onClick={() => setVotingOpen(true)}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-[#00FF00]/40 bg-[#00FF00]/10 px-3 py-1.5 font-bold uppercase tracking-wider text-[#00FF00] transition hover:bg-[#00FF00]/20"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--pelada-accent)]/40 bg-[var(--pelada-accent)]/10 px-3 py-1.5 font-bold uppercase tracking-wider text-[var(--pelada-accent)] transition hover:bg-[var(--pelada-accent)]/20"
                       >
                         <Star className="h-3.5 w-3.5" /> Votar agora
                       </button>
                     ) : isParticipant && votes && userHasVoted(votes, viewerId, voteSettings) ? (
-                      <span className="text-[#00FF00]">✓ Você já votou</span>
+                      <span className="text-[var(--pelada-accent)]">✓ Você já votou</span>
                     ) : (
                       <span className="text-zinc-500">Votação aberta</span>
                     )}
@@ -685,7 +685,7 @@ function NavItem({ icon, label, active, gold }: { icon: React.ReactNode; label: 
       type="button"
       className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
         active
-          ? "bg-[#00FF00]/10 text-[#00FF00] shadow-[inset_0_0_0_1px_rgba(0,255,0,0.25)]"
+          ? "bg-[var(--pelada-accent)]/10 text-[var(--pelada-accent)] shadow-[inset_0_0_0_1px_rgba(0,255,0,0.25)]"
           : gold
           ? "text-yellow-500 hover:bg-yellow-500/10"
           : "text-zinc-300 hover:bg-white/5 hover:text-zinc-100"
@@ -801,7 +801,7 @@ function PodiumCard({
               <button
                 type="button"
                 onClick={() => onPick(p)}
-                className="hover:text-[#00FF00] hover:underline"
+                className="hover:text-[var(--pelada-accent)] hover:underline"
               >
                 {p.name}
               </button>
