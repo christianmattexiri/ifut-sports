@@ -51,26 +51,26 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/pelada/$id': typeof PeladaIdRoute
-  '/pelada/$id/historico': typeof PeladaIdHistoricoRoute
   '/pelada/$id/lista': typeof PeladaIdListaRoute
   '/pelada/$id/usuarios': typeof PeladaIdUsuariosRoute
+  '/pelada/$id/historico': typeof PeladaIdHistoricoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/pelada/$id': typeof PeladaIdRoute
-  '/pelada/$id/historico': typeof PeladaIdHistoricoRoute
   '/pelada/$id/lista': typeof PeladaIdListaRoute
   '/pelada/$id/usuarios': typeof PeladaIdUsuariosRoute
+  '/pelada/$id/historico': typeof PeladaIdHistoricoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/pelada/$id': typeof PeladaIdRoute
-  '/pelada/$id_/historico': typeof PeladaIdHistoricoRoute
   '/pelada/$id_/lista': typeof PeladaIdListaRoute
   '/pelada/$id_/usuarios': typeof PeladaIdUsuariosRoute
+  '/pelada/$id_/historico': typeof PeladaIdHistoricoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -78,34 +78,34 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/pelada/$id'
-    | '/pelada/$id/historico'
     | '/pelada/$id/lista'
     | '/pelada/$id/usuarios'
+    | '/pelada/$id/historico'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/dashboard'
     | '/pelada/$id'
-    | '/pelada/$id/historico'
     | '/pelada/$id/lista'
     | '/pelada/$id/usuarios'
+    | '/pelada/$id/historico'
   id:
     | '__root__'
     | '/'
     | '/dashboard'
     | '/pelada/$id'
-    | '/pelada/$id_/historico'
     | '/pelada/$id_/lista'
     | '/pelada/$id_/usuarios'
+    | '/pelada/$id_/historico'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRoute: typeof DashboardRoute
   PeladaIdRoute: typeof PeladaIdRoute
-  PeladaIdHistoricoRoute: typeof PeladaIdHistoricoRoute
   PeladaIdListaRoute: typeof PeladaIdListaRoute
   PeladaIdUsuariosRoute: typeof PeladaIdUsuariosRoute
+  PeladaIdHistoricoRoute: typeof PeladaIdHistoricoRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -159,10 +159,20 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRoute,
   PeladaIdRoute: PeladaIdRoute,
-  PeladaIdHistoricoRoute: PeladaIdHistoricoRoute,
   PeladaIdListaRoute: PeladaIdListaRoute,
   PeladaIdUsuariosRoute: PeladaIdUsuariosRoute,
+  PeladaIdHistoricoRoute: PeladaIdHistoricoRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
