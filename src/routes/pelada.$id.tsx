@@ -6,6 +6,7 @@ import { VotingModal } from "@/components/VotingModal";
 import { ApittoResultsModal } from "@/components/ApittoResultsModal";
 import { AdminVotingAuditModal } from "@/components/AdminVotingAuditModal";
 import { loadAdminSettings } from "@/routes/pelada.$id_.admin";
+import { AudioFooterPlayer } from "@/components/AudioFooterPlayer";
 import {
   loadVotes,
   saveVotes,
