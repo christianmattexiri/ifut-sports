@@ -13,6 +13,7 @@ import {
   userHasVoted,
   onVotesUpdated,
   isLeaderMathLocked,
+  computeApitto,
   type MatchVotes,
 } from "@/lib/voting";
 import { loadHistory, saveHistory } from "@/routes/pelada.$id_.historico";
