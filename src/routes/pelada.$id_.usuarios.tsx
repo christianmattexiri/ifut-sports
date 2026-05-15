@@ -16,6 +16,7 @@ import {
   User as UserIcon,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { isSuperAdminUsername } from "@/lib/admin";
 import {
   Dialog,
   DialogContent,
@@ -61,6 +62,30 @@ function UsuariosPage() {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [pendingInviteIds, setPendingInviteIds] = useState<Set<string>>(new Set());
+  const [ratings, setRatings] = useState<Record<string, number>>({});
+
+  // Hydrate ratings from localStorage
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = localStorage.getItem(`pelada:${id}:ratings`);
+      if (raw) setRatings(JSON.parse(raw));
+    } catch {
+      /* ignore */
+    }
+  }, [id]);
+
+  const updateRating = (pid: string, value: number) => {
+    const v = Math.max(1, Math.min(10, Math.round(value * 10) / 10));
+    setRatings((prev) => {
+      const next = { ...prev, [pid]: v };
+      if (typeof window !== "undefined") {
+        localStorage.setItem(`pelada:${id}:ratings`, JSON.stringify(next));
+      }
+      // TODO: Salvar nota na tabela associativa match_players (rating numeric)
+      return next;
+    });
+  };
 
   useEffect(() => {
     (async () => {
@@ -76,19 +101,27 @@ function UsuariosPage() {
         .eq("id", id)
         .maybeSingle();
       const match = m as Match | null;
-      if (!match || match.admin_id !== uid) {
+      // Carrega meu profile primeiro para checar super admin
+      const { data: myProf } = await supabase
+        .from("profiles")
+        .select("id, full_name, username, avatar_url")
+        .eq("id", uid)
+        .maybeSingle();
+      const isOwner = match?.admin_id === uid;
+      const isSuper = isSuperAdminUsername(myProf?.username);
+      if (!match || (!isOwner && !isSuper)) {
         toast.error("Acesso restrito ao admin da pelada");
         navigate({ to: "/pelada/$id", params: { id } });
         return;
       }
       setMatch(match);
 
-      // Carrega admin + membros confirmados (match_members)
+      // Carrega admin da pelada + membros confirmados (match_members)
       const [{ data: adminProf }, { data: memberRows }, { data: invs }] = await Promise.all([
         supabase
           .from("profiles")
           .select("id, full_name, username, avatar_url")
-          .eq("id", uid)
+          .eq("id", match.admin_id)
           .maybeSingle(),
         supabase
           .from("match_members")
@@ -247,6 +280,8 @@ function UsuariosPage() {
                     key={m.id}
                     profile={m}
                     isAdmin={m.id === match?.admin_id}
+                    rating={ratings[m.id] ?? 5}
+                    onRatingChange={(v) => updateRating(m.id, v)}
                     onRemove={() => removeMember(m.id)}
                   />
                 ))
