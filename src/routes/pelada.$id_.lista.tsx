@@ -340,6 +340,11 @@ Bora pro jogo! 🔥
           </nav>
 
           <div className="mt-auto pt-6">
+            {isAdmin && (
+              <Link to="/pelada/$id/usuarios" params={{ id }} className="mb-2 block">
+                <NavItem icon={<UserCog className="h-4 w-4" />} label="Gerenciamento de Usuários" />
+              </Link>
+            )}
             <button
               type="button"
               className="flex w-full items-center gap-2.5 rounded-xl border border-amber-400/30 bg-amber-400/5 px-3 py-2.5 text-sm font-semibold text-amber-300 transition hover:bg-amber-400/10"
@@ -635,7 +640,7 @@ Bora pro jogo! 🔥
         fields={[
           { key: "valorLinha", label: "Valor Linha (R$)", value: settings.valorLinha },
           { key: "valorGoleiro", label: "Valor Goleiro (R$)", value: settings.valorGoleiro },
-          { key: "pix", label: "Chave Pix", value: settings.pix },
+          { key: "pix", label: "Chave Pix", value: settings.pix, placeholder: "Sua chave pix AQUI" },
         ]}
         onSave={(vals) => setSettings((s) => ({ ...s, ...vals }))}
       />
@@ -800,7 +805,7 @@ function AddPlayerForm({ onAdd }: { onAdd: (name: string, isGK: boolean) => void
   );
 }
 
-type EditField = { key: string; label: string; value: string; type?: string };
+type EditField = { key: string; label: string; value: string; type?: string; placeholder?: string };
 
 function EditDialog({
   open,
@@ -844,6 +849,7 @@ function EditDialog({
                 type={f.type ?? "text"}
                 value={draft[f.key] ?? ""}
                 onChange={(e) => setDraft((d) => ({ ...d, [f.key]: e.target.value }))}
+                placeholder={f.placeholder}
                 className="border-white/10 bg-zinc-900 text-zinc-100"
               />
             </div>
