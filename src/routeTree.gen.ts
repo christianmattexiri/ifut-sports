@@ -14,6 +14,7 @@ import { Route as ConvitesRouteImport } from './routes/convites'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PeladaIdRouteImport } from './routes/pelada.$id'
 import { Route as PeladaIdUsuariosRouteImport } from './routes/pelada.$id_.usuarios'
+import { Route as PeladaIdPartidaRouteImport } from './routes/pelada.$id_.partida'
 import { Route as PeladaIdListaRouteImport } from './routes/pelada.$id_.lista'
 import { Route as PeladaIdHistoricoRouteImport } from './routes/pelada.$id_.historico'
 
@@ -42,6 +43,11 @@ const PeladaIdUsuariosRoute = PeladaIdUsuariosRouteImport.update({
   path: '/pelada/$id/usuarios',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PeladaIdPartidaRoute = PeladaIdPartidaRouteImport.update({
+  id: '/pelada/$id_/partida',
+  path: '/pelada/$id/partida',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PeladaIdListaRoute = PeladaIdListaRouteImport.update({
   id: '/pelada/$id_/lista',
   path: '/pelada/$id/lista',
@@ -60,6 +66,7 @@ export interface FileRoutesByFullPath {
   '/pelada/$id': typeof PeladaIdRoute
   '/pelada/$id/historico': typeof PeladaIdHistoricoRoute
   '/pelada/$id/lista': typeof PeladaIdListaRoute
+  '/pelada/$id/partida': typeof PeladaIdPartidaRoute
   '/pelada/$id/usuarios': typeof PeladaIdUsuariosRoute
 }
 export interface FileRoutesByTo {
@@ -69,6 +76,7 @@ export interface FileRoutesByTo {
   '/pelada/$id': typeof PeladaIdRoute
   '/pelada/$id/historico': typeof PeladaIdHistoricoRoute
   '/pelada/$id/lista': typeof PeladaIdListaRoute
+  '/pelada/$id/partida': typeof PeladaIdPartidaRoute
   '/pelada/$id/usuarios': typeof PeladaIdUsuariosRoute
 }
 export interface FileRoutesById {
@@ -79,6 +87,7 @@ export interface FileRoutesById {
   '/pelada/$id': typeof PeladaIdRoute
   '/pelada/$id_/historico': typeof PeladaIdHistoricoRoute
   '/pelada/$id_/lista': typeof PeladaIdListaRoute
+  '/pelada/$id_/partida': typeof PeladaIdPartidaRoute
   '/pelada/$id_/usuarios': typeof PeladaIdUsuariosRoute
 }
 export interface FileRouteTypes {
@@ -90,6 +99,7 @@ export interface FileRouteTypes {
     | '/pelada/$id'
     | '/pelada/$id/historico'
     | '/pelada/$id/lista'
+    | '/pelada/$id/partida'
     | '/pelada/$id/usuarios'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -99,6 +109,7 @@ export interface FileRouteTypes {
     | '/pelada/$id'
     | '/pelada/$id/historico'
     | '/pelada/$id/lista'
+    | '/pelada/$id/partida'
     | '/pelada/$id/usuarios'
   id:
     | '__root__'
@@ -108,6 +119,7 @@ export interface FileRouteTypes {
     | '/pelada/$id'
     | '/pelada/$id_/historico'
     | '/pelada/$id_/lista'
+    | '/pelada/$id_/partida'
     | '/pelada/$id_/usuarios'
   fileRoutesById: FileRoutesById
 }
@@ -118,6 +130,7 @@ export interface RootRouteChildren {
   PeladaIdRoute: typeof PeladaIdRoute
   PeladaIdHistoricoRoute: typeof PeladaIdHistoricoRoute
   PeladaIdListaRoute: typeof PeladaIdListaRoute
+  PeladaIdPartidaRoute: typeof PeladaIdPartidaRoute
   PeladaIdUsuariosRoute: typeof PeladaIdUsuariosRoute
 }
 
@@ -158,6 +171,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PeladaIdUsuariosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pelada/$id_/partida': {
+      id: '/pelada/$id_/partida'
+      path: '/pelada/$id/partida'
+      fullPath: '/pelada/$id/partida'
+      preLoaderRoute: typeof PeladaIdPartidaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pelada/$id_/lista': {
       id: '/pelada/$id_/lista'
       path: '/pelada/$id/lista'
@@ -182,8 +202,19 @@ const rootRouteChildren: RootRouteChildren = {
   PeladaIdRoute: PeladaIdRoute,
   PeladaIdHistoricoRoute: PeladaIdHistoricoRoute,
   PeladaIdListaRoute: PeladaIdListaRoute,
+  PeladaIdPartidaRoute: PeladaIdPartidaRoute,
   PeladaIdUsuariosRoute: PeladaIdUsuariosRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
