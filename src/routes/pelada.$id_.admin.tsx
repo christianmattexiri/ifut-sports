@@ -161,6 +161,25 @@ function AdminPage() {
     });
   }
 
+  // Module toggles cascade:
+  // - Rankings OFF: hide from sidebar (handled in dashboard).
+  // - Votações OFF: clear all vote modes; ON: default to MVP only if all empty.
+  // - Som do MVP / Música: mutually exclusive.
+  function setModule(k: keyof Modules, v: boolean) {
+    setSettings((s) => {
+      let modules = { ...s.modules, [k]: v };
+      let voteModes = s.voteModes;
+      if (k === "votacoes") {
+        if (!v) voteModes = { mvp: false, pereba: false, apitto: false };
+        else if (!voteModes.mvp && !voteModes.pereba && !voteModes.apitto)
+          voteModes = { mvp: true, pereba: false, apitto: false };
+      }
+      if (k === "somMvp" && v) modules.musica = false;
+      if (k === "musica" && v) modules.somMvp = false;
+      return { ...s, modules, voteModes };
+    });
+  }
+
   if (!isAdmin) return null;
 
   return (
@@ -277,15 +296,15 @@ function AdminPage() {
             <Section title="Módulos" subtitle="Ative funcionalidades extras para sua pelada.">
               <div className="space-y-2">
                 <ModuleRow icon={<BarChart className="h-4 w-4" />} title="Rankings" desc="Ranking de jogadores e estatísticas"
-                  value={settings.modules.rankings} onChange={(v) => setSettings((s) => ({ ...s, modules: { ...s.modules, rankings: v } }))} />
+                  value={settings.modules.rankings} onChange={(v) => setModule("rankings", v)} />
                 <ModuleRow icon={<Headphones className="h-4 w-4" />} title="Som do MVP" desc="Player do YouTube na home com música do craque" pro
-                  value={settings.modules.somMvp} onChange={(v) => setSettings((s) => ({ ...s, modules: { ...s.modules, somMvp: v } }))} />
+                  value={settings.modules.somMvp} onChange={(v) => setModule("somMvp", v)} />
                 <ModuleRow icon={<DollarSign className="h-4 w-4" />} title="Finanças" desc="Caixinha do grupo: saldo atual e atualizações" pro
-                  value={settings.modules.financas} onChange={(v) => setSettings((s) => ({ ...s, modules: { ...s.modules, financas: v } }))} />
+                  value={settings.modules.financas} onChange={(v) => setModule("financas", v)} />
                 <ModuleRow icon={<Vote className="h-4 w-4" />} title="Votações" desc="Eleger craque/pereba do dia"
-                  value={settings.modules.votacoes} onChange={(v) => setSettings((s) => ({ ...s, modules: { ...s.modules, votacoes: v } }))} />
+                  value={settings.modules.votacoes} onChange={(v) => setModule("votacoes", v)} />
                 <ModuleRow icon={<Music className="h-4 w-4" />} title="Música" desc="Música do site, escolhida pelo adm." pro
-                  value={settings.modules.musica} onChange={(v) => setSettings((s) => ({ ...s, modules: { ...s.modules, musica: v } }))} />
+                  value={settings.modules.musica} onChange={(v) => setModule("musica", v)} />
               </div>
             </Section>
 
