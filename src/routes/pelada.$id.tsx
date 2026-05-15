@@ -231,6 +231,16 @@ function PeladaPage() {
         const w = computeWinner(current.perebaVotes).id;
         if (w) h.pereba = w;
       }
+      // Apitto: 1º colocado vira MVP, último vira Pereba.
+      // Idempotente: só seta se ainda não estiver definido (não soma duas vezes
+      // se o modal de resultados for reaberto).
+      if (voteSettings.apitto) {
+        const ranked = computeApitto(current.apitto);
+        if (ranked.length > 0) {
+          if (!h.mvp) h.mvp = ranked[0].id;
+          if (ranked.length > 1 && !h.pereba) h.pereba = ranked[ranked.length - 1].id;
+        }
+      }
       list[idx] = h;
       saveHistory(id, list);
       setLatest(h as typeof latest);
