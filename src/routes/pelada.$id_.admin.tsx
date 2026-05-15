@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import {
   ArrowLeft, Home, ClipboardList, History as HistoryIcon, BarChart3,
   UserCircle2, ShieldCheck, Trophy, UserCog, Upload, Trash2, Save,
-  BarChart, Headphones, DollarSign, Vote, Music, Crown, Skull, Star, Target, Sparkles,
+  BarChart, Headphones, DollarSign, Vote, Music, Crown, Skull, Star, Target, Sparkles, Lock,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
@@ -29,7 +29,7 @@ const PALETTE = [
 
 type Match = {
   id: string; name: string; day_of_week: string | null; match_time: string | null;
-  location: string | null; logo_url: string | null; admin_id?: string | null;
+  location: string | null; logo_url: string | null; admin_id?: string | null; is_pro?: boolean | null;
 };
 
 type Modules = {
@@ -83,6 +83,7 @@ function AdminPage() {
   const [logo, setLogo] = useState<string | null>(null);
   const [settings, setSettings] = useState<AdminSettings>(DEFAULT_SETTINGS);
   const [uploading, setUploading] = useState(false);
+  const [isPro, setIsPro] = useState(false);
 
   useEffect(() => {
     setSettings(loadAdminSettings(id));
@@ -101,7 +102,7 @@ function AdminPage() {
       const uid = sess.session.user.id;
       const [{ data: m }, { data: prof }] = await Promise.all([
         supabase.from("matches")
-          .select("id, name, day_of_week, match_time, location, logo_url, admin_id")
+          .select("id, name, day_of_week, match_time, location, logo_url, admin_id, is_pro")
           .eq("id", id).maybeSingle(),
         supabase.from("profiles").select("username").eq("id", uid).maybeSingle(),
       ]);
@@ -119,6 +120,7 @@ function AdminPage() {
       setTime(mm?.match_time ?? "");
       setLoc(mm?.location ?? "");
       setLogo(mm?.logo_url ?? null);
+      setIsPro(!!(mm as any)?.is_pro);
     })();
   }, [id, navigate]);
 
@@ -166,6 +168,11 @@ function AdminPage() {
   // - Votações OFF: clear all vote modes; ON: default to MVP only if all empty.
   // - Som do MVP / Música: mutually exclusive.
   function setModule(k: keyof Modules, v: boolean) {
+    // PRO gate: somMvp/musica require is_pro.
+    if ((k === "somMvp" || k === "musica") && v && !isPro) {
+      toast.error("Recurso PRO. Faça upgrade para ativar.");
+      return;
+    }
     setSettings((s) => {
       let modules = { ...s.modules, [k]: v };
       let voteModes = s.voteModes;
