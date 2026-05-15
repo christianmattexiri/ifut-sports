@@ -4,6 +4,7 @@ import { useAvatars } from "@/lib/avatars";
 import { PlayerProfileModal } from "@/components/PlayerProfileModal";
 import { VotingModal } from "@/components/VotingModal";
 import { ApittoResultsModal } from "@/components/ApittoResultsModal";
+import { AdminVotingAuditModal } from "@/components/AdminVotingAuditModal";
 import { loadAdminSettings } from "@/routes/pelada.$id_.admin";
 import {
   loadVotes,
@@ -11,8 +12,10 @@ import {
   computeWinner,
   userHasVoted,
   onVotesUpdated,
+  isLeaderMathLocked,
   type MatchVotes,
 } from "@/lib/voting";
+import { loadHistory, saveHistory } from "@/routes/pelada.$id_.historico";
 import {
   ArrowLeft,
   Home,
@@ -34,6 +37,7 @@ import {
   Skull,
   Star,
   Lock,
+  Eye,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
@@ -66,6 +70,7 @@ function PeladaPage() {
   const [votes, setVotes] = useState<MatchVotes | null>(null);
   const [votingOpen, setVotingOpen] = useState(false);
   const [apittoResultsOpen, setApittoResultsOpen] = useState(false);
+  const [auditOpen, setAuditOpen] = useState(false);
   const [validVoterIds, setValidVoterIds] = useState<string[]>([]);
   const [counts, setCounts] = useState<{
     line: number;
@@ -185,17 +190,51 @@ function PeladaPage() {
     return () => { cancelled = true; };
   }, [latest]);
 
-  // Auto-close: when every valid voter has voted, lock the poll.
+  // Auto-close: 100% quorum OR mathematical leader lock.
   useEffect(() => {
     if (!latest || !votes || votes.closed) return;
     const anyMode = voteSettings.mvp || voteSettings.pereba || voteSettings.apitto;
     if (!anyMode) return;
     if (validVoterIds.length === 0) return;
+    const total = validVoterIds.length;
     const allDone = validVoterIds.every((vid) => userHasVoted(votes, vid, voteSettings));
-    if (allDone) {
-      saveVotes(id, latest.id, { ...votes, closed: true, closedAt: new Date().toISOString() });
+    // Mathematical lock applies to MVP/Pereba (winner-take-all). Apitto is averaged
+    // and only closes by full quorum or admin force.
+    const mvpLocked = voteSettings.mvp ? isLeaderMathLocked(votes.mvpVotes, total) : true;
+    const perebaLocked = voteSettings.pereba ? isLeaderMathLocked(votes.perebaVotes, total) : true;
+    const mathLocked =
+      (voteSettings.mvp || voteSettings.pereba) &&
+      !voteSettings.apitto &&
+      mvpLocked &&
+      perebaLocked;
+    if (allDone || mathLocked) {
+      closeAndPersist(votes);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [latest, votes, voteSettings, validVoterIds, id]);
+
+  // Persist winners back into the history record so Rankings/Profile pick them up,
+  // then mark the votes as closed.
+  function closeAndPersist(current: MatchVotes) {
+    if (!latest) return;
+    const list = loadHistory(id);
+    const idx = list.findIndex((h) => h.id === latest.id);
+    if (idx >= 0) {
+      const h = { ...list[idx] };
+      if (voteSettings.mvp && !h.mvp) {
+        const w = computeWinner(current.mvpVotes).id;
+        if (w) h.mvp = w;
+      }
+      if (voteSettings.pereba) {
+        const w = computeWinner(current.perebaVotes).id;
+        if (w) h.pereba = w;
+      }
+      list[idx] = h;
+      saveHistory(id, list);
+      setLatest(h as typeof latest);
+    }
+    saveVotes(id, latest.id, { ...current, closed: true, closedAt: new Date().toISOString() });
+  }
 
   // Auto-open voting modal once per session if the viewer is eligible.
   const [autoShown, setAutoShown] = useState<string | null>(null);
@@ -440,10 +479,18 @@ function PeladaPage() {
                     {isAdmin && !votes?.closed && (
                       <button
                         type="button"
+                        onClick={() => setAuditOpen(true)}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-amber-400/40 bg-amber-400/10 px-3 py-1.5 font-bold uppercase tracking-wider text-amber-300 transition hover:bg-amber-400/20"
+                      >
+                        <Eye className="h-3.5 w-3.5" /> Auditoria (Admin)
+                      </button>
+                    )}
+                    {isAdmin && !votes?.closed && (
+                      <button
+                        type="button"
                         onClick={() => {
-                          if (!latest) return;
-                          const v = loadVotes(id, latest.id);
-                          saveVotes(id, latest.id, { ...v, closed: true, closedAt: new Date().toISOString() });
+                          if (!latest || !votes) return;
+                          closeAndPersist(votes);
                         }}
                         className="inline-flex items-center gap-1.5 rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-1.5 font-bold uppercase tracking-wider text-red-400 transition hover:bg-red-500/20"
                       >
@@ -595,6 +642,17 @@ function PeladaPage() {
           peladaId={id}
           histId={latest.id}
           players={[...latest.teamA.players, ...latest.teamB.players].map((p) => ({ id: p.id, name: p.name }))}
+        />
+      )}
+      {latest && isAdmin && (
+        <AdminVotingAuditModal
+          open={auditOpen}
+          onOpenChange={setAuditOpen}
+          votes={votes}
+          players={[...latest.teamA.players, ...latest.teamB.players].map((p) => ({ id: p.id, name: p.name }))}
+          validVoterIds={validVoterIds}
+          modes={voteSettings}
+          onForceClose={() => votes && closeAndPersist(votes)}
         />
       )}
     </main>
