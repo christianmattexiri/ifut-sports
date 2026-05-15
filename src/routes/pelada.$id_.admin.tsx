@@ -279,14 +279,18 @@ function AdminPage() {
                   <div className="flex items-center gap-2">
                     <Label>Cor de destaque</Label>
                     <ProBadge />
+                    {!isPro && <Lock className="h-3 w-3 text-amber-300/70" />}
                   </div>
-                  <div className="mt-3 flex flex-wrap items-center gap-3">
+                  <div className={`mt-3 flex flex-wrap items-center gap-3 ${!isPro ? "opacity-50 pointer-events-none" : ""}`}>
                     {PALETTE.map((c) => {
                       const active = settings.accent === c.value;
                       return (
                         <button
                           key={c.value}
-                          onClick={() => setSettings((s) => ({ ...s, accent: c.value }))}
+                          onClick={() => {
+                            if (!isPro) { toast.error("Recurso PRO. Faça upgrade para personalizar a cor."); return; }
+                            setSettings((s) => ({ ...s, accent: c.value }));
+                          }}
                           aria-label={c.name}
                           className={`h-9 w-9 rounded-full border-2 transition ${active ? "scale-110 border-white shadow-[0_0_15px_currentColor]" : "border-white/20"}`}
                           style={{ background: c.value, color: c.value }}
@@ -294,7 +298,11 @@ function AdminPage() {
                       );
                     })}
                   </div>
-                  <p className="mt-2 text-xs text-zinc-500">Pré-visualização ao vivo aplicada nesta tela. Salve para tornar permanente.</p>
+                  <p className="mt-2 text-xs text-zinc-500">
+                    {isPro
+                      ? "Pré-visualização ao vivo aplicada nesta tela. Salve para tornar permanente."
+                      : "🔒 Disponível apenas para peladas PRO. A cor padrão (verde) será mantida."}
+                  </p>
                 </div>
               </div>
             </Section>
