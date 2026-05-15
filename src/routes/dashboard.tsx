@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   Home,
@@ -11,6 +11,7 @@ import {
   Trophy,
   Repeat,
   RefreshCw,
+  Mail,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -52,6 +53,7 @@ function Dashboard() {
   const [createOpen, setCreateOpen] = useState(false);
   const [fixoOpen, setFixoOpen] = useState(false);
   const [peladas, setPeladas] = useState<Pelada[]>([]);
+  const [pendingInvites, setPendingInvites] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -62,7 +64,7 @@ function Dashboard() {
         return;
       }
       const uid = sess.session.user.id;
-      const [{ data }, { data: matches }] = await Promise.all([
+      const [{ data }, { data: ownMatches }, { data: memberRows }, { count: invitesCount }] = await Promise.all([
         supabase
           .from("profiles")
           .select("id, full_name, username, avatar_url")
@@ -73,6 +75,15 @@ function Dashboard() {
           .select("id, name, day_of_week, match_time, location, logo_url")
           .eq("admin_id", uid)
           .order("created_at", { ascending: false }),
+        supabase
+          .from("match_members")
+          .select("match:matches(id, name, day_of_week, match_time, location, logo_url)")
+          .eq("user_id", uid),
+        supabase
+          .from("match_invitations")
+          .select("id", { count: "exact", head: true })
+          .eq("invitee_id", uid)
+          .eq("status", "pending"),
       ]);
       if (!active) return;
       setProfile(
@@ -83,8 +94,11 @@ function Dashboard() {
           avatar_url: null,
         },
       );
-      setPeladas(
-        (matches ?? []).map((m: any) => ({
+      const ownIds = new Set<string>();
+      const list: Pelada[] = [];
+      for (const m of (ownMatches ?? []) as any[]) {
+        ownIds.add(m.id);
+        list.push({
           id: m.id,
           name: m.name,
           time: [m.day_of_week, m.match_time].filter(Boolean).join(" • ") || "Sem horário",
@@ -92,8 +106,23 @@ function Dashboard() {
           status: "Ativa" as const,
           avatars: [],
           logoUrl: m.logo_url ?? null,
-        })),
-      );
+        });
+      }
+      for (const row of (memberRows ?? []) as any[]) {
+        const m = row.match;
+        if (!m || ownIds.has(m.id)) continue;
+        list.push({
+          id: m.id,
+          name: m.name,
+          time: [m.day_of_week, m.match_time].filter(Boolean).join(" • ") || "Sem horário",
+          participants: 0,
+          status: "Ativa" as const,
+          avatars: [],
+          logoUrl: m.logo_url ?? null,
+        });
+      }
+      setPeladas(list);
+      setPendingInvites(invitesCount ?? 0);
       setReady(true);
     })();
     return () => {
@@ -142,6 +171,13 @@ function Dashboard() {
 
             <nav className="space-y-1.5">
               <NavItem icon={<Home className="h-4 w-4" />} label="Início" active />
+              <Link to="/convites" className="block">
+                <NavItem
+                  icon={<Mail className="h-4 w-4" />}
+                  label="Convites"
+                  badgeCount={pendingInvites}
+                />
+              </Link>
               {isSuperAdmin && (
                 <NavItem
                   icon={<ShieldCheck className="h-4 w-4" />}
