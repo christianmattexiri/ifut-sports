@@ -709,6 +709,7 @@ function PeladaPage() {
             titlePrefix={mvpPlayer ? `Som do MVP: ${mvpPlayer.name}` : "Som do MVP"}
             disabled={!mvpPlayer}
             disabledHint="Aguardando o primeiro MVP"
+            scopeKey={mvpId ?? "none"}
           />
         );
       })()}
