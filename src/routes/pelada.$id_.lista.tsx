@@ -220,7 +220,7 @@ function ListaPresencaPage() {
     );
   }, [id, categorized, lineLimit, gkLimit, subLimit]);
 
-  const addPlayer = (name: string, isGK = false) => {
+  const addPlayer = (name: string, isGK = false, userId?: string) => {
     if (!name.trim()) return;
     const totalConfirmed = categorized.line.length + categorized.gks.length;
     const totalSubs = categorized.subs.length;
@@ -230,7 +230,7 @@ function ListaPresencaPage() {
     }
     setPlayers((prev) => [
       ...prev,
-      { id: crypto.randomUUID(), name: name.trim(), isGoalkeeper: isGK, paid: false },
+      { id: userId ?? crypto.randomUUID(), name: name.trim(), isGoalkeeper: isGK, paid: false },
     ]);
   };
 
@@ -831,11 +831,15 @@ Bora pro jogo! 🔥
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
         <DialogContent className="border-white/10 bg-zinc-950 text-zinc-100">
           <DialogHeader>
-            <DialogTitle className="text-amber-300">Adicionar jogador</DialogTitle>
+            <DialogTitle className="text-amber-300">Adicionar jogador da pelada</DialogTitle>
           </DialogHeader>
-          <AddPlayerForm
-            onAdd={(name, isGK) => {
-              addPlayer(name, isGK);
+          <AddMemberPicker
+            peladaId={id}
+            excludeIds={players.map((p) => p.id)}
+            open={addOpen}
+            onAdd={(profile, isGK) => {
+              const display = profile.full_name?.trim() || profile.username || "Jogador";
+              addPlayer(display, isGK, profile.id);
               setAddOpen(false);
             }}
           />
