@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Trophy, Skull, Star, StarHalf, Check } from "lucide-react";
+import { Star, StarHalf, Check, ChevronRight } from "lucide-react";
 import { useAvatars } from "@/lib/avatars";
 import {
   loadVotes,
@@ -40,6 +40,12 @@ export function VotingModal({
   const [mvp, setMvp] = useState<string | null>(null);
   const [pereba, setPereba] = useState<string | null>(null);
   const [ratings, setRatings] = useState<Record<string, number>>({});
+  const [apittoIdx, setApittoIdx] = useState(0);
+
+  // Reset sequential index whenever the modal reopens.
+  useEffect(() => {
+    if (open) setApittoIdx(0);
+  }, [open]);
 
   function persistAndClose(updater: (v: MatchVotes) => MatchVotes) {
     const cur = loadVotes(peladaId, histId);
@@ -65,30 +71,56 @@ export function VotingModal({
   }
 
   if (modes.apitto) {
-    const allRated = candidates.every((p) => (ratings[p.id] ?? 0) > 0);
+    if (candidates.length === 0) return null;
+    const cur = candidates[Math.min(apittoIdx, candidates.length - 1)];
+    const rating = ratings[cur.id] ?? 0;
+    const isLast = apittoIdx >= candidates.length - 1;
+    const goNext = () => {
+      if (isLast) submitApitto();
+      else setApittoIdx((i) => i + 1);
+    };
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto border-white/10 bg-zinc-950 text-zinc-100">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto border-white/10 bg-zinc-950 text-zinc-100">
           <DialogHeader>
-            <DialogTitle className="text-amber-400 text-center">⭐ Avalie a Galera</DialogTitle>
+            <DialogTitle className="text-amber-400 text-center">
+              ⭐ Avalie a Galera
+              <span className="ml-2 text-xs font-mono text-zinc-500">
+                {apittoIdx + 1}/{candidates.length}
+              </span>
+            </DialogTitle>
           </DialogHeader>
-          <p className="text-center text-xs text-zinc-400">Dê uma nota de 0,5 a 5 estrelas para cada jogador.</p>
-          <ul className="mt-4 space-y-2">
-            {candidates.map((p) => (
-              <li key={p.id} className="flex items-center gap-3 rounded-xl border border-white/10 bg-zinc-900/60 px-3 py-2.5">
-                <Avatar uid={p.id} name={p.name} avatars={avatars} />
-                <span className="flex-1 text-sm font-medium text-zinc-100">{p.name}</span>
-                <StarRating value={ratings[p.id] ?? 0} onChange={(v) => setRatings((r) => ({ ...r, [p.id]: v }))} />
-              </li>
-            ))}
-          </ul>
+          <p className="text-center text-xs text-zinc-400">
+            Dê uma nota de 0,5 a 5 estrelas para o jogador.
+          </p>
+          <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-zinc-800">
+            <div
+              className="h-full bg-amber-400 transition-all"
+              style={{ width: `${((apittoIdx + (rating > 0 ? 1 : 0)) / candidates.length) * 100}%` }}
+            />
+          </div>
+          <div
+            key={cur.id}
+            className="mt-6 flex flex-col items-center gap-4 animate-in fade-in slide-in-from-right-4 duration-300"
+          >
+            <Avatar uid={cur.id} name={cur.name} avatars={avatars} large />
+            <p className="text-lg font-bold text-zinc-100">{cur.name}</p>
+            <StarRating
+              value={rating}
+              onChange={(v) => setRatings((r) => ({ ...r, [cur.id]: v }))}
+            />
+          </div>
           <button
             type="button"
-            disabled={!allRated}
-            onClick={submitApitto}
-            className="mt-5 w-full rounded-xl border border-[#00FF00]/50 bg-[#00FF00]/15 px-4 py-3 text-sm font-bold uppercase tracking-wider text-[#00FF00] transition hover:bg-[#00FF00]/25 disabled:opacity-40 disabled:cursor-not-allowed"
+            disabled={!rating}
+            onClick={goNext}
+            className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[#00FF00]/50 bg-[#00FF00]/15 px-4 py-3 text-sm font-bold uppercase tracking-wider text-[#00FF00] transition hover:bg-[#00FF00]/25 disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            Enviar Notas
+            {isLast ? "Finalizar Avaliações" : (
+              <>
+                Próximo Jogador <ChevronRight className="h-4 w-4" />
+              </>
+            )}
           </button>
         </DialogContent>
       </Dialog>

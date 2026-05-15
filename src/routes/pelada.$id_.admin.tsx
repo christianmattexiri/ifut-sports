@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import {
   ArrowLeft, Home, ClipboardList, History as HistoryIcon, BarChart3,
   UserCircle2, ShieldCheck, Trophy, UserCog, Upload, Trash2, Save,
-  BarChart, Headphones, DollarSign, Vote, Music,
+  BarChart, Headphones, DollarSign, Vote, Music, Crown, Skull, Star, Target, Sparkles,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
@@ -36,12 +36,21 @@ type Modules = {
   rankings: boolean; somMvp: boolean; financas: boolean; votacoes: boolean; musica: boolean;
 };
 type VoteModes = { mvp: boolean; pereba: boolean; apitto: boolean };
-type AdminSettings = { accent: string; modules: Modules; voteModes: VoteModes };
+type PodiumDisplay = {
+  matador: boolean; maestro: boolean; mvp: boolean; pereba: boolean; apitto: boolean;
+};
+type AdminSettings = {
+  accent: string;
+  modules: Modules;
+  voteModes: VoteModes;
+  podium: PodiumDisplay;
+};
 
 const DEFAULT_SETTINGS: AdminSettings = {
   accent: "#00FF00",
   modules: { rankings: true, somMvp: true, financas: true, votacoes: true, musica: false },
   voteModes: { mvp: true, pereba: false, apitto: false },
+  podium: { matador: true, maestro: true, mvp: true, pereba: true, apitto: true },
 };
 
 export const adminSettingsKey = (id: string) => `pelada:${id}:adminSettings`;
@@ -51,7 +60,14 @@ export function loadAdminSettings(id: string): AdminSettings {
   try {
     const raw = localStorage.getItem(adminSettingsKey(id));
     if (!raw) return DEFAULT_SETTINGS;
-    return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+    const parsed = JSON.parse(raw);
+    return {
+      ...DEFAULT_SETTINGS,
+      ...parsed,
+      podium: { ...DEFAULT_SETTINGS.podium, ...(parsed?.podium ?? {}) },
+      voteModes: { ...DEFAULT_SETTINGS.voteModes, ...(parsed?.voteModes ?? {}) },
+      modules: { ...DEFAULT_SETTINGS.modules, ...(parsed?.modules ?? {}) },
+    };
   } catch { return DEFAULT_SETTINGS; }
 }
 
@@ -282,6 +298,22 @@ function AdminPage() {
               </div>
             </Section>
 
+            {/* Exibição do Pódio */}
+            <Section title="Exibição do Pódio" subtitle="Escolha quais cards aparecem no pódio da Home.">
+              <div className="grid gap-2 md:grid-cols-2">
+                <PodiumToggle icon={<Target className="h-4 w-4" />} color="#fb923c" label="Matador (Gols)"
+                  value={settings.podium.matador} onChange={(v) => setSettings((s) => ({ ...s, podium: { ...s.podium, matador: v } }))} />
+                <PodiumToggle icon={<Sparkles className="h-4 w-4" />} color="#60a5fa" label="Maestro (Assists)"
+                  value={settings.podium.maestro} onChange={(v) => setSettings((s) => ({ ...s, podium: { ...s.podium, maestro: v } }))} />
+                <PodiumToggle icon={<Crown className="h-4 w-4" />} color="#00FF00" label="MVP (Craque)"
+                  value={settings.podium.mvp} onChange={(v) => setSettings((s) => ({ ...s, podium: { ...s.podium, mvp: v } }))} />
+                <PodiumToggle icon={<Skull className="h-4 w-4" />} color="#ef4444" label="Pereba"
+                  value={settings.podium.pereba} onChange={(v) => setSettings((s) => ({ ...s, podium: { ...s.podium, pereba: v } }))} />
+                <PodiumToggle icon={<Star className="h-4 w-4" />} color="#facc15" label="Notas da Galera (Apitto)"
+                  value={settings.podium.apitto} onChange={(v) => setSettings((s) => ({ ...s, podium: { ...s.podium, apitto: v } }))} />
+              </div>
+            </Section>
+
             <button
               onClick={handleSave}
               className="w-full rounded-xl border border-[#00FF00]/40 bg-[#00FF00]/10 px-5 py-3 text-sm font-bold uppercase tracking-wider text-[#00FF00] hover:bg-[#00FF00]/20"
@@ -350,6 +382,20 @@ function CheckRow({ label, checked, onChange }: { label: string; checked: boolea
       <Checkbox checked={checked} onCheckedChange={(v) => onChange(!!v)} className="border-white/20 data-[state=checked]:bg-[#00FF00] data-[state=checked]:text-zinc-950" />
       <span>{label}</span>
     </label>
+  );
+}
+
+function PodiumToggle({
+  icon, color, label, value, onChange,
+}: { icon: React.ReactNode; color: string; label: string; value: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <div className="flex items-center gap-3 rounded-xl border border-white/5 bg-zinc-950/50 px-3 py-3">
+      <div className="grid h-9 w-9 place-items-center rounded-full" style={{ background: `${color}1a`, color }}>
+        {icon}
+      </div>
+      <p className="flex-1 text-sm font-semibold text-zinc-100">{label}</p>
+      <Switch checked={value} onCheckedChange={onChange} className="data-[state=checked]:bg-emerald-500" />
+    </div>
   );
 }
 
