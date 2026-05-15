@@ -292,7 +292,9 @@ function PeladaPage() {
           <div className="flex flex-col items-center gap-2 pb-6">
             <div className="relative">
               <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-[var(--pelada-accent)]/40 bg-zinc-900 shadow-[0_0_30px_-8px_color-mix(in_oklab,var(--pelada-accent)_70%,transparent)]">
-                {peladaLogo ? (
+                {matchLoading ? (
+                  <Skeleton className="h-full w-full rounded-full bg-zinc-800/60" />
+                ) : peladaLogo ? (
                   <img src={peladaLogo} alt={peladaName} className="h-full w-full object-cover" />
                 ) : (
                   <Trophy className="h-9 w-9 text-[var(--pelada-accent)]" />
@@ -300,9 +302,13 @@ function PeladaPage() {
               </div>
               {isPro && <ProTag className="absolute -right-2 -top-1" />}
             </div>
-            <p className="text-center text-base font-bold tracking-tight text-white">
-              {peladaName}
-            </p>
+            {matchLoading ? (
+              <Skeleton className="h-5 w-32 bg-zinc-800/60" />
+            ) : (
+              <p className="text-center text-base font-bold tracking-tight text-white">
+                {peladaName}
+              </p>
+            )}
           </div>
 
           <nav className="space-y-1.5">
