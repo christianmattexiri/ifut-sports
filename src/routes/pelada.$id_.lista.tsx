@@ -1010,27 +1010,126 @@ function PlayerRow({
   );
 }
 
-function AddPlayerForm({ onAdd }: { onAdd: (name: string, isGK: boolean) => void }) {
-  const [name, setName] = useState("");
+type MemberProfile = {
+  id: string;
+  full_name: string | null;
+  username: string | null;
+  avatar_url: string | null;
+};
+
+function AddMemberPicker({
+  peladaId,
+  excludeIds,
+  open,
+  onAdd,
+}: {
+  peladaId: string;
+  excludeIds: string[];
+  open: boolean;
+  onAdd: (profile: MemberProfile, isGK: boolean) => void;
+}) {
+  const [members, setMembers] = useState<MemberProfile[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<string>("");
   const [isGK, setIsGK] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    setLoading(true);
+    setSelected("");
+    setIsGK(false);
+    (async () => {
+      const { data: m } = await supabase
+        .from("matches")
+        .select("admin_id")
+        .eq("id", peladaId)
+        .maybeSingle();
+      const { data: rows } = await supabase
+        .from("match_members")
+        .select("user_id")
+        .eq("match_id", peladaId);
+      const ids = new Set<string>();
+      if (m?.admin_id) ids.add(m.admin_id);
+      for (const r of (rows ?? []) as any[]) ids.add(r.user_id);
+      const list = Array.from(ids);
+      if (list.length === 0) {
+        if (!cancelled) { setMembers([]); setLoading(false); }
+        return;
+      }
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("id, full_name, username, avatar_url")
+        .in("id", list);
+      if (cancelled) return;
+      setMembers(((profs ?? []) as MemberProfile[]));
+      setLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [open, peladaId]);
+
+  const exclude = new Set(excludeIds);
+  const available = members.filter((m) => !exclude.has(m.id));
+
   return (
     <div className="space-y-4 py-2">
-      <Input
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="Nome do jogador"
-        className="border-white/10 bg-zinc-900 text-zinc-100"
-      />
+      {loading ? (
+        <p className="py-6 text-center text-sm text-zinc-400">Carregando membros...</p>
+      ) : available.length === 0 ? (
+        <p className="py-6 text-center text-sm text-zinc-400">
+          Todos os membros da pelada já estão na lista.
+        </p>
+      ) : (
+        <div className="max-h-64 space-y-1.5 overflow-y-auto pr-1">
+          {available.map((p) => {
+            const display = p.full_name?.trim() || p.username || "Jogador";
+            const isSel = selected === p.id;
+            return (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => setSelected(p.id)}
+                className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2 text-left transition ${
+                  isSel
+                    ? "border-amber-400/70 bg-amber-400/10"
+                    : "border-white/10 bg-zinc-900/40 hover:border-amber-400/30"
+                }`}
+              >
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-zinc-800 text-xs font-bold text-zinc-300">
+                  {p.avatar_url ? (
+                    <img src={p.avatar_url} alt={display} className="h-full w-full object-cover" />
+                  ) : (
+                    display.charAt(0).toUpperCase()
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-zinc-100">{display}</p>
+                  {p.username && (
+                    <p className="truncate text-xs text-zinc-500">@{p.username}</p>
+                  )}
+                </div>
+                {isSel && <Check className="h-4 w-4 text-amber-300" />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       <label className="flex items-center gap-2 text-sm text-zinc-200">
         <Checkbox checked={isGK} onCheckedChange={(v) => setIsGK(Boolean(v))} />
         É goleiro?
       </label>
+
       <button
         type="button"
-        onClick={() => onAdd(name, isGK)}
-        className="w-full rounded-xl border border-amber-400/50 bg-amber-400/10 px-4 py-2.5 text-sm font-semibold uppercase tracking-wider text-amber-300 transition hover:bg-amber-400/20"
+        disabled={!selected}
+        onClick={() => {
+          const p = available.find((x) => x.id === selected);
+          if (p) onAdd(p, isGK);
+        }}
+        className="w-full rounded-xl border border-amber-400/50 bg-amber-400/10 px-4 py-2.5 text-sm font-semibold uppercase tracking-wider text-amber-300 transition hover:bg-amber-400/20 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        Adicionar
+        Adicionar à lista
       </button>
     </div>
   );
