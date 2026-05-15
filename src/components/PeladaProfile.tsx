@@ -422,11 +422,13 @@ function RecordCell({
 function MyMatchAccordion({
   m,
   myUserId,
+  viewerId,
   open,
   onToggle,
 }: {
   m: HistMatch;
   myUserId: string;
+  viewerId: string;
   open: boolean;
   onToggle: () => void;
 }) {
@@ -492,8 +494,8 @@ function MyMatchAccordion({
 
       {open && (
         <div className="grid grid-cols-1 gap-5 border-t border-white/5 bg-zinc-950/40 px-4 py-4 md:grid-cols-2">
-          <TeamColumn team={m.teamA} myUserId={myUserId} colorClass="text-[#00FF00]" />
-          <TeamColumn team={m.teamB} myUserId={myUserId} colorClass="text-red-500" />
+          <TeamColumn team={m.teamA} myUserId={myUserId} viewerId={viewerId} colorClass="text-[#00FF00]" />
+          <TeamColumn team={m.teamB} myUserId={myUserId} viewerId={viewerId} colorClass="text-red-500" />
         </div>
       )}
     </div>
