@@ -245,7 +245,7 @@ function UsuariosPage() {
             <Link to="/pelada/$id/historico" params={{ id }} className="block">
               <NavItem icon={<History className="h-4 w-4" />} label="Histórico" />
             </Link>
-            <NavItem icon={<BarChart3 className="h-4 w-4" />} label="Rankings" />
+            <Link to="/pelada/$id/rankings" params={{ id }} className="block"><NavItem icon={<BarChart3 className="h-4 w-4" />} label="Rankings" /></Link>
             <NavItem icon={<UserCircle2 className="h-4 w-4" />} label="Meu perfil na pelada" />
           </nav>
 

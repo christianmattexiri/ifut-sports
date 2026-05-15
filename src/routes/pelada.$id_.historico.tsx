@@ -231,7 +231,7 @@ function HistoricoPage() {
               <NavItem icon={<Trophy className="h-4 w-4" />} label="Partida" gold />
             </Link>
             <NavItem icon={<HistoryIcon className="h-4 w-4" />} label="Histórico" active />
-            <NavItem icon={<BarChart3 className="h-4 w-4" />} label="Rankings" />
+            <Link to="/pelada/$id/rankings" params={{ id }} className="block"><NavItem icon={<BarChart3 className="h-4 w-4" />} label="Rankings" /></Link>
             <NavItem icon={<UserCircle2 className="h-4 w-4" />} label="Meu perfil na pelada" />
           </nav>
 
