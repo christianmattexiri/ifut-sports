@@ -69,8 +69,13 @@ function PeladaPage() {
   const [modalUser, setModalUser] = useState<{ id: string; name: string } | null>(null);
   const [viewerId, setViewerId] = useState<string>("");
   const [adminSettings, setAdminSettings] = useState(() => loadAdminSettings(id));
-  const voteSettings = adminSettings.voteModes;
+  // Vote modes are gated by the master "Votações" module switch.
+  const voteSettings = adminSettings.modules.votacoes
+    ? adminSettings.voteModes
+    : { mvp: false, pereba: false, apitto: false };
   const podiumDisplay = adminSettings.podium;
+  const modules = adminSettings.modules;
+  const accent = adminSettings.accent || "#00FF00";
   const [votes, setVotes] = useState<MatchVotes | null>(null);
   const [votingOpen, setVotingOpen] = useState(false);
   const [apittoResultsOpen, setApittoResultsOpen] = useState(false);
@@ -272,7 +277,10 @@ function PeladaPage() {
     : "";
 
   return (
-    <main className="relative min-h-screen w-full bg-zinc-950 text-zinc-100 font-sans antialiased">
+    <main
+      className="relative min-h-screen w-full bg-zinc-950 text-zinc-100 font-sans antialiased pb-20"
+      style={{ ["--pelada-accent" as string]: accent }}
+    >
       <div
         aria-hidden
         className="pointer-events-none fixed -top-40 left-1/3 h-[480px] w-[480px] rounded-full bg-[var(--pelada-accent)]/10 blur-[160px]"
@@ -313,7 +321,9 @@ function PeladaPage() {
             <Link to="/pelada/$id/historico" params={{ id }} className="block">
               <NavItem icon={<History className="h-4 w-4" />} label="Histórico" />
             </Link>
-            <Link to="/pelada/$id/rankings" params={{ id }} className="block"><NavItem icon={<BarChart3 className="h-4 w-4" />} label="Rankings" /></Link>
+            {modules.rankings && (
+              <Link to="/pelada/$id/rankings" params={{ id }} className="block"><NavItem icon={<BarChart3 className="h-4 w-4" />} label="Rankings" /></Link>
+            )}
             <Link to="/pelada/$id/perfil" params={{ id }} className="block"><NavItem icon={<UserCircle2 className="h-4 w-4" />} label="Meu perfil na pelada" /></Link>
           </nav>
 
