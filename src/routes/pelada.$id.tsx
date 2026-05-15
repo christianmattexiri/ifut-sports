@@ -66,6 +66,7 @@ function PeladaPage() {
   const [votes, setVotes] = useState<MatchVotes | null>(null);
   const [votingOpen, setVotingOpen] = useState(false);
   const [apittoResultsOpen, setApittoResultsOpen] = useState(false);
+  const [validVoterIds, setValidVoterIds] = useState<string[]>([]);
   const [counts, setCounts] = useState<{
     line: number;
     lineLimit: number;
@@ -168,6 +169,33 @@ function PeladaPage() {
     const off = onVotesUpdated(() => setVotes(loadVotes(id, latest!.id)));
     return off;
   }, [id, latest]);
+
+  // Resolve which match players are real registered users (valid voters).
+  // Guests added via "Chamar amigo" get random UUIDs that don't exist in profiles.
+  useEffect(() => {
+    if (!latest) { setValidVoterIds([]); return; }
+    const ids = [...latest.teamA.players, ...latest.teamB.players].map((p) => p.id);
+    if (ids.length === 0) { setValidVoterIds([]); return; }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.from("profiles").select("id").in("id", ids);
+      if (cancelled) return;
+      setValidVoterIds((data ?? []).map((r) => r.id as string));
+    })();
+    return () => { cancelled = true; };
+  }, [latest]);
+
+  // Auto-close: when every valid voter has voted, lock the poll.
+  useEffect(() => {
+    if (!latest || !votes || votes.closed) return;
+    const anyMode = voteSettings.mvp || voteSettings.pereba || voteSettings.apitto;
+    if (!anyMode) return;
+    if (validVoterIds.length === 0) return;
+    const allDone = validVoterIds.every((vid) => userHasVoted(votes, vid, voteSettings));
+    if (allDone) {
+      saveVotes(id, latest.id, { ...votes, closed: true, closedAt: new Date().toISOString() });
+    }
+  }, [latest, votes, voteSettings, validVoterIds, id]);
 
   // Auto-open voting modal once per session if the viewer is eligible.
   const [autoShown, setAutoShown] = useState<string | null>(null);
