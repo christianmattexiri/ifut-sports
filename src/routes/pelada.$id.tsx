@@ -218,13 +218,16 @@ function PeladaPage() {
                 </p>
               )}
             </div>
-            <button
-              type="button"
-              className="rounded-lg p-2 text-zinc-400 transition hover:bg-white/5 hover:text-[#00FF00]"
-              aria-label="Editar"
-            >
-              <Pencil className="h-4 w-4" />
-            </button>
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => navigate({ to: "/pelada/$id/lista", params: { id } })}
+                className="rounded-lg p-2 text-zinc-400 transition hover:bg-white/5 hover:text-[#00FF00]"
+                aria-label="Editar"
+              >
+                <Pencil className="h-4 w-4" />
+              </button>
+            )}
           </div>
 
           <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
