@@ -23,6 +23,8 @@ import {
   Minus,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { peladaMatchQuery, viewerQuery } from "@/lib/pelada-queries";
 import {
   Dialog,
   DialogContent,
@@ -46,6 +48,12 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/pelada/$id_/historico")({
   component: HistoricoPage,
   head: () => ({ meta: [{ title: "iFut — Histórico de Jogos" }] }),
+  loader: async ({ params, context }) => {
+    await Promise.all([
+      context.queryClient.ensureQueryData(peladaMatchQuery(params.id)),
+      context.queryClient.ensureQueryData(viewerQuery()),
+    ]);
+  },
 });
 
 type HistPlayer = { id: string; name: string; goals: number; assists: number };
@@ -99,8 +107,13 @@ function formatDate(iso: string) {
 function HistoricoPage() {
   const navigate = useNavigate();
   const { id } = useParams({ from: "/pelada/$id_/historico" });
-  const [match, setMatch] = useState<Match | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { data: matchData } = useQuery(peladaMatchQuery(id));
+  const match = (matchData ?? null) as Match | null;
+  const { data: viewer, isLoading: viewerLoading } = useQuery(viewerQuery());
+  const isAdmin = !!viewer && !!match && match.admin_id === viewer.id;
+  useEffect(() => {
+    if (!viewerLoading && viewer === null) navigate({ to: "/" });
+  }, [viewer, viewerLoading, navigate]);
   const [history, setHistory] = useState<HistMatch[]>([]);
   const [openId, setOpenId] = useState<string | null>(null);
   const [editing, setEditing] = useState<HistMatch | null>(null);
@@ -109,25 +122,6 @@ function HistoricoPage() {
   useEffect(() => {
     setHistory(loadHistory(id));
   }, [id]);
-
-  useEffect(() => {
-    (async () => {
-      const { data: sess } = await supabase.auth.getSession();
-      if (!sess.session) {
-        navigate({ to: "/" });
-        return;
-      }
-      const uid = sess.session.user.id;
-      const { data: m } = await supabase
-        .from("matches")
-        .select("id, name, logo_url, admin_id")
-        .eq("id", id)
-        .maybeSingle();
-      const mm = m as Match | null;
-      setMatch(mm);
-      setIsAdmin((mm?.admin_id ?? null) === uid);
-    })();
-  }, [navigate, id]);
 
   function persist(next: HistMatch[]) {
     // Sort newest first by date
