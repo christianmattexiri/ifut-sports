@@ -180,7 +180,7 @@ function RankingsPage() {
               <NavItem icon={<HistoryIcon className="h-4 w-4" />} label="Histórico" />
             </Link>
             <NavItem icon={<BarChart3 className="h-4 w-4" />} label="Rankings" active />
-            <NavItem icon={<UserCircle2 className="h-4 w-4" />} label="Meu perfil na pelada" />
+            <Link to="/pelada/$id/perfil" params={{ id }} className="block"><NavItem icon={<UserCircle2 className="h-4 w-4" />} label="Meu perfil na pelada" /></Link>
           </nav>
           <div className="mt-auto pt-6">
             {isAdmin && (
