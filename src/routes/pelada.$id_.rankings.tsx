@@ -234,33 +234,15 @@ function RankingsPage() {
 
           {/* Podium */}
           <div className="mt-10 grid grid-cols-3 items-end gap-3 md:gap-6">
-            {/* 2nd */}
-            <PodiumCard
-              place={2}
-              player={podium[1]}
-              stat={activeTab}
-              color="#9ca3af"
-              label="2nd PLACE"
-              size="sm"
-            />
-            {/* 1st */}
-            <PodiumCard
-              place={1}
-              player={podium[0]}
-              stat={activeTab}
-              color="#fbbf24"
-              label="1st PLACE"
-              size="lg"
-            />
-            {/* 3rd */}
-            <PodiumCard
-              place={3}
-              player={podium[2]}
-              stat={activeTab}
-              color="#f97316"
-              label="3rd PLACE"
-              size="sm"
-            />
+            <PodiumLink id={id} player={podium[1]}>
+              <PodiumCard place={2} player={podium[1]} stat={activeTab} color="#9ca3af" label="2nd PLACE" size="sm" />
+            </PodiumLink>
+            <PodiumLink id={id} player={podium[0]}>
+              <PodiumCard place={1} player={podium[0]} stat={activeTab} color="#fbbf24" label="1st PLACE" size="lg" />
+            </PodiumLink>
+            <PodiumLink id={id} player={podium[2]}>
+              <PodiumCard place={3} player={podium[2]} stat={activeTab} color="#f97316" label="3rd PLACE" size="sm" />
+            </PodiumLink>
           </div>
 
           {/* List */}
@@ -272,13 +254,19 @@ function RankingsPage() {
                 </p>
               ) : (
                 rest.map((p, idx) => (
-                  <RankRow
+                  <Link
                     key={p.id}
-                    position={idx + 4}
-                    player={p}
-                    stat={activeTab}
-                    last={idx === rest.length - 1}
-                  />
+                    to="/pelada/$id/perfil/$userId"
+                    params={{ id, userId: p.id }}
+                    className="block transition hover:bg-white/5"
+                  >
+                    <RankRow
+                      position={idx + 4}
+                      player={p}
+                      stat={activeTab}
+                      last={idx === rest.length - 1}
+                    />
+                  </Link>
                 ))
               )}
             </div>
