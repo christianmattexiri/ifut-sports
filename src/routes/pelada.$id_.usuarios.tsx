@@ -228,7 +228,12 @@ function UsuariosPage() {
             <Link to="/pelada/$id/lista" params={{ id }} className="block">
               <NavItem icon={<ClipboardList className="h-4 w-4" />} label="Lista de Presença" />
             </Link>
-            <NavItem icon={<History className="h-4 w-4" />} label="Histórico" />
+            <Link to="/pelada/$id/partida" params={{ id }} className="block">
+              <NavItem icon={<Trophy className="h-4 w-4" />} label="Partida" gold />
+            </Link>
+            <Link to="/pelada/$id/historico" params={{ id }} className="block">
+              <NavItem icon={<History className="h-4 w-4" />} label="Histórico" />
+            </Link>
             <NavItem icon={<BarChart3 className="h-4 w-4" />} label="Rankings" />
             <NavItem icon={<UserCircle2 className="h-4 w-4" />} label="Meu perfil na pelada" />
           </nav>
@@ -280,7 +285,7 @@ function UsuariosPage() {
                     key={m.id}
                     profile={m}
                     isAdmin={m.id === match?.admin_id}
-                    rating={ratings[m.id] ?? 5}
+                    rating={ratings[m.id]}
                     onRatingChange={(v) => updateRating(m.id, v)}
                     onRemove={() => removeMember(m.id)}
                   />
@@ -305,12 +310,14 @@ function UsuariosPage() {
   );
 }
 
-function NavItem({ icon, label, active }: { icon: React.ReactNode; label: string; active?: boolean }) {
+function NavItem({ icon, label, active, gold }: { icon: React.ReactNode; label: string; active?: boolean; gold?: boolean }) {
   return (
     <div
       className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
         active
           ? "bg-[#00FF00]/10 text-[#00FF00] shadow-[inset_0_0_0_1px_rgba(0,255,0,0.25)]"
+          : gold
+          ? "text-yellow-500 hover:bg-yellow-500/10"
           : "text-zinc-300 hover:bg-white/5 hover:text-zinc-100"
       }`}
     >
@@ -329,7 +336,7 @@ function MemberRow({
 }: {
   profile: Profile;
   isAdmin: boolean;
-  rating: number;
+  rating: number | undefined;
   onRatingChange: (v: number) => void;
   onRemove: () => void;
 }) {
@@ -352,16 +359,17 @@ function MemberRow({
       <div className="flex shrink-0 items-center gap-1.5 rounded-lg border border-[#00FF00]/30 bg-zinc-900/60 px-2 py-1">
         <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Nota</span>
         <input
-          type="number"
-          min={1}
-          max={10}
-          step={0.1}
-          value={rating}
-          onChange={(e) => {
-            const n = Number(e.target.value);
+          type="text"
+          inputMode="decimal"
+          placeholder="Ex: 7.5"
+          defaultValue={rating ? String(rating) : ""}
+          onBlur={(e) => {
+            const raw = e.target.value.replace(",", ".").trim();
+            if (!raw) return;
+            const n = Number(raw);
             if (!Number.isNaN(n)) onRatingChange(n);
           }}
-          className="w-14 rounded-md border border-white/10 bg-zinc-950 px-1.5 py-0.5 text-center text-xs font-bold tabular-nums text-[#00FF00] outline-none focus:border-[#00FF00]/60"
+          className="w-16 appearance-none rounded-md border border-white/10 bg-zinc-950 px-1.5 py-0.5 text-center text-xs font-bold tabular-nums text-[#00FF00] outline-none focus:border-[#00FF00]/60 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
         />
       </div>
       {isAdmin ? (

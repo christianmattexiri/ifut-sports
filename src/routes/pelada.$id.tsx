@@ -173,6 +173,9 @@ function PeladaPage() {
             <Link to="/pelada/$id/lista" params={{ id }} className="block">
               <NavItem icon={<ClipboardList className="h-4 w-4" />} label="Lista de Presença" />
             </Link>
+            <Link to="/pelada/$id/partida" params={{ id }} className="block">
+              <NavItem icon={<Trophy className="h-4 w-4" />} label="Partida" gold />
+            </Link>
             <Link to="/pelada/$id/historico" params={{ id }} className="block">
               <NavItem icon={<History className="h-4 w-4" />} label="Histórico" />
             </Link>
@@ -339,13 +342,15 @@ function PeladaPage() {
   );
 }
 
-function NavItem({ icon, label, active }: { icon: React.ReactNode; label: string; active?: boolean }) {
+function NavItem({ icon, label, active, gold }: { icon: React.ReactNode; label: string; active?: boolean; gold?: boolean }) {
   return (
     <button
       type="button"
       className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
         active
           ? "bg-[#00FF00]/10 text-[#00FF00] shadow-[inset_0_0_0_1px_rgba(0,255,0,0.25)]"
+          : gold
+          ? "text-yellow-500 hover:bg-yellow-500/10"
           : "text-zinc-300 hover:bg-white/5 hover:text-zinc-100"
       }`}
     >

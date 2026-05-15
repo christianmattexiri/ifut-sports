@@ -121,6 +121,24 @@ function Dashboard() {
           logoUrl: m.logo_url ?? null,
         });
       }
+
+      // Fetch member counts for each pelada (admin counts as 1 + match_members rows)
+      const matchIds = list.map((p) => p.id);
+      if (matchIds.length) {
+        const { data: allMembers } = await supabase
+          .from("match_members")
+          .select("match_id")
+          .in("match_id", matchIds);
+        const memberCounts = new Map<string, number>();
+        for (const r of (allMembers ?? []) as any[]) {
+          memberCounts.set(r.match_id, (memberCounts.get(r.match_id) ?? 0) + 1);
+        }
+        for (const p of list) {
+          // +1 for the admin (not stored in match_members)
+          p.participants = (memberCounts.get(p.id) ?? 0) + 1;
+        }
+      }
+
       setPeladas(list);
       setPendingInvites(invitesCount ?? 0);
       setReady(true);

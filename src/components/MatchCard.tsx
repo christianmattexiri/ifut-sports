@@ -14,30 +14,34 @@ export function MatchCard({ pelada, onClick }: { pelada: Pelada; onClick?: () =>
   return (
     <article
       onClick={onClick}
-      className="group relative cursor-pointer overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/60 p-5 backdrop-blur-xl transition-transform duration-200 hover:scale-[1.02] hover:border-[#00FF00]/30"
+      className="group relative cursor-pointer overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/60 p-6 backdrop-blur-xl transition-transform duration-200 hover:scale-[1.02] hover:border-[#00FF00]/30"
     >
       <div className="absolute inset-x-6 -top-px h-px bg-gradient-to-r from-transparent via-[#00FF00]/40 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
 
       <header className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           {pelada.logoUrl ? (
             <img
               src={pelada.logoUrl}
               alt={pelada.name}
-              className="h-12 w-12 rounded-full border border-[#00FF00]/30 bg-zinc-800 object-cover"
+              className="h-20 w-20 rounded-full border-2 border-[#00FF00]/40 bg-zinc-800 object-cover shadow-[0_0_25px_-8px_rgba(0,255,0,0.55)]"
             />
-          ) : null}
+          ) : (
+            <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-[#00FF00]/40 bg-zinc-800 text-2xl font-black text-[#00FF00] shadow-[0_0_25px_-8px_rgba(0,255,0,0.55)]">
+              {pelada.name.charAt(0).toUpperCase()}
+            </div>
+          )}
           <div>
-            <h3 className="text-lg font-semibold text-zinc-50">{pelada.name}</h3>
-            <p className="mt-1 inline-flex items-center gap-1.5 text-xs text-zinc-400">
-              <Clock className="h-3.5 w-3.5" />
+            <h3 className="text-2xl font-bold tracking-tight text-zinc-50">{pelada.name}</h3>
+            <p className="mt-1.5 inline-flex items-center gap-1.5 text-sm text-zinc-400">
+              <Clock className="h-4 w-4" />
               {pelada.time}
             </p>
           </div>
         </div>
       </header>
 
-      <div className="mt-5 flex items-center gap-3">
+      <div className="mt-6 flex items-center gap-3">
         <div className="flex -space-x-2">
           {pelada.avatars.map((src, i) => (
             <img
@@ -48,9 +52,9 @@ export function MatchCard({ pelada, onClick }: { pelada: Pelada; onClick?: () =>
             />
           ))}
         </div>
-        <span className="inline-flex items-center gap-1 rounded-full bg-white/5 px-2 py-0.5 text-xs text-zinc-300">
-          <Users className="h-3 w-3" />
-          {pelada.participants}
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1 text-sm font-semibold text-zinc-200">
+          <Users className="h-4 w-4" />
+          {pelada.participants} {pelada.participants === 1 ? "membro" : "membros"}
         </span>
       </div>
 
