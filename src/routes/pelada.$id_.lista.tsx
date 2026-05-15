@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
+import { useAvatars } from "@/lib/avatars";
 import {
   Dialog,
   DialogContent,
@@ -202,6 +203,7 @@ function ListaPresencaPage() {
     () => [...categorized.line, ...categorized.gks, ...categorized.subs],
     [categorized],
   );
+  const avatarMap = useAvatars(orderedPlayers.map((p) => p.id));
 
   // Persist counts so other pages (Pelada home) can read them
   useEffect(() => {
@@ -663,11 +665,12 @@ Bora pro jogo! 🔥
               ) : (
                 orderedPlayers.map((p, idx) => {
                   const isSub = idx >= lineLimit + gkLimit;
+                  const av = avatarMap[p.id]?.avatar_url ?? p.avatarUrl ?? null;
                   return (
                     <PlayerRow
                       key={p.id}
                       position={idx + 1}
-                      player={p}
+                      player={{ ...p, avatarUrl: av }}
                       isSub={isSub}
                       onTogglePaid={() => togglePaid(p.id)}
                       onRemove={() => removePlayer(p.id)}
