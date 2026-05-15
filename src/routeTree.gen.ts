@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as PeladaIdRouteImport } from './routes/pelada.$id'
 import { Route as PeladaIdUsuariosRouteImport } from './routes/pelada.$id_.usuarios'
 import { Route as PeladaIdRankingsRouteImport } from './routes/pelada.$id_.rankings'
+import { Route as PeladaIdPerfilRouteImport } from './routes/pelada.$id_.perfil'
 import { Route as PeladaIdPartidaRouteImport } from './routes/pelada.$id_.partida'
 import { Route as PeladaIdListaRouteImport } from './routes/pelada.$id_.lista'
 import { Route as PeladaIdHistoricoRouteImport } from './routes/pelada.$id_.historico'
@@ -49,6 +50,11 @@ const PeladaIdRankingsRoute = PeladaIdRankingsRouteImport.update({
   path: '/pelada/$id/rankings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PeladaIdPerfilRoute = PeladaIdPerfilRouteImport.update({
+  id: '/pelada/$id_/perfil',
+  path: '/pelada/$id/perfil',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PeladaIdPartidaRoute = PeladaIdPartidaRouteImport.update({
   id: '/pelada/$id_/partida',
   path: '/pelada/$id/partida',
@@ -73,6 +79,7 @@ export interface FileRoutesByFullPath {
   '/pelada/$id/historico': typeof PeladaIdHistoricoRoute
   '/pelada/$id/lista': typeof PeladaIdListaRoute
   '/pelada/$id/partida': typeof PeladaIdPartidaRoute
+  '/pelada/$id/perfil': typeof PeladaIdPerfilRoute
   '/pelada/$id/rankings': typeof PeladaIdRankingsRoute
   '/pelada/$id/usuarios': typeof PeladaIdUsuariosRoute
 }
@@ -84,6 +91,7 @@ export interface FileRoutesByTo {
   '/pelada/$id/historico': typeof PeladaIdHistoricoRoute
   '/pelada/$id/lista': typeof PeladaIdListaRoute
   '/pelada/$id/partida': typeof PeladaIdPartidaRoute
+  '/pelada/$id/perfil': typeof PeladaIdPerfilRoute
   '/pelada/$id/rankings': typeof PeladaIdRankingsRoute
   '/pelada/$id/usuarios': typeof PeladaIdUsuariosRoute
 }
@@ -96,6 +104,7 @@ export interface FileRoutesById {
   '/pelada/$id_/historico': typeof PeladaIdHistoricoRoute
   '/pelada/$id_/lista': typeof PeladaIdListaRoute
   '/pelada/$id_/partida': typeof PeladaIdPartidaRoute
+  '/pelada/$id_/perfil': typeof PeladaIdPerfilRoute
   '/pelada/$id_/rankings': typeof PeladaIdRankingsRoute
   '/pelada/$id_/usuarios': typeof PeladaIdUsuariosRoute
 }
@@ -109,6 +118,7 @@ export interface FileRouteTypes {
     | '/pelada/$id/historico'
     | '/pelada/$id/lista'
     | '/pelada/$id/partida'
+    | '/pelada/$id/perfil'
     | '/pelada/$id/rankings'
     | '/pelada/$id/usuarios'
   fileRoutesByTo: FileRoutesByTo
@@ -120,6 +130,7 @@ export interface FileRouteTypes {
     | '/pelada/$id/historico'
     | '/pelada/$id/lista'
     | '/pelada/$id/partida'
+    | '/pelada/$id/perfil'
     | '/pelada/$id/rankings'
     | '/pelada/$id/usuarios'
   id:
@@ -131,6 +142,7 @@ export interface FileRouteTypes {
     | '/pelada/$id_/historico'
     | '/pelada/$id_/lista'
     | '/pelada/$id_/partida'
+    | '/pelada/$id_/perfil'
     | '/pelada/$id_/rankings'
     | '/pelada/$id_/usuarios'
   fileRoutesById: FileRoutesById
@@ -143,6 +155,7 @@ export interface RootRouteChildren {
   PeladaIdHistoricoRoute: typeof PeladaIdHistoricoRoute
   PeladaIdListaRoute: typeof PeladaIdListaRoute
   PeladaIdPartidaRoute: typeof PeladaIdPartidaRoute
+  PeladaIdPerfilRoute: typeof PeladaIdPerfilRoute
   PeladaIdRankingsRoute: typeof PeladaIdRankingsRoute
   PeladaIdUsuariosRoute: typeof PeladaIdUsuariosRoute
 }
@@ -191,6 +204,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PeladaIdRankingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pelada/$id_/perfil': {
+      id: '/pelada/$id_/perfil'
+      path: '/pelada/$id/perfil'
+      fullPath: '/pelada/$id/perfil'
+      preLoaderRoute: typeof PeladaIdPerfilRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pelada/$id_/partida': {
       id: '/pelada/$id_/partida'
       path: '/pelada/$id/partida'
@@ -223,9 +243,20 @@ const rootRouteChildren: RootRouteChildren = {
   PeladaIdHistoricoRoute: PeladaIdHistoricoRoute,
   PeladaIdListaRoute: PeladaIdListaRoute,
   PeladaIdPartidaRoute: PeladaIdPartidaRoute,
+  PeladaIdPerfilRoute: PeladaIdPerfilRoute,
   PeladaIdRankingsRoute: PeladaIdRankingsRoute,
   PeladaIdUsuariosRoute: PeladaIdUsuariosRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
