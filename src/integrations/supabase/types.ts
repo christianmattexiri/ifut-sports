@@ -49,6 +49,32 @@ export type Database = {
           },
         ]
       }
+      match_members: {
+        Row: {
+          created_at: string
+          match_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          match_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          match_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_members_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       matches: {
         Row: {
           admin_id: string
