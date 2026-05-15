@@ -81,6 +81,7 @@ export type Database = {
           created_at: string
           day_of_week: string | null
           id: string
+          is_pro: boolean
           location: string | null
           logo_url: string | null
           match_time: string | null
@@ -92,6 +93,7 @@ export type Database = {
           created_at?: string
           day_of_week?: string | null
           id?: string
+          is_pro?: boolean
           location?: string | null
           logo_url?: string | null
           match_time?: string | null
@@ -103,6 +105,7 @@ export type Database = {
           created_at?: string
           day_of_week?: string | null
           id?: string
+          is_pro?: boolean
           location?: string | null
           logo_url?: string | null
           match_time?: string | null
