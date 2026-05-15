@@ -797,3 +797,14 @@ function PodiumCard({
     </div>
   );
 }
+
+function SinglePlayerAvatar({ player, fallbackColor }: { player: { id: string; name: string }; fallbackColor?: string }) {
+  const av = useAvatars([player.id]);
+  const url = av[player.id]?.avatar_url;
+  if (url) return <img src={url} alt={player.name} className="h-full w-full object-cover" />;
+  return (
+    <span className="text-2xl font-black" style={{ color: fallbackColor ?? "#e4e4e7" }}>
+      {player.name[0]?.toUpperCase()}
+    </span>
+  );
+}
