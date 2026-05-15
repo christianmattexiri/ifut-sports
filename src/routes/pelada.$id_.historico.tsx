@@ -57,6 +57,7 @@ export type HistMatch = {
   teamA: HistTeam;
   teamB: HistTeam;
   mvp: string | null; // player id
+  pereba?: string | null; // player id (winner of Pereba vote)
   topScorers: string[]; // ids
   topAssists: string[]; // ids
 };
