@@ -16,6 +16,7 @@ import {
   User as UserIcon,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { isSuperAdminUsername } from "@/lib/admin";
 import {
   Dialog,
   DialogContent,
@@ -61,6 +62,30 @@ function UsuariosPage() {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [pendingInviteIds, setPendingInviteIds] = useState<Set<string>>(new Set());
+  const [ratings, setRatings] = useState<Record<string, number>>({});
+
+  // Hydrate ratings from localStorage
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = localStorage.getItem(`pelada:${id}:ratings`);
+      if (raw) setRatings(JSON.parse(raw));
+    } catch {
+      /* ignore */
+    }
+  }, [id]);
+
+  const updateRating = (pid: string, value: number) => {
+    const v = Math.max(1, Math.min(10, Math.round(value * 10) / 10));
+    setRatings((prev) => {
+      const next = { ...prev, [pid]: v };
+      if (typeof window !== "undefined") {
+        localStorage.setItem(`pelada:${id}:ratings`, JSON.stringify(next));
+      }
+      // TODO: Salvar nota na tabela associativa match_players (rating numeric)
+      return next;
+    });
+  };
 
   useEffect(() => {
     (async () => {
@@ -76,19 +101,27 @@ function UsuariosPage() {
         .eq("id", id)
         .maybeSingle();
       const match = m as Match | null;
-      if (!match || match.admin_id !== uid) {
+      // Carrega meu profile primeiro para checar super admin
+      const { data: myProf } = await supabase
+        .from("profiles")
+        .select("id, full_name, username, avatar_url")
+        .eq("id", uid)
+        .maybeSingle();
+      const isOwner = match?.admin_id === uid;
+      const isSuper = isSuperAdminUsername(myProf?.username);
+      if (!match || (!isOwner && !isSuper)) {
         toast.error("Acesso restrito ao admin da pelada");
         navigate({ to: "/pelada/$id", params: { id } });
         return;
       }
       setMatch(match);
 
-      // Carrega admin + membros confirmados (match_members)
+      // Carrega admin da pelada + membros confirmados (match_members)
       const [{ data: adminProf }, { data: memberRows }, { data: invs }] = await Promise.all([
         supabase
           .from("profiles")
           .select("id, full_name, username, avatar_url")
-          .eq("id", uid)
+          .eq("id", match.admin_id)
           .maybeSingle(),
         supabase
           .from("match_members")
@@ -247,6 +280,8 @@ function UsuariosPage() {
                     key={m.id}
                     profile={m}
                     isAdmin={m.id === match?.admin_id}
+                    rating={ratings[m.id] ?? 5}
+                    onRatingChange={(v) => updateRating(m.id, v)}
                     onRemove={() => removeMember(m.id)}
                   />
                 ))
@@ -288,10 +323,14 @@ function NavItem({ icon, label, active }: { icon: React.ReactNode; label: string
 function MemberRow({
   profile,
   isAdmin,
+  rating,
+  onRatingChange,
   onRemove,
 }: {
   profile: Profile;
   isAdmin: boolean;
+  rating: number;
+  onRatingChange: (v: number) => void;
   onRemove: () => void;
 }) {
   const display = profile.full_name?.trim() || profile.username;
@@ -309,6 +348,21 @@ function MemberRow({
       <div className="flex-1 min-w-0">
         <p className="truncate text-sm font-semibold text-zinc-100">{display}</p>
         <p className="truncate text-xs text-zinc-500">@{profile.username}</p>
+      </div>
+      <div className="flex shrink-0 items-center gap-1.5 rounded-lg border border-[#00FF00]/30 bg-zinc-900/60 px-2 py-1">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Nota</span>
+        <input
+          type="number"
+          min={1}
+          max={10}
+          step={0.1}
+          value={rating}
+          onChange={(e) => {
+            const n = Number(e.target.value);
+            if (!Number.isNaN(n)) onRatingChange(n);
+          }}
+          className="w-14 rounded-md border border-white/10 bg-zinc-950 px-1.5 py-0.5 text-center text-xs font-bold tabular-nums text-[#00FF00] outline-none focus:border-[#00FF00]/60"
+        />
       </div>
       {isAdmin ? (
         <span className="rounded-md border border-amber-400/40 bg-amber-400/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-300">

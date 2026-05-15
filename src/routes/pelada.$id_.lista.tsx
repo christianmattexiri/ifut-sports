@@ -27,6 +27,7 @@ import {
   UserCog,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { isSuperAdminUsername } from "@/lib/admin";
 import {
   Dialog,
   DialogContent,
@@ -37,6 +38,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
+import { MousePointerClick, Scale, Dices, RefreshCw } from "lucide-react";
 
 export const Route = createFileRoute("/pelada/$id_/lista")({
   component: ListaPresencaPage,
@@ -104,6 +106,25 @@ function ListaPresencaPage() {
   const [editValuesOpen, setEditValuesOpen] = useState(false);
   const [editLimitsOpen, setEditLimitsOpen] = useState(false);
 
+  // Sorteio
+  const [sorteioOpen, setSorteioOpen] = useState(false);
+  const [sepOpen, setSepOpen] = useState(false);
+  const [sepMode, setSepMode] = useState<"manual" | "fair" | "random">("manual");
+  const [ratings, setRatings] = useState<Record<string, number>>({});
+  const [teamA, setTeamA] = useState<Player[]>([]);
+  const [teamB, setTeamB] = useState<Player[]>([]);
+  const [pool, setPool] = useState<Player[]>([]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = localStorage.getItem(`pelada:${id}:ratings`);
+      if (raw) setRatings(JSON.parse(raw));
+    } catch {
+      /* ignore */
+    }
+  }, [id]);
+
   // Hydrate persisted state from localStorage
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -145,7 +166,8 @@ function ListaPresencaPage() {
       ]);
       const match = m as Match | null;
       setMatch(match);
-      setIsAdmin(((m as { admin_id?: string } | null)?.admin_id ?? null) === uid);
+      const owner = ((m as { admin_id?: string } | null)?.admin_id ?? null) === uid;
+      setIsAdmin(owner || isSuperAdminUsername(prof?.username));
       setMe({ id: uid, fullName: prof?.full_name?.trim() || prof?.username || "Você" });
       setSettings((s) => ({
         ...s,
@@ -293,6 +315,103 @@ Bora pro jogo! 🔥
     toast.success("Lista e configurações salvas com sucesso!");
   };
 
+  // ============ SORTEIO ============
+  const confirmedPlayers = useMemo(
+    () =>
+      [...categorized.line, ...categorized.gks].map((p) => ({
+        ...p,
+        rating: ratings[p.id] ?? p.rating ?? 5,
+      })),
+    [categorized, ratings],
+  );
+
+  function shuffle<T>(arr: T[]): T[] {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function runSorteio(mode: "manual" | "fair" | "random") {
+    const all = confirmedPlayers;
+    const gks = all.filter((p) => p.isGoalkeeper);
+    const line = all.filter((p) => !p.isGoalkeeper);
+    const a: Player[] = [];
+    const b: Player[] = [];
+    const remaining: Player[] = [];
+
+    // Goleiros: 1 em cada time
+    const shuffledGks = shuffle(gks);
+    if (shuffledGks[0]) a.push(shuffledGks[0]);
+    if (shuffledGks[1]) b.push(shuffledGks[1]);
+    for (let i = 2; i < shuffledGks.length; i++) remaining.push(shuffledGks[i]);
+
+    if (mode === "manual") {
+      remaining.push(...line);
+    } else if (mode === "random") {
+      const sh = shuffle(line);
+      const half = Math.ceil(sh.length / 2);
+      a.push(...sh.slice(0, half));
+      b.push(...sh.slice(half));
+    } else {
+      // fair: snake/greedy by rating
+      const sorted = [...line].sort((x, y) => (y.rating ?? 5) - (x.rating ?? 5));
+      const sum = (t: Player[]) => t.reduce((s, p) => s + (p.rating ?? 5), 0);
+      for (const p of sorted) {
+        const sa = sum(a.filter((x) => !x.isGoalkeeper));
+        const sb = sum(b.filter((x) => !x.isGoalkeeper));
+        if (sa <= sb) a.push(p);
+        else b.push(p);
+      }
+    }
+
+    setTeamA(a);
+    setTeamB(b);
+    setPool(remaining);
+  }
+
+  function openSeparation(mode: "manual" | "fair" | "random") {
+    setSepMode(mode);
+    runSorteio(mode);
+    setSorteioOpen(false);
+    setSepOpen(true);
+  }
+
+  function moveTo(playerId: string, target: "A" | "B") {
+    const p =
+      pool.find((x) => x.id === playerId) ||
+      teamA.find((x) => x.id === playerId) ||
+      teamB.find((x) => x.id === playerId);
+    if (!p) return;
+    setPool((prev) => prev.filter((x) => x.id !== playerId));
+    setTeamA((prev) => prev.filter((x) => x.id !== playerId));
+    setTeamB((prev) => prev.filter((x) => x.id !== playerId));
+    if (target === "A") setTeamA((prev) => [...prev, p]);
+    else setTeamB((prev) => [...prev, p]);
+  }
+
+  function backToPool(playerId: string) {
+    const p = teamA.find((x) => x.id === playerId) || teamB.find((x) => x.id === playerId);
+    if (!p) return;
+    setTeamA((prev) => prev.filter((x) => x.id !== playerId));
+    setTeamB((prev) => prev.filter((x) => x.id !== playerId));
+    setPool((prev) => [...prev, p]);
+  }
+
+  function saveTeams() {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(
+        `pelada:${id}:teams`,
+        JSON.stringify({ teamA, teamB, savedAt: Date.now() }),
+      );
+    }
+    // TODO: Salvar times no Supabase
+    toast.success("Times salvos!");
+    setSepOpen(false);
+  }
+
   const peladaName = match?.name ?? "Minha Pelada";
   const peladaLogo = match?.logo_url ?? null;
   const lineCount = categorized.line.length;
@@ -360,14 +479,16 @@ Bora pro jogo! 🔥
           <div className="mx-auto max-w-3xl space-y-4">
             {/* Painel 1 — Próxima Pelada */}
             <div className="relative rounded-2xl border border-[#00FF00]/40 bg-zinc-900/50 p-5 backdrop-blur-xl shadow-[0_0_30px_-12px_rgba(0,255,0,0.6)]">
-              <button
-                type="button"
-                aria-label="Editar"
-                onClick={() => setEditMatchOpen(true)}
-                className="absolute right-3 top-3 rounded-lg p-1.5 text-zinc-400 transition hover:bg-white/5 hover:text-[#00FF00]"
-              >
-                <Pencil className="h-4 w-4" />
-              </button>
+              {isAdmin && (
+                <button
+                  type="button"
+                  aria-label="Editar"
+                  onClick={() => setEditMatchOpen(true)}
+                  className="absolute right-3 top-3 rounded-lg p-1.5 text-zinc-400 transition hover:bg-white/5 hover:text-[#00FF00]"
+                >
+                  <Pencil className="h-4 w-4" />
+                </button>
+              )}
               <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-[#00FF00]">
                 Próxima Pelada
               </h3>
@@ -387,14 +508,16 @@ Bora pro jogo! 🔥
 
             {/* Painel 2 — Valores */}
             <div className="relative rounded-2xl border border-amber-400/30 bg-zinc-900/40 p-5 backdrop-blur-xl">
-              <button
-                type="button"
-                aria-label="Editar valores"
-                onClick={() => setEditValuesOpen(true)}
-                className="absolute right-3 top-3 rounded-lg p-1.5 text-zinc-400 transition hover:bg-white/5 hover:text-amber-300"
-              >
-                <Pencil className="h-4 w-4" />
-              </button>
+              {isAdmin && (
+                <button
+                  type="button"
+                  aria-label="Editar valores"
+                  onClick={() => setEditValuesOpen(true)}
+                  className="absolute right-3 top-3 rounded-lg p-1.5 text-zinc-400 transition hover:bg-white/5 hover:text-amber-300"
+                >
+                  <Pencil className="h-4 w-4" />
+                </button>
+              )}
               <h3 className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-amber-300">
                 <DollarSign className="h-4 w-4" />
                 Valores
@@ -414,14 +537,16 @@ Bora pro jogo! 🔥
 
             {/* Painel 3 — Vagas */}
             <div className="relative">
-              <button
-                type="button"
-                aria-label="Editar limites"
-                onClick={() => setEditLimitsOpen(true)}
-                className="absolute -top-2 right-0 z-10 rounded-lg border border-white/10 bg-zinc-900/80 p-1.5 text-zinc-400 transition hover:bg-white/5 hover:text-[#00FF00]"
-              >
-                <Pencil className="h-4 w-4" />
-              </button>
+              {isAdmin && (
+                <button
+                  type="button"
+                  aria-label="Editar limites"
+                  onClick={() => setEditLimitsOpen(true)}
+                  className="absolute -top-2 right-0 z-10 rounded-lg border border-white/10 bg-zinc-900/80 p-1.5 text-zinc-400 transition hover:bg-white/5 hover:text-[#00FF00]"
+                >
+                  <Pencil className="h-4 w-4" />
+                </button>
+              )}
               <div className="grid grid-cols-3 gap-3">
                 <SlotCard
                   icon={<Users className="h-4 w-4" />}
@@ -468,6 +593,7 @@ Bora pro jogo! 🔥
             </div>
 
             {/* Botões de Ação - Admin */}
+            {isAdmin && (
             <button
               type="button"
               onClick={() => setAddOpen(true)}
@@ -476,6 +602,7 @@ Bora pro jogo! 🔥
               <Plus className="mr-2 inline h-4 w-4" />
               Adicionar Jogador
             </button>
+            )}
 
             <div className="grid grid-cols-2 gap-3">
               <button
@@ -496,15 +623,7 @@ Bora pro jogo! 🔥
               </button>
             </div>
 
-            <button
-              type="button"
-              onClick={() => toast.info("Sorteio em breve")}
-              className="w-full rounded-xl border border-amber-400/60 bg-amber-400/5 px-4 py-3 text-sm font-bold uppercase tracking-wider text-amber-300 transition hover:bg-amber-400/10 shadow-[0_0_20px_-10px_rgba(251,191,36,0.6)]"
-            >
-              <Shuffle className="mr-2 inline h-4 w-4" />
-              Sortear Times
-            </button>
-
+            {isAdmin && (
             <button
               type="button"
               onClick={handleSaveAll}
@@ -513,7 +632,9 @@ Bora pro jogo! 🔥
               <Save className="mr-2 inline h-5 w-5" />
               💾 Salvar Lista
             </button>
+            )}
 
+            {isAdmin && (
             <button
               type="button"
               onClick={() => {
@@ -526,6 +647,7 @@ Bora pro jogo! 🔥
               <Trash2 className="mr-2 inline h-4 w-4" />
               Limpar Lista
             </button>
+            )}
 
             {/* Lista de Jogadores */}
             <div className="space-y-2 pt-2">
@@ -549,9 +671,110 @@ Bora pro jogo! 🔥
                 })
               )}
             </div>
+
+            {/* Partida — Sortear Times */}
+            <div className="mt-6 rounded-2xl border border-[#00FF00]/40 bg-zinc-900/50 p-5 backdrop-blur-xl shadow-[0_0_30px_-12px_rgba(0,255,0,0.6)]">
+              <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-[#00FF00]">
+                Partida
+              </h3>
+              <button
+                type="button"
+                onClick={() => setSorteioOpen(true)}
+                disabled={!isAdmin}
+                className="w-full rounded-2xl border-2 border-[#00FF00] bg-[#00FF00]/10 px-6 py-6 text-xl font-black uppercase tracking-wider text-[#00FF00] transition hover:bg-[#00FF00]/20 hover:shadow-[0_0_50px_-8px_rgba(0,255,0,0.9)] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                ⚽ Sortear Times
+              </button>
+              {!isAdmin && (
+                <p className="mt-2 text-center text-xs text-zinc-500">
+                  Somente o admin da pelada pode sortear os times.
+                </p>
+              )}
+            </div>
           </div>
         </section>
       </div>
+
+      {/* Modal: Modalidade de Sorteio */}
+      <Dialog open={sorteioOpen} onOpenChange={setSorteioOpen}>
+        <DialogContent className="max-w-3xl border-[#00FF00]/40 bg-zinc-950 text-zinc-100 shadow-[0_0_60px_-10px_rgba(0,255,0,0.5)]">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black uppercase tracking-wider text-[#00FF00]">
+              | Escolha o Modo de Sorteio
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-1 gap-4 py-2 md:grid-cols-3">
+            <ModeCard
+              icon={<MousePointerClick className="h-10 w-10" />}
+              title="Separar Manual"
+              desc="Controle total. Arraste e solte ou clique para mover."
+              onClick={() => openSeparation("manual")}
+            />
+            <ModeCard
+              icon={<Scale className="h-10 w-10" />}
+              title="Sorteio Justo"
+              desc="Algoritmo inteligente que equilibra os times por nível técnico."
+              onClick={() => openSeparation("fair")}
+              highlighted
+            />
+            <ModeCard
+              icon={<Dices className="h-10 w-10" />}
+              title="Sorteio Aleatório"
+              desc="Pura sorte. Deixe o destino decidir."
+              onClick={() => openSeparation("random")}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal: Interface de Separação */}
+      <Dialog open={sepOpen} onOpenChange={setSepOpen}>
+        <DialogContent className="max-w-6xl border-[#00FF00]/40 bg-zinc-950 text-zinc-100">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black uppercase tracking-wider text-[#00FF00]">
+              | Interface de Separação
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-1 gap-4 py-2 md:grid-cols-3">
+            <TeamColumn
+              title="Time A"
+              players={teamA}
+              max={Math.ceil(confirmedPlayers.length / 2)}
+              accent="#00FF00"
+              onPlayerClick={(pid) => backToPool(pid)}
+            />
+            <PoolColumn
+              players={pool}
+              onMove={(pid, t) => moveTo(pid, t)}
+            />
+            <TeamColumn
+              title="Time B"
+              players={teamB}
+              max={Math.ceil(confirmedPlayers.length / 2)}
+              accent="#00FF00"
+              onPlayerClick={(pid) => backToPool(pid)}
+            />
+          </div>
+          <DialogFooter className="flex-row justify-center gap-3 sm:justify-center">
+            <button
+              type="button"
+              onClick={() => runSorteio(sepMode)}
+              className="inline-flex items-center gap-2 rounded-xl border border-zinc-500/40 bg-zinc-800/60 px-5 py-3 text-sm font-bold uppercase tracking-wider text-zinc-200 transition hover:bg-zinc-800"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Resortear
+            </button>
+            <button
+              type="button"
+              onClick={saveTeams}
+              className="inline-flex items-center gap-2 rounded-full border-2 border-[#00FF00] bg-[#00FF00] px-8 py-3 text-base font-black uppercase tracking-wider text-zinc-950 shadow-[0_0_40px_-5px_rgba(0,255,0,0.9)] transition hover:bg-[#00FF00]/90"
+            >
+              <Save className="h-5 w-5" />
+              Salvar Times
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Modal: Chamar Amigo */}
       <Dialog open={friendOpen} onOpenChange={setFriendOpen}>
@@ -806,6 +1029,149 @@ function AddPlayerForm({ onAdd }: { onAdd: (name: string, isGK: boolean) => void
 }
 
 type EditField = { key: string; label: string; value: string; type?: string; placeholder?: string };
+
+function ModeCard({
+  icon,
+  title,
+  desc,
+  onClick,
+  highlighted,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  desc: string;
+  onClick: () => void;
+  highlighted?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex flex-col items-center gap-3 rounded-2xl border bg-zinc-900/60 p-6 text-center transition hover:scale-[1.02] hover:bg-zinc-900 ${
+        highlighted
+          ? "border-[#00FF00] shadow-[0_0_30px_-5px_rgba(0,255,0,0.6)]"
+          : "border-white/10 hover:border-[#00FF00]/40"
+      }`}
+    >
+      <span className="text-[#00FF00] drop-shadow-[0_0_10px_rgba(0,255,0,0.7)]">{icon}</span>
+      <p className="text-base font-black uppercase tracking-wider text-zinc-100">{title}</p>
+      <p className="text-xs leading-relaxed text-zinc-400">{desc}</p>
+    </button>
+  );
+}
+
+function TeamColumn({
+  title,
+  players,
+  max,
+  accent,
+  onPlayerClick,
+}: {
+  title: string;
+  players: Player[];
+  max: number;
+  accent: string;
+  onPlayerClick: (pid: string) => void;
+}) {
+  return (
+    <div
+      className="flex min-h-[400px] flex-col gap-2 rounded-2xl border bg-zinc-900/60 p-4"
+      style={{ borderColor: `${accent}66`, boxShadow: `0 0 30px -10px ${accent}66` }}
+    >
+      <div className="flex items-center justify-between pb-2">
+        <p className="text-sm font-bold uppercase tracking-wider text-zinc-200">{title}</p>
+        <span
+          className="rounded-md px-2 py-0.5 text-[11px] font-black tabular-nums text-zinc-950"
+          style={{ backgroundColor: accent }}
+        >
+          {String(players.length).padStart(2, "0")} / {String(max).padStart(2, "0")}
+        </span>
+      </div>
+      {players.map((p) => (
+        <button
+          key={p.id}
+          type="button"
+          onClick={() => onPlayerClick(p.id)}
+          className="flex items-center justify-between rounded-lg border border-white/10 bg-zinc-950/70 px-3 py-2 text-left transition hover:border-[#00FF00]/40"
+          title="Clique para devolver à coluna Disponíveis"
+        >
+          <span className="flex items-center gap-2 truncate">
+            <span style={{ color: p.isGoalkeeper ? "#60a5fa" : "#00FF00" }} className="text-xs">●</span>
+            <span className="truncate text-sm text-zinc-100">{p.name}</span>
+          </span>
+          <span className="text-xs font-bold tabular-nums text-zinc-500">
+            {(p.rating ?? 5).toFixed(1)}
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function PoolColumn({
+  players,
+  onMove,
+}: {
+  players: Player[];
+  onMove: (pid: string, target: "A" | "B") => void;
+}) {
+  const [openId, setOpenId] = useState<string | null>(null);
+  return (
+    <div className="flex min-h-[400px] flex-col gap-2 rounded-2xl border border-white/10 bg-zinc-900/60 p-4">
+      <div className="flex items-center justify-between pb-2">
+        <p className="text-sm font-bold uppercase tracking-wider text-zinc-200">Disponíveis</p>
+        <span className="rounded-md bg-zinc-800 px-2 py-0.5 text-[11px] font-black tabular-nums text-zinc-300">
+          {String(players.length).padStart(2, "0")}
+        </span>
+      </div>
+      {players.length === 0 ? (
+        <p className="py-10 text-center text-xs text-zinc-500">Todos os jogadores foram distribuídos.</p>
+      ) : (
+        players.map((p) => (
+          <div key={p.id} className="rounded-lg border border-white/10 bg-zinc-950/70">
+            <button
+              type="button"
+              onClick={() => setOpenId((cur) => (cur === p.id ? null : p.id))}
+              className="flex w-full items-center justify-between px-3 py-2 text-left"
+            >
+              <span className="flex items-center gap-2 truncate">
+                <span style={{ color: p.isGoalkeeper ? "#60a5fa" : "#00FF00" }} className="text-xs">||</span>
+                <span className="truncate text-sm text-zinc-100">{p.name}</span>
+              </span>
+              <span className="text-xs font-bold tabular-nums text-zinc-500">
+                {(p.rating ?? 5).toFixed(1)}
+              </span>
+            </button>
+            {openId === p.id && (
+              <div className="flex gap-2 border-t border-white/10 p-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onMove(p.id, "A");
+                    setOpenId(null);
+                  }}
+                  className="flex-1 rounded-md border border-[#00FF00]/40 bg-[#00FF00]/10 px-2 py-1.5 text-xs font-bold uppercase tracking-wider text-[#00FF00] transition hover:bg-[#00FF00]/20"
+                >
+                  → Time A
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onMove(p.id, "B");
+                    setOpenId(null);
+                  }}
+                  className="flex-1 rounded-md border border-[#00FF00]/40 bg-[#00FF00]/10 px-2 py-1.5 text-xs font-bold uppercase tracking-wider text-[#00FF00] transition hover:bg-[#00FF00]/20"
+                >
+                  Time B →
+                </button>
+              </div>
+            )}
+          </div>
+        ))
+      )}
+    </div>
+  );
+}
 
 function EditDialog({
   open,

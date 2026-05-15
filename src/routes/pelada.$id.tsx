@@ -20,6 +20,7 @@ import {
   UserCog,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { isSuperAdminUsername } from "@/lib/admin";
 
 export const Route = createFileRoute("/pelada/$id")({
   component: PeladaPage,
@@ -124,7 +125,8 @@ function PeladaPage() {
       setFirstName(full.split(" ")[0]);
       const match = m as Match | null;
       setMatch(match);
-      setIsAdmin((match?.admin_id ?? null) === uid);
+      const owner = (match?.admin_id ?? null) === uid;
+      setIsAdmin(owner || isSuperAdminUsername(prof?.username));
       setLoading(false);
     })();
   }, [navigate, id]);
@@ -184,6 +186,7 @@ function PeladaPage() {
                 <NavItem icon={<UserCog className="h-4 w-4" />} label="Gerenciamento de Usuários" />
               </Link>
             )}
+            {isAdmin && (
             <button
               type="button"
               className="flex w-full items-center gap-2.5 rounded-xl border border-amber-400/30 bg-amber-400/5 px-3 py-2.5 text-sm font-semibold text-amber-300 transition hover:bg-amber-400/10"
@@ -191,6 +194,7 @@ function PeladaPage() {
               <ShieldCheck className="h-4 w-4" />
               Administrador
             </button>
+            )}
           </div>
         </aside>
 
@@ -216,13 +220,16 @@ function PeladaPage() {
                 </p>
               )}
             </div>
-            <button
-              type="button"
-              className="rounded-lg p-2 text-zinc-400 transition hover:bg-white/5 hover:text-[#00FF00]"
-              aria-label="Editar"
-            >
-              <Pencil className="h-4 w-4" />
-            </button>
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => navigate({ to: "/pelada/$id/lista", params: { id } })}
+                className="rounded-lg p-2 text-zinc-400 transition hover:bg-white/5 hover:text-[#00FF00]"
+                aria-label="Editar"
+              >
+                <Pencil className="h-4 w-4" />
+              </button>
+            )}
           </div>
 
           <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
