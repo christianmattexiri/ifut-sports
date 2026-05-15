@@ -117,6 +117,7 @@ function UsuariosPage() {
       setMatch(match);
 
       // Carrega admin da pelada + membros confirmados (match_members)
+      // Sem embed PostgREST: match_members.user_id não tem FK explícita para profiles.id
       const [{ data: adminProf }, { data: memberRows }, { data: invs }] = await Promise.all([
         supabase
           .from("profiles")
@@ -125,7 +126,7 @@ function UsuariosPage() {
           .maybeSingle(),
         supabase
           .from("match_members")
-          .select("user:profiles!match_members_user_id_fkey(id, full_name, username, avatar_url)")
+          .select("user_id")
           .eq("match_id", id),
         supabase
           .from("match_invitations")
@@ -133,11 +134,21 @@ function UsuariosPage() {
           .eq("match_id", id)
           .eq("status", "pending"),
       ]);
+      const memberIds = Array.from(
+        new Set(((memberRows ?? []) as any[]).map((r) => r.user_id).filter(Boolean))
+      );
+      let memberProfiles: Profile[] = [];
+      if (memberIds.length > 0) {
+        const { data: profs } = await supabase
+          .from("profiles")
+          .select("id, full_name, username, avatar_url")
+          .in("id", memberIds);
+        memberProfiles = (profs ?? []) as Profile[];
+      }
       const list: Profile[] = [];
       if (adminProf) list.push(adminProf as Profile);
-      for (const row of (memberRows ?? []) as any[]) {
-        const u = row.user;
-        if (u && !list.some((p) => p.id === u.id)) list.push(u as Profile);
+      for (const u of memberProfiles) {
+        if (!list.some((p) => p.id === u.id)) list.push(u);
       }
       setMembers(list);
       setPendingInviteIds(new Set((invs ?? []).map((i: any) => i.invitee_id)));
