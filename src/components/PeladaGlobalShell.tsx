@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouterState } from "@tanstack/react-router";
-import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 import { loadAdminSettings } from "@/routes/pelada.$id_.admin";
 import { AudioFooterPlayer } from "@/components/AudioFooterPlayer";
+import { peladaMatchQuery, viewerQuery } from "@/lib/pelada-queries";
 
 /**
  * Mounted once at the root. Detects when the user is inside any
@@ -22,9 +23,14 @@ export function PeladaGlobalShell() {
   const [settings, setSettings] = useState(() =>
     peladaId ? loadAdminSettings(peladaId) : null,
   );
-  const [isPro, setIsPro] = useState<boolean>(false);
-  const [viewerId, setViewerId] = useState<string>("");
   const [latestMvp, setLatestMvp] = useState<{ id: string; name: string } | null>(null);
+
+  // Shared React Query cache — same keys used by every pelada route, so this
+  // is a cache hit after the first load and never refetches on tab nav.
+  const { data: match, isSuccess: matchLoaded } = useQuery(peladaMatchQuery(peladaId ?? undefined));
+  const { data: viewer } = useQuery(viewerQuery());
+  const isPro = !!match?.is_pro;
+  const viewerId = viewer?.id ?? "";
 
   // Reload settings when pelada changes or admin saves (storage event).
   useEffect(() => {
@@ -42,30 +48,6 @@ export function PeladaGlobalShell() {
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
   }, [peladaId]);
-
-  // Fetch is_pro from DB.
-  useEffect(() => {
-    if (!peladaId) return;
-    let cancelled = false;
-    (async () => {
-      const { data } = await supabase
-        .from("matches")
-        .select("id, is_pro")
-        .eq("id", peladaId)
-        .maybeSingle();
-      if (cancelled) return;
-      setIsPro(!!(data as any)?.is_pro);
-    })();
-    return () => { cancelled = true; };
-  }, [peladaId]);
-
-  // Viewer id (for somMvp permission).
-  useEffect(() => {
-    (async () => {
-      const { data } = await supabase.auth.getSession();
-      setViewerId(data.session?.user.id ?? "");
-    })();
-  }, []);
 
   // Read latest MVP from histórico (used by Som do MVP player).
   useEffect(() => {
@@ -98,19 +80,18 @@ export function PeladaGlobalShell() {
     return () => window.removeEventListener("storage", onStorage);
   }, [peladaId]);
 
-  // Apply accent globally so it survives navigation between sub-routes.
-  // PRO-locked peladas always use the default green.
+  // Apply accent globally — but only AFTER the match record loaded so we don't
+  // briefly paint the default green over a PRO accent on first navigation.
   useEffect(() => {
     if (typeof document === "undefined") return;
+    if (!peladaId) {
+      document.documentElement.style.removeProperty("--pelada-accent");
+      return;
+    }
+    if (!matchLoaded) return; // wait for is_pro to be known
     const accent = settings && isPro ? settings.accent || "#00FF00" : "#00FF00";
     document.documentElement.style.setProperty("--pelada-accent", accent);
-    return () => {
-      // Reset when leaving the pelada area entirely.
-      if (!peladaId) {
-        document.documentElement.style.removeProperty("--pelada-accent");
-      }
-    };
-  }, [settings, isPro, peladaId]);
+  }, [settings, isPro, peladaId, matchLoaded]);
 
   if (!peladaId || !settings) return null;
   // PRO gate: music modules only run on PRO peladas.
@@ -136,22 +117,11 @@ export function PeladaGlobalShell() {
 }
 
 function AdminAwareMusicPlayer({ peladaId, viewerId }: { peladaId: string; viewerId: string }) {
-  const [canEdit, setCanEdit] = useState(false);
-  useEffect(() => {
-    if (!viewerId) return;
-    let cancelled = false;
-    (async () => {
-      const [{ data: m }, { data: prof }] = await Promise.all([
-        supabase.from("matches").select("admin_id").eq("id", peladaId).maybeSingle(),
-        supabase.from("profiles").select("username").eq("id", viewerId).maybeSingle(),
-      ]);
-      if (cancelled) return;
-      const isOwner = (m as any)?.admin_id === viewerId;
-      const isSuper = (prof?.username ?? "").toLowerCase() === "christianmatte";
-      setCanEdit(isOwner || isSuper);
-    })();
-    return () => { cancelled = true; };
-  }, [peladaId, viewerId]);
+  const { data: match } = useQuery(peladaMatchQuery(peladaId));
+  const { data: viewer } = useQuery(viewerQuery());
+  const isOwner = !!match && match.admin_id === viewerId;
+  const isSuper = (viewer?.username ?? "").toLowerCase() === "christianmatte";
+  const canEdit = isOwner || isSuper;
   return (
     <AudioFooterPlayer
       peladaId={peladaId}

@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
+import { useQuery } from "@tanstack/react-query";
+import { peladaMatchQuery, viewerQuery } from "@/lib/pelada-queries";
 import { loadHistory, type HistMatch } from "./pelada.$id_.historico";
 import { onProfileUpdate } from "@/lib/profile-sync";
 import { useAvatars } from "@/lib/avatars";
@@ -25,6 +27,12 @@ import { PlayerProfileModal } from "@/components/PlayerProfileModal";
 export const Route = createFileRoute("/pelada/$id_/rankings")({
   component: RankingsPage,
   head: () => ({ meta: [{ title: "iFut — Rankings" }] }),
+  loader: async ({ params, context }) => {
+    await Promise.all([
+      context.queryClient.ensureQueryData(peladaMatchQuery(params.id)),
+      context.queryClient.ensureQueryData(viewerQuery()),
+    ]);
+  },
 });
 
 type Match = { id: string; name: string; logo_url: string | null; admin_id?: string | null };
@@ -104,33 +112,18 @@ const MOCK: PlayerStats[] = [
 function RankingsPage() {
   const navigate = useNavigate();
   const { id } = useParams({ from: "/pelada/$id_/rankings" });
-  const [match, setMatch] = useState<Match | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { data: matchData } = useQuery(peladaMatchQuery(id));
+  const match = (matchData ?? null) as Match | null;
+  const { data: viewer, isLoading: viewerLoading } = useQuery(viewerQuery());
+  const isAdmin =
+    !!viewer && !!match &&
+    (match.admin_id === viewer.id || isSuperAdminUsername(viewer.username));
+  useEffect(() => {
+    if (!viewerLoading && viewer === null) navigate({ to: "/" });
+  }, [viewer, viewerLoading, navigate]);
   const [activeTab, setActiveTab] = useState<Stat>("gols");
   const [players, setPlayers] = useState<PlayerStats[]>([]);
   const [modalUser, setModalUser] = useState<{ id: string; name: string } | null>(null);
-
-  useEffect(() => {
-    let cancel = false;
-    (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        navigate({ to: "/" });
-        return;
-      }
-      const [{ data: m }, { data: prof }] = await Promise.all([
-        supabase.from("matches").select("id, name, logo_url, admin_id").eq("id", id).single(),
-        supabase.from("profiles").select("username").eq("id", user.id).single(),
-      ]);
-      if (cancel) return;
-      setMatch(m as Match);
-      const owner = ((m as { admin_id?: string } | null)?.admin_id ?? null) === user.id;
-      setIsAdmin(owner || isSuperAdminUsername(prof?.username));
-    })();
-    return () => {
-      cancel = true;
-    };
-  }, [id, navigate]);
 
   // TODO: Consumir dados reais agregados do histórico de partidas no Supabase
   useEffect(() => {

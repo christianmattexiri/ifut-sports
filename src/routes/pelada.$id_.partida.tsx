@@ -7,6 +7,8 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
+import { useQuery } from "@tanstack/react-query";
+import { peladaMatchQuery, viewerQuery } from "@/lib/pelada-queries";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { EditMatchDialog, loadHistory, saveHistory, type HistMatch } from "./pelada.$id_.historico";
@@ -14,6 +16,12 @@ import { EditMatchDialog, loadHistory, saveHistory, type HistMatch } from "./pel
 export const Route = createFileRoute("/pelada/$id_/partida")({
   component: PartidaPage,
   head: () => ({ meta: [{ title: "iFut — Partida" }] }),
+  loader: async ({ params, context }) => {
+    await Promise.all([
+      context.queryClient.ensureQueryData(peladaMatchQuery(params.id)),
+      context.queryClient.ensureQueryData(viewerQuery()),
+    ]);
+  },
 });
 
 type Match = { id: string; name: string; logo_url: string | null; admin_id?: string | null };
@@ -23,8 +31,15 @@ type SavedTeams = { teamA: Player[]; teamB: Player[] };
 function PartidaPage() {
   const navigate = useNavigate();
   const { id } = useParams({ from: "/pelada/$id_/partida" });
-  const [match, setMatch] = useState<Match | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { data: matchData } = useQuery(peladaMatchQuery(id));
+  const match = (matchData ?? null) as Match | null;
+  const { data: viewer, isLoading: viewerLoading } = useQuery(viewerQuery());
+  const isAdmin =
+    !!viewer && !!match &&
+    (match.admin_id === viewer.id || isSuperAdminUsername(viewer.username));
+  useEffect(() => {
+    if (!viewerLoading && viewer === null) navigate({ to: "/" });
+  }, [viewer, viewerLoading, navigate]);
   const [confirmed, setConfirmed] = useState<Player[]>([]);
   const [ratings, setRatings] = useState<Record<string, number>>({});
   const [saved, setSaved] = useState<SavedTeams | null>(null);
@@ -35,21 +50,6 @@ function PartidaPage() {
   const [teamB, setTeamB] = useState<Player[]>([]);
   const [pool, setPool] = useState<Player[]>([]);
   const [editing, setEditing] = useState<HistMatch | null>(null);
-
-  useEffect(() => {
-    (async () => {
-      const { data: sess } = await supabase.auth.getSession();
-      if (!sess.session) return navigate({ to: "/" });
-      const uid = sess.session.user.id;
-      const [{ data: m }, { data: prof }] = await Promise.all([
-        supabase.from("matches").select("id, name, logo_url, admin_id").eq("id", id).maybeSingle(),
-        supabase.from("profiles").select("username").eq("id", uid).maybeSingle(),
-      ]);
-      setMatch(m as Match | null);
-      const owner = (m as any)?.admin_id === uid;
-      setIsAdmin(owner || isSuperAdminUsername(prof?.username));
-    })();
-  }, [navigate, id]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;

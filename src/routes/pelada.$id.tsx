@@ -42,10 +42,19 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
+import { useQuery } from "@tanstack/react-query";
+import { peladaMatchQuery, viewerQuery } from "@/lib/pelada-queries";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const Route = createFileRoute("/pelada/$id")({
   component: PeladaPage,
   head: () => ({ meta: [{ title: "iFut — Pelada" }] }),
+  loader: async ({ params, context }) => {
+    await Promise.all([
+      context.queryClient.ensureQueryData(peladaMatchQuery(params.id)),
+      context.queryClient.ensureQueryData(viewerQuery()),
+    ]);
+  },
 });
 
 type Match = {
@@ -62,12 +71,21 @@ type Match = {
 function PeladaPage() {
   const navigate = useNavigate();
   const { id } = useParams({ from: "/pelada/$id" });
-  const [firstName, setFirstName] = useState("Jogador");
-  const [match, setMatch] = useState<Match | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { data: match, isLoading: matchLoading } = useQuery(peladaMatchQuery(id));
+  const { data: viewer, isLoading: viewerLoading } = useQuery(viewerQuery());
+  const loading = matchLoading || viewerLoading;
+  const viewerId = viewer?.id ?? "";
+  const firstName = (viewer?.full_name?.trim() || viewer?.username || "").split(" ")[0] || "";
+  const isAdmin =
+    !!viewer &&
+    !!match &&
+    (match.admin_id === viewer.id || isSuperAdminUsername(viewer.username));
   const [modalUser, setModalUser] = useState<{ id: string; name: string } | null>(null);
-  const [viewerId, setViewerId] = useState<string>("");
+
+  // Redirect if logged out (loader already prefetched the session).
+  useEffect(() => {
+    if (!viewerLoading && !viewer) navigate({ to: "/" });
+  }, [viewer, viewerLoading, navigate]);
   const [adminSettings, setAdminSettings] = useState(() => loadAdminSettings(id));
   // Vote modes are gated by the master "Votações" module switch.
   const voteSettings = adminSettings.modules.votacoes
@@ -141,33 +159,6 @@ function PeladaPage() {
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
   }, [id]);
-
-  useEffect(() => {
-    (async () => {
-      const { data: sess } = await supabase.auth.getSession();
-      if (!sess.session) {
-        navigate({ to: "/" });
-        return;
-      }
-      const uid = sess.session.user.id;
-      setViewerId(uid);
-      const [{ data: prof }, { data: m }] = await Promise.all([
-        supabase.from("profiles").select("full_name, username").eq("id", uid).maybeSingle(),
-        supabase
-          .from("matches")
-          .select("id, name, day_of_week, match_time, location, logo_url, admin_id, is_pro")
-          .eq("id", id)
-          .maybeSingle(),
-      ]);
-      const full = prof?.full_name?.trim() || prof?.username || "Jogador";
-      setFirstName(full.split(" ")[0]);
-      const match = m as Match | null;
-      setMatch(match);
-      const owner = (match?.admin_id ?? null) === uid;
-      setIsAdmin(owner || isSuperAdminUsername(prof?.username));
-      setLoading(false);
-    })();
-  }, [navigate, id]);
 
   // Reload admin vote settings if changed in another tab/page.
   useEffect(() => {
@@ -301,7 +292,9 @@ function PeladaPage() {
           <div className="flex flex-col items-center gap-2 pb-6">
             <div className="relative">
               <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-[var(--pelada-accent)]/40 bg-zinc-900 shadow-[0_0_30px_-8px_color-mix(in_oklab,var(--pelada-accent)_70%,transparent)]">
-                {peladaLogo ? (
+                {matchLoading ? (
+                  <Skeleton className="h-full w-full rounded-full bg-zinc-800/60" />
+                ) : peladaLogo ? (
                   <img src={peladaLogo} alt={peladaName} className="h-full w-full object-cover" />
                 ) : (
                   <Trophy className="h-9 w-9 text-[var(--pelada-accent)]" />
@@ -309,9 +302,13 @@ function PeladaPage() {
               </div>
               {isPro && <ProTag className="absolute -right-2 -top-1" />}
             </div>
-            <p className="text-center text-base font-bold tracking-tight text-white">
-              {peladaName}
-            </p>
+            {matchLoading ? (
+              <Skeleton className="h-5 w-32 bg-zinc-800/60" />
+            ) : (
+              <p className="text-center text-base font-bold tracking-tight text-white">
+                {peladaName}
+              </p>
+            )}
           </div>
 
           <nav className="space-y-1.5">
@@ -352,8 +349,12 @@ function PeladaPage() {
         </aside>
 
         <section className="flex-1 px-5 py-8 md:px-10 md:py-10">
-          <h1 className="text-3xl font-bold uppercase tracking-tight text-[var(--pelada-accent)] md:text-4xl">
-            Bem-vindo, {firstName}! <span className="inline-block">👋</span>
+          <h1 className="flex items-center gap-3 text-3xl font-bold uppercase tracking-tight text-[var(--pelada-accent)] md:text-4xl">
+            {firstName ? (
+              <>Bem-vindo, {firstName}! <span className="inline-block">👋</span></>
+            ) : (
+              <Skeleton className="h-8 w-72 bg-zinc-800/60" />
+            )}
           </h1>
 
           <div className="mt-8 flex items-center justify-between gap-4 rounded-2xl border border-[var(--pelada-accent)]/30 bg-zinc-900/50 px-6 py-5 backdrop-blur-xl shadow-[0_0_40px_-15px_color-mix(in_oklab,var(--pelada-accent)_50%,transparent)]">
