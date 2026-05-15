@@ -343,8 +343,12 @@ function PeladaPage() {
         </aside>
 
         <section className="flex-1 px-5 py-8 md:px-10 md:py-10">
-          <h1 className="text-3xl font-bold uppercase tracking-tight text-[var(--pelada-accent)] md:text-4xl">
-            Bem-vindo, {firstName}! <span className="inline-block">👋</span>
+          <h1 className="flex items-center gap-3 text-3xl font-bold uppercase tracking-tight text-[var(--pelada-accent)] md:text-4xl">
+            {firstName ? (
+              <>Bem-vindo, {firstName}! <span className="inline-block">👋</span></>
+            ) : (
+              <Skeleton className="h-8 w-72 bg-zinc-800/60" />
+            )}
           </h1>
 
           <div className="mt-8 flex items-center justify-between gap-4 rounded-2xl border border-[var(--pelada-accent)]/30 bg-zinc-900/50 px-6 py-5 backdrop-blur-xl shadow-[0_0_40px_-15px_color-mix(in_oklab,var(--pelada-accent)_50%,transparent)]">
