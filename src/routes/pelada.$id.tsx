@@ -446,8 +446,8 @@ function PodiumCard({
             <span key={p.id}>
               {i > 0 && ", "}
               <Link
-                to="/pelada/$id_/perfil/$userId"
-                params={{ id_: matchId, userId: p.id }}
+                to="/pelada/$id/perfil/$userId"
+                params={{ id: matchId, userId: p.id }}
                 className="hover:text-[#00FF00] hover:underline"
               >
                 {p.name}
