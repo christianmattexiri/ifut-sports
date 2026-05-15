@@ -86,7 +86,7 @@ const SUB_LIMIT = 2;
 
 function ListaPresencaPage() {
   const navigate = useNavigate();
-  const { id } = useParams({ from: "/pelada/$id/lista" });
+  const { id } = useParams({ from: "/pelada/$id_/lista" });
   const [match, setMatch] = useState<Match | null>(null);
   const [players, setPlayers] = useState<Player[]>(MOCK_PLAYERS);
   const [meInList, setMeInList] = useState(false);
