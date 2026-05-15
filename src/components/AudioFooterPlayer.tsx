@@ -79,30 +79,32 @@ export function AudioFooterPlayer({ peladaId, mode, canEdit, titlePrefix, disabl
             <p className="truncate text-[11px] uppercase tracking-wider text-zinc-500">
               {mode === "musica" ? "Música da Pelada" : titlePrefix}
             </p>
-            <p className="truncate text-sm font-semibold text-zinc-100">
-              {disabled ? (disabledHint ?? "Indisponível") : saved?.title || (videoId ? "Reproduzindo" : "Sem música definida")}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="truncate text-sm font-semibold text-zinc-100">
+                {disabled ? (disabledHint ?? "Indisponível") : saved?.title || (videoId ? "Reproduzindo" : "Sem música definida")}
+              </p>
+              {canEdit && (
+                <button
+                  type="button"
+                  onClick={openEdit}
+                  disabled={disabled}
+                  className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-zinc-400 transition hover:bg-white/5 hover:text-amber-300 disabled:opacity-40"
+                  aria-label="Editar música"
+                >
+                  <Pencil className="h-3 w-3" />
+                </button>
+              )}
+            </div>
           </div>
           <button
             type="button"
             disabled={disabled || !videoId}
             onClick={() => setPlaying((p) => !p)}
-            className="grid h-10 w-10 place-items-center rounded-full bg-[var(--pelada-accent)] text-black shadow-[0_0_20px_-6px_var(--pelada-accent)] transition hover:scale-105 disabled:cursor-not-allowed disabled:bg-zinc-800 disabled:text-zinc-500 disabled:shadow-none"
+            className="mr-12 grid h-10 w-10 place-items-center rounded-full bg-[var(--pelada-accent)] text-black shadow-[0_0_20px_-6px_var(--pelada-accent)] transition hover:scale-105 disabled:cursor-not-allowed disabled:bg-zinc-800 disabled:text-zinc-500 disabled:shadow-none"
             aria-label={playing ? "Pausar" : "Tocar"}
           >
-            {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+            {playing ? <Pause className="h-4 w-4" /> : <MusicIcon className="h-4 w-4" />}
           </button>
-          {canEdit && (
-            <button
-              type="button"
-              onClick={openEdit}
-              disabled={disabled}
-              className="grid h-9 w-9 place-items-center rounded-full border border-white/10 text-zinc-300 transition hover:bg-white/5 hover:text-amber-300 disabled:opacity-40"
-              aria-label="Editar música"
-            >
-              <Pencil className="h-3.5 w-3.5" />
-            </button>
-          )}
         </div>
         {/* Hidden YouTube player */}
         {src && (
