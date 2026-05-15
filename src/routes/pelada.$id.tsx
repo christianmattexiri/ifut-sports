@@ -154,7 +154,9 @@ function PeladaPage() {
           </div>
 
           <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <QuickCard icon={<Users className="h-6 w-6" />} label="Presença" color="#00FF00" />
+            <Link to="/pelada/$id/lista" params={{ id }}>
+              <QuickCard icon={<Users className="h-6 w-6" />} label="Presença" color="#00FF00" />
+            </Link>
             <QuickCard icon={<BarChart className="h-6 w-6" />} label="Ranking" color="#fb923c" />
             <QuickCard icon={<UserIcon className="h-6 w-6" />} label="Stats" color="#60a5fa" />
           </div>

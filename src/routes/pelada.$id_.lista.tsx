@@ -36,7 +36,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/pelada/$id/lista")({
+export const Route = createFileRoute("/pelada/$id_/lista")({
   component: ListaPresencaPage,
   head: () => ({ meta: [{ title: "iFut — Lista de Presença" }] }),
 });
@@ -86,7 +86,7 @@ const SUB_LIMIT = 2;
 
 function ListaPresencaPage() {
   const navigate = useNavigate();
-  const { id } = useParams({ from: "/pelada/$id/lista" });
+  const { id } = useParams({ from: "/pelada/$id_/lista" });
   const [match, setMatch] = useState<Match | null>(null);
   const [players, setPlayers] = useState<Player[]>(MOCK_PLAYERS);
   const [meInList, setMeInList] = useState(false);
