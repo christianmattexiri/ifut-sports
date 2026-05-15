@@ -17,6 +17,7 @@ import {
   Crown,
   Target,
   Sparkles,
+  UserCog,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -32,6 +33,7 @@ type Match = {
   match_time: string | null;
   location: string | null;
   logo_url: string | null;
+  admin_id?: string | null;
 };
 
 function PeladaPage() {
@@ -40,6 +42,7 @@ function PeladaPage() {
   const [firstName, setFirstName] = useState("Jogador");
   const [match, setMatch] = useState<Match | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [counts, setCounts] = useState<{
     line: number;
     lineLimit: number;
@@ -78,13 +81,15 @@ function PeladaPage() {
         supabase.from("profiles").select("full_name, username").eq("id", uid).maybeSingle(),
         supabase
           .from("matches")
-          .select("id, name, day_of_week, match_time, location, logo_url")
+          .select("id, name, day_of_week, match_time, location, logo_url, admin_id")
           .eq("id", id)
           .maybeSingle(),
       ]);
       const full = prof?.full_name?.trim() || prof?.username || "Jogador";
       setFirstName(full.split(" ")[0]);
-      setMatch(m as Match | null);
+      const match = m as Match | null;
+      setMatch(match);
+      setIsAdmin((match?.admin_id ?? null) === uid);
       setLoading(false);
     })();
   }, [navigate, id]);
@@ -137,6 +142,11 @@ function PeladaPage() {
           </nav>
 
           <div className="mt-auto pt-6">
+            {isAdmin && (
+              <Link to="/pelada/$id/usuarios" params={{ id }} className="mb-2 block">
+                <NavItem icon={<UserCog className="h-4 w-4" />} label="Gerenciamento de Usuários" />
+              </Link>
+            )}
             <button
               type="button"
               className="flex w-full items-center gap-2.5 rounded-xl border border-amber-400/30 bg-amber-400/5 px-3 py-2.5 text-sm font-semibold text-amber-300 transition hover:bg-amber-400/10"
