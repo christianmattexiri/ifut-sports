@@ -19,6 +19,7 @@ import { Route as PeladaIdPerfilRouteImport } from './routes/pelada.$id_.perfil'
 import { Route as PeladaIdPartidaRouteImport } from './routes/pelada.$id_.partida'
 import { Route as PeladaIdListaRouteImport } from './routes/pelada.$id_.lista'
 import { Route as PeladaIdHistoricoRouteImport } from './routes/pelada.$id_.historico'
+import { Route as PeladaIdPerfilUserIdRouteImport } from './routes/pelada.$id_.perfil.$userId'
 
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
@@ -70,6 +71,11 @@ const PeladaIdHistoricoRoute = PeladaIdHistoricoRouteImport.update({
   path: '/pelada/$id/historico',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PeladaIdPerfilUserIdRoute = PeladaIdPerfilUserIdRouteImport.update({
+  id: '/$userId',
+  path: '/$userId',
+  getParentRoute: () => PeladaIdPerfilRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -79,9 +85,10 @@ export interface FileRoutesByFullPath {
   '/pelada/$id/historico': typeof PeladaIdHistoricoRoute
   '/pelada/$id/lista': typeof PeladaIdListaRoute
   '/pelada/$id/partida': typeof PeladaIdPartidaRoute
-  '/pelada/$id/perfil': typeof PeladaIdPerfilRoute
+  '/pelada/$id/perfil': typeof PeladaIdPerfilRouteWithChildren
   '/pelada/$id/rankings': typeof PeladaIdRankingsRoute
   '/pelada/$id/usuarios': typeof PeladaIdUsuariosRoute
+  '/pelada/$id/perfil/$userId': typeof PeladaIdPerfilUserIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -91,9 +98,10 @@ export interface FileRoutesByTo {
   '/pelada/$id/historico': typeof PeladaIdHistoricoRoute
   '/pelada/$id/lista': typeof PeladaIdListaRoute
   '/pelada/$id/partida': typeof PeladaIdPartidaRoute
-  '/pelada/$id/perfil': typeof PeladaIdPerfilRoute
+  '/pelada/$id/perfil': typeof PeladaIdPerfilRouteWithChildren
   '/pelada/$id/rankings': typeof PeladaIdRankingsRoute
   '/pelada/$id/usuarios': typeof PeladaIdUsuariosRoute
+  '/pelada/$id/perfil/$userId': typeof PeladaIdPerfilUserIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -104,9 +112,10 @@ export interface FileRoutesById {
   '/pelada/$id_/historico': typeof PeladaIdHistoricoRoute
   '/pelada/$id_/lista': typeof PeladaIdListaRoute
   '/pelada/$id_/partida': typeof PeladaIdPartidaRoute
-  '/pelada/$id_/perfil': typeof PeladaIdPerfilRoute
+  '/pelada/$id_/perfil': typeof PeladaIdPerfilRouteWithChildren
   '/pelada/$id_/rankings': typeof PeladaIdRankingsRoute
   '/pelada/$id_/usuarios': typeof PeladaIdUsuariosRoute
+  '/pelada/$id_/perfil/$userId': typeof PeladaIdPerfilUserIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -121,6 +130,7 @@ export interface FileRouteTypes {
     | '/pelada/$id/perfil'
     | '/pelada/$id/rankings'
     | '/pelada/$id/usuarios'
+    | '/pelada/$id/perfil/$userId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -133,6 +143,7 @@ export interface FileRouteTypes {
     | '/pelada/$id/perfil'
     | '/pelada/$id/rankings'
     | '/pelada/$id/usuarios'
+    | '/pelada/$id/perfil/$userId'
   id:
     | '__root__'
     | '/'
@@ -145,6 +156,7 @@ export interface FileRouteTypes {
     | '/pelada/$id_/perfil'
     | '/pelada/$id_/rankings'
     | '/pelada/$id_/usuarios'
+    | '/pelada/$id_/perfil/$userId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -155,7 +167,7 @@ export interface RootRouteChildren {
   PeladaIdHistoricoRoute: typeof PeladaIdHistoricoRoute
   PeladaIdListaRoute: typeof PeladaIdListaRoute
   PeladaIdPartidaRoute: typeof PeladaIdPartidaRoute
-  PeladaIdPerfilRoute: typeof PeladaIdPerfilRoute
+  PeladaIdPerfilRoute: typeof PeladaIdPerfilRouteWithChildren
   PeladaIdRankingsRoute: typeof PeladaIdRankingsRoute
   PeladaIdUsuariosRoute: typeof PeladaIdUsuariosRoute
 }
@@ -232,8 +244,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PeladaIdHistoricoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pelada/$id_/perfil/$userId': {
+      id: '/pelada/$id_/perfil/$userId'
+      path: '/$userId'
+      fullPath: '/pelada/$id/perfil/$userId'
+      preLoaderRoute: typeof PeladaIdPerfilUserIdRouteImport
+      parentRoute: typeof PeladaIdPerfilRoute
+    }
   }
 }
+
+interface PeladaIdPerfilRouteChildren {
+  PeladaIdPerfilUserIdRoute: typeof PeladaIdPerfilUserIdRoute
+}
+
+const PeladaIdPerfilRouteChildren: PeladaIdPerfilRouteChildren = {
+  PeladaIdPerfilUserIdRoute: PeladaIdPerfilUserIdRoute,
+}
+
+const PeladaIdPerfilRouteWithChildren = PeladaIdPerfilRoute._addFileChildren(
+  PeladaIdPerfilRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -243,7 +274,7 @@ const rootRouteChildren: RootRouteChildren = {
   PeladaIdHistoricoRoute: PeladaIdHistoricoRoute,
   PeladaIdListaRoute: PeladaIdListaRoute,
   PeladaIdPartidaRoute: PeladaIdPartidaRoute,
-  PeladaIdPerfilRoute: PeladaIdPerfilRoute,
+  PeladaIdPerfilRoute: PeladaIdPerfilRouteWithChildren,
   PeladaIdRankingsRoute: PeladaIdRankingsRoute,
   PeladaIdUsuariosRoute: PeladaIdUsuariosRoute,
 }

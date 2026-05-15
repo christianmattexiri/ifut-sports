@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Loader2, Camera } from "lucide-react";
 import {
@@ -11,6 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { emitProfileUpdate } from "@/lib/profile-sync";
 
 export type ProfileDialogProps = {
   open: boolean;
@@ -40,6 +41,14 @@ export function ProfileDialog({
   const [currentAvatar, setCurrentAvatar] = useState(avatarUrl);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  // Sync local form state when the parent values change or dialog reopens.
+  useEffect(() => {
+    if (open) {
+      setName(fullName);
+      setCurrentAvatar(avatarUrl);
+    }
+  }, [open, fullName, avatarUrl]);
+
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -61,6 +70,7 @@ export function ProfileDialog({
       if (dbErr) throw dbErr;
       setCurrentAvatar(url);
       onUpdated({ avatar_url: url });
+      emitProfileUpdate({ userId, avatar_url: url });
       toast.success("Foto atualizada!", { id: t });
     } catch (err) {
       toast.error((err as Error).message || "Falha no upload", { id: t });
@@ -80,6 +90,7 @@ export function ProfileDialog({
           .eq("id", userId);
         if (error) throw error;
         onUpdated({ full_name: name.trim() });
+        emitProfileUpdate({ userId, full_name: name.trim() });
       }
       if (password) {
         if (password.length < 6) {

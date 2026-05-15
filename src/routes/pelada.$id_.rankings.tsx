@@ -18,6 +18,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
 import { loadHistory, type HistMatch } from "./pelada.$id_.historico";
+import { onProfileUpdate } from "@/lib/profile-sync";
 
 export const Route = createFileRoute("/pelada/$id_/rankings")({
   component: RankingsPage,
@@ -130,9 +131,13 @@ function RankingsPage() {
 
   // TODO: Consumir dados reais agregados do histórico de partidas no Supabase
   useEffect(() => {
-    const hist = loadHistory(id);
-    const agg = aggregate(hist);
-    setPlayers(agg.length > 0 ? agg : MOCK);
+    const refresh = () => {
+      const hist = loadHistory(id);
+      const agg = aggregate(hist);
+      setPlayers(agg.length > 0 ? agg : MOCK);
+    };
+    refresh();
+    return onProfileUpdate(() => refresh());
   }, [id]);
 
   const ordered = useMemo(() => {
