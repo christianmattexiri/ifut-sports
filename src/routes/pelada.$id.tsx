@@ -6,7 +6,6 @@ import { VotingModal } from "@/components/VotingModal";
 import { ApittoResultsModal } from "@/components/ApittoResultsModal";
 import { AdminVotingAuditModal } from "@/components/AdminVotingAuditModal";
 import { loadAdminSettings } from "@/routes/pelada.$id_.admin";
-import { AudioFooterPlayer } from "@/components/AudioFooterPlayer";
 import {
   loadVotes,
   saveVotes,
@@ -57,6 +56,7 @@ type Match = {
   location: string | null;
   logo_url: string | null;
   admin_id?: string | null;
+  is_pro?: boolean | null;
 };
 
 function PeladaPage() {
@@ -155,7 +155,7 @@ function PeladaPage() {
         supabase.from("profiles").select("full_name, username").eq("id", uid).maybeSingle(),
         supabase
           .from("matches")
-          .select("id, name, day_of_week, match_time, location, logo_url, admin_id")
+          .select("id, name, day_of_week, match_time, location, logo_url, admin_id, is_pro")
           .eq("id", id)
           .maybeSingle(),
       ]);
@@ -272,6 +272,7 @@ function PeladaPage() {
 
   const peladaName = match?.name ?? "Minha Pelada";
   const peladaLogo = match?.logo_url ?? null;
+  const isPro = !!match?.is_pro;
   const nextLine = match
     ? [match.day_of_week, match.match_time, match.location].filter(Boolean).join(" • ")
     : "";
@@ -298,12 +299,15 @@ function PeladaPage() {
           </button>
 
           <div className="flex flex-col items-center gap-2 pb-6">
-            <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-[var(--pelada-accent)]/40 bg-zinc-900 shadow-[0_0_30px_-8px_rgba(0,255,0,0.7)]">
-              {peladaLogo ? (
-                <img src={peladaLogo} alt={peladaName} className="h-full w-full object-cover" />
-              ) : (
-                <Trophy className="h-9 w-9 text-[var(--pelada-accent)]" />
-              )}
+            <div className="relative">
+              <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-[var(--pelada-accent)]/40 bg-zinc-900 shadow-[0_0_30px_-8px_rgba(0,255,0,0.7)]">
+                {peladaLogo ? (
+                  <img src={peladaLogo} alt={peladaName} className="h-full w-full object-cover" />
+                ) : (
+                  <Trophy className="h-9 w-9 text-[var(--pelada-accent)]" />
+                )}
+              </div>
+              {isPro && <ProTag className="absolute -right-2 -top-1" />}
             </div>
             <p className="text-center text-base font-bold tracking-tight text-white">
               {peladaName}
