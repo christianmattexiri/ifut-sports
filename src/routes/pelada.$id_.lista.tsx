@@ -106,6 +106,25 @@ function ListaPresencaPage() {
   const [editValuesOpen, setEditValuesOpen] = useState(false);
   const [editLimitsOpen, setEditLimitsOpen] = useState(false);
 
+  // Sorteio
+  const [sorteioOpen, setSorteioOpen] = useState(false);
+  const [sepOpen, setSepOpen] = useState(false);
+  const [sepMode, setSepMode] = useState<"manual" | "fair" | "random">("manual");
+  const [ratings, setRatings] = useState<Record<string, number>>({});
+  const [teamA, setTeamA] = useState<Player[]>([]);
+  const [teamB, setTeamB] = useState<Player[]>([]);
+  const [pool, setPool] = useState<Player[]>([]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = localStorage.getItem(`pelada:${id}:ratings`);
+      if (raw) setRatings(JSON.parse(raw));
+    } catch {
+      /* ignore */
+    }
+  }, [id]);
+
   // Hydrate persisted state from localStorage
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -295,6 +314,103 @@ Bora pro jogo! 🔥
     // TODO: Salvar no Supabase (matches + lista de jogadores)
     toast.success("Lista e configurações salvas com sucesso!");
   };
+
+  // ============ SORTEIO ============
+  const confirmedPlayers = useMemo(
+    () =>
+      [...categorized.line, ...categorized.gks].map((p) => ({
+        ...p,
+        rating: ratings[p.id] ?? p.rating ?? 5,
+      })),
+    [categorized, ratings],
+  );
+
+  function shuffle<T>(arr: T[]): T[] {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function runSorteio(mode: "manual" | "fair" | "random") {
+    const all = confirmedPlayers;
+    const gks = all.filter((p) => p.isGoalkeeper);
+    const line = all.filter((p) => !p.isGoalkeeper);
+    const a: Player[] = [];
+    const b: Player[] = [];
+    const remaining: Player[] = [];
+
+    // Goleiros: 1 em cada time
+    const shuffledGks = shuffle(gks);
+    if (shuffledGks[0]) a.push(shuffledGks[0]);
+    if (shuffledGks[1]) b.push(shuffledGks[1]);
+    for (let i = 2; i < shuffledGks.length; i++) remaining.push(shuffledGks[i]);
+
+    if (mode === "manual") {
+      remaining.push(...line);
+    } else if (mode === "random") {
+      const sh = shuffle(line);
+      const half = Math.ceil(sh.length / 2);
+      a.push(...sh.slice(0, half));
+      b.push(...sh.slice(half));
+    } else {
+      // fair: snake/greedy by rating
+      const sorted = [...line].sort((x, y) => (y.rating ?? 5) - (x.rating ?? 5));
+      const sum = (t: Player[]) => t.reduce((s, p) => s + (p.rating ?? 5), 0);
+      for (const p of sorted) {
+        const sa = sum(a.filter((x) => !x.isGoalkeeper));
+        const sb = sum(b.filter((x) => !x.isGoalkeeper));
+        if (sa <= sb) a.push(p);
+        else b.push(p);
+      }
+    }
+
+    setTeamA(a);
+    setTeamB(b);
+    setPool(remaining);
+  }
+
+  function openSeparation(mode: "manual" | "fair" | "random") {
+    setSepMode(mode);
+    runSorteio(mode);
+    setSorteioOpen(false);
+    setSepOpen(true);
+  }
+
+  function moveTo(playerId: string, target: "A" | "B") {
+    const p =
+      pool.find((x) => x.id === playerId) ||
+      teamA.find((x) => x.id === playerId) ||
+      teamB.find((x) => x.id === playerId);
+    if (!p) return;
+    setPool((prev) => prev.filter((x) => x.id !== playerId));
+    setTeamA((prev) => prev.filter((x) => x.id !== playerId));
+    setTeamB((prev) => prev.filter((x) => x.id !== playerId));
+    if (target === "A") setTeamA((prev) => [...prev, p]);
+    else setTeamB((prev) => [...prev, p]);
+  }
+
+  function backToPool(playerId: string) {
+    const p = teamA.find((x) => x.id === playerId) || teamB.find((x) => x.id === playerId);
+    if (!p) return;
+    setTeamA((prev) => prev.filter((x) => x.id !== playerId));
+    setTeamB((prev) => prev.filter((x) => x.id !== playerId));
+    setPool((prev) => [...prev, p]);
+  }
+
+  function saveTeams() {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(
+        `pelada:${id}:teams`,
+        JSON.stringify({ teamA, teamB, savedAt: Date.now() }),
+      );
+    }
+    // TODO: Salvar times no Supabase
+    toast.success("Times salvos!");
+    setSepOpen(false);
+  }
 
   const peladaName = match?.name ?? "Minha Pelada";
   const peladaLogo = match?.logo_url ?? null;
