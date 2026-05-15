@@ -247,27 +247,34 @@ function PeladaPage() {
                 ]}
               />
             </Link>
-            <QuickCard icon={<BarChart className="h-6 w-6" />} label="Ranking" color="#fb923c" />
-            <QuickCard icon={<UserIcon className="h-6 w-6" />} label="Stats" color="#60a5fa" />
+            <Link to="/pelada/$id/rankings" params={{ id }}>
+              <QuickCard icon={<BarChart className="h-6 w-6" />} label="Ranking" color="#fb923c" />
+            </Link>
+            <Link to="/pelada/$id/perfil" params={{ id }}>
+              <QuickCard icon={<UserIcon className="h-6 w-6" />} label="Stats" color="#60a5fa" />
+            </Link>
           </div>
 
           {(() => {
             const all = latest ? [...latest.teamA.players, ...latest.teamB.players] : [];
-            const findName = (pid: string | null) =>
-              pid ? all.find((p) => p.id === pid)?.name ?? null : null;
+            const findPlayer = (pid: string | null) =>
+              pid ? all.find((p) => p.id === pid) ?? null : null;
+            const findName = (pid: string | null) => findPlayer(pid)?.name ?? null;
             const scoreA = latest ? latest.teamA.players.reduce((a, p) => a + p.goals, 0) : 0;
             const scoreB = latest ? latest.teamB.players.reduce((a, p) => a + p.goals, 0) : 0;
-            const matadorNames =
-              latest?.topScorers.map((pid) => findName(pid)).filter(Boolean) as string[];
+            const matadorPlayers = (latest?.topScorers
+              .map((pid) => findPlayer(pid))
+              .filter(Boolean) ?? []) as { id: string; name: string }[];
             const matadorGoals = latest?.topScorers[0]
               ? all.find((p) => p.id === latest.topScorers[0])?.goals ?? 0
               : 0;
-            const maestroNames =
-              latest?.topAssists.map((pid) => findName(pid)).filter(Boolean) as string[];
+            const maestroPlayers = (latest?.topAssists
+              .map((pid) => findPlayer(pid))
+              .filter(Boolean) ?? []) as { id: string; name: string }[];
             const maestroAssists = latest?.topAssists[0]
               ? all.find((p) => p.id === latest.topAssists[0])?.assists ?? 0
               : 0;
-            const mvpName = findName(latest?.mvp ?? null);
+            const mvpPlayer = findPlayer(latest?.mvp ?? null);
             return (
               <>
                 <div className="mt-10 rounded-2xl border border-white/5 bg-zinc-900/40 px-6 py-8 backdrop-blur-xl">
@@ -310,26 +317,29 @@ function PeladaPage() {
                   </div>
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:items-center">
                     <PodiumCard
+                      matchId={id}
                       icon={<Target className="h-6 w-6" />}
                       title="Matador"
                       subtitle={matadorGoals > 0 ? `${matadorGoals} Gol${matadorGoals > 1 ? "s" : ""}` : "Gols"}
                       color="#fb923c"
-                      names={matadorNames}
+                      players={matadorPlayers}
                     />
                     <PodiumCard
+                      matchId={id}
                       icon={<Crown className="h-6 w-6" />}
                       title="Craque do Jogo"
                       subtitle="MVP"
                       color="#00FF00"
-                      names={mvpName ? [mvpName] : []}
+                      players={mvpPlayer ? [mvpPlayer] : []}
                       highlighted
                     />
                     <PodiumCard
+                      matchId={id}
                       icon={<Sparkles className="h-6 w-6" />}
                       title="Maestro"
                       subtitle={maestroAssists > 0 ? `${maestroAssists} Assist${maestroAssists > 1 ? "s" : ""}` : "Assists"}
                       color="#60a5fa"
-                      names={maestroNames}
+                      players={maestroPlayers}
                     />
                   </div>
                 </div>
@@ -401,19 +411,21 @@ function QuickCard({
 }
 
 function PodiumCard({
+  matchId,
   icon,
   title,
   subtitle,
   color,
   highlighted,
-  names,
+  players,
 }: {
+  matchId: string;
   icon: React.ReactNode;
   title: string;
   subtitle: string;
   color: string;
   highlighted?: boolean;
-  names?: string[];
+  players?: { id: string; name: string }[];
 }) {
   return (
     <div
@@ -428,9 +440,20 @@ function PodiumCard({
       >
         <UserCircle2 className="h-10 w-10" />
       </div>
-      {names && names.length > 0 ? (
+      {players && players.length > 0 ? (
         <p className="px-2 text-center text-sm font-semibold text-zinc-100">
-          {names.join(", ")}
+          {players.map((p, i) => (
+            <span key={p.id}>
+              {i > 0 && ", "}
+              <Link
+                to="/pelada/$id_/perfil/$userId"
+                params={{ id_: matchId, userId: p.id }}
+                className="hover:text-[#00FF00] hover:underline"
+              >
+                {p.name}
+              </Link>
+            </span>
+          ))}
         </p>
       ) : (
         <p className="text-sm text-zinc-500">Aguardando partida</p>
