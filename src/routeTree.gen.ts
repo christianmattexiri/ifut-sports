@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ConvitesRouteImport } from './routes/convites'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as PeladaPerfilRouteImport } from './routes/pelada..perfil'
 import { Route as PeladaIdRouteImport } from './routes/pelada.$id'
 import { Route as PeladaIdUsuariosRouteImport } from './routes/pelada.$id_.usuarios'
 import { Route as PeladaIdRankingsRouteImport } from './routes/pelada.$id_.rankings'
@@ -35,11 +34,6 @@ const ConvitesRoute = ConvitesRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PeladaPerfilRoute = PeladaPerfilRouteImport.update({
-  id: '/pelada/perfil',
-  path: '/pelada/perfil',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PeladaIdRoute = PeladaIdRouteImport.update({
@@ -88,7 +82,6 @@ export interface FileRoutesByFullPath {
   '/convites': typeof ConvitesRoute
   '/dashboard': typeof DashboardRoute
   '/pelada/$id': typeof PeladaIdRoute
-  '/pelada/perfil': typeof PeladaPerfilRoute
   '/pelada/$id/historico': typeof PeladaIdHistoricoRoute
   '/pelada/$id/lista': typeof PeladaIdListaRoute
   '/pelada/$id/partida': typeof PeladaIdPartidaRoute
@@ -102,7 +95,6 @@ export interface FileRoutesByTo {
   '/convites': typeof ConvitesRoute
   '/dashboard': typeof DashboardRoute
   '/pelada/$id': typeof PeladaIdRoute
-  '/pelada/perfil': typeof PeladaPerfilRoute
   '/pelada/$id/historico': typeof PeladaIdHistoricoRoute
   '/pelada/$id/lista': typeof PeladaIdListaRoute
   '/pelada/$id/partida': typeof PeladaIdPartidaRoute
@@ -117,7 +109,6 @@ export interface FileRoutesById {
   '/convites': typeof ConvitesRoute
   '/dashboard': typeof DashboardRoute
   '/pelada/$id': typeof PeladaIdRoute
-  '/pelada/perfil': typeof PeladaPerfilRoute
   '/pelada/$id_/historico': typeof PeladaIdHistoricoRoute
   '/pelada/$id_/lista': typeof PeladaIdListaRoute
   '/pelada/$id_/partida': typeof PeladaIdPartidaRoute
@@ -133,7 +124,6 @@ export interface FileRouteTypes {
     | '/convites'
     | '/dashboard'
     | '/pelada/$id'
-    | '/pelada/perfil'
     | '/pelada/$id/historico'
     | '/pelada/$id/lista'
     | '/pelada/$id/partida'
@@ -147,7 +137,6 @@ export interface FileRouteTypes {
     | '/convites'
     | '/dashboard'
     | '/pelada/$id'
-    | '/pelada/perfil'
     | '/pelada/$id/historico'
     | '/pelada/$id/lista'
     | '/pelada/$id/partida'
@@ -161,7 +150,6 @@ export interface FileRouteTypes {
     | '/convites'
     | '/dashboard'
     | '/pelada/$id'
-    | '/pelada/perfil'
     | '/pelada/$id_/historico'
     | '/pelada/$id_/lista'
     | '/pelada/$id_/partida'
@@ -176,7 +164,6 @@ export interface RootRouteChildren {
   ConvitesRoute: typeof ConvitesRoute
   DashboardRoute: typeof DashboardRoute
   PeladaIdRoute: typeof PeladaIdRoute
-  PeladaPerfilRoute: typeof PeladaPerfilRoute
   PeladaIdHistoricoRoute: typeof PeladaIdHistoricoRoute
   PeladaIdListaRoute: typeof PeladaIdListaRoute
   PeladaIdPartidaRoute: typeof PeladaIdPartidaRoute
@@ -206,13 +193,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/pelada/perfil': {
-      id: '/pelada/perfil'
-      path: '/pelada/perfil'
-      fullPath: '/pelada/perfil'
-      preLoaderRoute: typeof PeladaPerfilRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pelada/$id': {
@@ -291,7 +271,6 @@ const rootRouteChildren: RootRouteChildren = {
   ConvitesRoute: ConvitesRoute,
   DashboardRoute: DashboardRoute,
   PeladaIdRoute: PeladaIdRoute,
-  PeladaPerfilRoute: PeladaPerfilRoute,
   PeladaIdHistoricoRoute: PeladaIdHistoricoRoute,
   PeladaIdListaRoute: PeladaIdListaRoute,
   PeladaIdPartidaRoute: PeladaIdPartidaRoute,
