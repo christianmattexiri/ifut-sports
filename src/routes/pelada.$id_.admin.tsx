@@ -312,13 +312,13 @@ function AdminPage() {
               <div className="space-y-2">
                 <ModuleRow icon={<BarChart className="h-4 w-4" />} title="Rankings" desc="Ranking de jogadores e estatísticas"
                   value={settings.modules.rankings} onChange={(v) => setModule("rankings", v)} />
-                <ModuleRow icon={<Headphones className="h-4 w-4" />} title="Som do MVP" desc="Player do YouTube na home com música do craque" pro
+                <ModuleRow icon={<Headphones className="h-4 w-4" />} title="Som do MVP" desc="Player do YouTube na home com música do craque" pro locked={!isPro}
                   value={settings.modules.somMvp} onChange={(v) => setModule("somMvp", v)} />
                 <ModuleRow icon={<DollarSign className="h-4 w-4" />} title="Finanças" desc="Caixinha do grupo: saldo atual e atualizações" pro
                   value={settings.modules.financas} onChange={(v) => setModule("financas", v)} />
                 <ModuleRow icon={<Vote className="h-4 w-4" />} title="Votações" desc="Eleger craque/pereba do dia"
                   value={settings.modules.votacoes} onChange={(v) => setModule("votacoes", v)} />
-                <ModuleRow icon={<Music className="h-4 w-4" />} title="Música" desc="Música do site, escolhida pelo adm." pro
+                <ModuleRow icon={<Music className="h-4 w-4" />} title="Música" desc="Música do site, escolhida pelo adm." pro locked={!isPro}
                   value={settings.modules.musica} onChange={(v) => setModule("musica", v)} />
               </div>
             </Section>
@@ -393,19 +393,20 @@ function ProBadge() {
 }
 
 function ModuleRow({
-  icon, title, desc, pro, value, onChange,
-}: { icon: React.ReactNode; title: string; desc: string; pro?: boolean; value: boolean; onChange: (v: boolean) => void }) {
+  icon, title, desc, pro, locked, value, onChange,
+}: { icon: React.ReactNode; title: string; desc: string; pro?: boolean; locked?: boolean; value: boolean; onChange: (v: boolean) => void }) {
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-white/5 bg-zinc-950/50 px-3 py-3">
+    <div className={`flex items-center gap-3 rounded-xl border border-white/5 bg-zinc-950/50 px-3 py-3 ${locked ? "opacity-60" : ""}`}>
       <div className="grid h-9 w-9 place-items-center rounded-full bg-emerald-500/10 text-emerald-400">{icon}</div>
       <div className="flex-1">
         <div className="flex items-center gap-1.5">
           <p className="text-sm font-bold text-zinc-100">{title}</p>
           {pro && <ProBadge />}
+          {locked && <Lock className="h-3 w-3 text-amber-300/70" />}
         </div>
         <p className="text-xs text-zinc-500">{desc}</p>
       </div>
-      <Switch checked={value} onCheckedChange={onChange} className="data-[state=checked]:bg-emerald-500" />
+      <Switch checked={value} onCheckedChange={onChange} disabled={locked} className="data-[state=checked]:bg-emerald-500" />
     </div>
   );
 }
