@@ -220,7 +220,7 @@ function ListaPresencaPage() {
     );
   }, [id, categorized, lineLimit, gkLimit, subLimit]);
 
-  const addPlayer = (name: string, isGK = false, userId?: string) => {
+  const addPlayer = (name: string, isGK = false, userId?: string, rating?: number) => {
     if (!name.trim()) return;
     const totalConfirmed = categorized.line.length + categorized.gks.length;
     const totalSubs = categorized.subs.length;
@@ -228,9 +228,13 @@ function ListaPresencaPage() {
       toast.error("Lista cheia (incluindo suplentes)");
       return;
     }
+    const id = userId ?? crypto.randomUUID();
+    if (typeof rating === "number") {
+      setRatings((prev) => ({ ...prev, [id]: rating }));
+    }
     setPlayers((prev) => [
       ...prev,
-      { id: userId ?? crypto.randomUUID(), name: name.trim(), isGoalkeeper: isGK, paid: false },
+      { id, name: name.trim(), isGoalkeeper: isGK, paid: false, rating },
     ]);
   };
 
@@ -255,9 +259,9 @@ function ListaPresencaPage() {
   };
 
   const handleSubmitFriend = () => {
-    addPlayer(friendName, friendGK);
+    addPlayer(friendName, friendGK, undefined, friendRating);
     setFriendName("");
-    setFriendRating(3);
+    setFriendRating(5);
     setFriendGK(false);
     setFriendOpen(false);
   };
