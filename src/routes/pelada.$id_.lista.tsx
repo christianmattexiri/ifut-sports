@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
+import { useAvatars } from "@/lib/avatars";
 import {
   Dialog,
   DialogContent,
@@ -202,6 +203,7 @@ function ListaPresencaPage() {
     () => [...categorized.line, ...categorized.gks, ...categorized.subs],
     [categorized],
   );
+  const avatarMap = useAvatars(orderedPlayers.map((p) => p.id));
 
   // Persist counts so other pages (Pelada home) can read them
   useEffect(() => {
@@ -469,13 +471,17 @@ Bora pro jogo! 🔥
                 <NavItem icon={<UserCog className="h-4 w-4" />} label="Gerenciamento de Usuários" />
               </Link>
             )}
-            <button
-              type="button"
-              className="flex w-full items-center gap-2.5 rounded-xl border border-amber-400/30 bg-amber-400/5 px-3 py-2.5 text-sm font-semibold text-amber-300 transition hover:bg-amber-400/10"
-            >
-              <ShieldCheck className="h-4 w-4" />
-              Administrador
-            </button>
+            {isAdmin && (
+              <Link to="/pelada/$id/admin" params={{ id }} className="block">
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-2.5 rounded-xl border border-amber-400/30 bg-amber-400/5 px-3 py-2.5 text-sm font-semibold text-amber-300 transition hover:bg-amber-400/10"
+                >
+                  <ShieldCheck className="h-4 w-4" />
+                  Administrador
+                </button>
+              </Link>
+            )}
           </div>
         </aside>
 
@@ -663,11 +669,12 @@ Bora pro jogo! 🔥
               ) : (
                 orderedPlayers.map((p, idx) => {
                   const isSub = idx >= lineLimit + gkLimit;
+                  const av = avatarMap[p.id]?.avatar_url ?? p.avatarUrl ?? null;
                   return (
                     <PlayerRow
                       key={p.id}
                       position={idx + 1}
-                      player={p}
+                      player={{ ...p, avatarUrl: av }}
                       isSub={isSub}
                       onTogglePaid={() => togglePaid(p.id)}
                       onRemove={() => removePlayer(p.id)}

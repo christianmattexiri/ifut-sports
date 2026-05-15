@@ -19,6 +19,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
 import { loadHistory, type HistMatch } from "./pelada.$id_.historico";
 import { onProfileUpdate } from "@/lib/profile-sync";
+import { useAvatars } from "@/lib/avatars";
+import { PlayerProfileModal } from "@/components/PlayerProfileModal";
 
 export const Route = createFileRoute("/pelada/$id_/rankings")({
   component: RankingsPage,
@@ -106,6 +108,7 @@ function RankingsPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [activeTab, setActiveTab] = useState<Stat>("gols");
   const [players, setPlayers] = useState<PlayerStats[]>([]);
+  const [modalUser, setModalUser] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
     let cancel = false;
@@ -146,6 +149,12 @@ function RankingsPage() {
 
   const podium = ordered.slice(0, 3);
   const rest = ordered.slice(3);
+  const allIds = useMemo(() => ordered.map((p) => p.id), [ordered]);
+  const avMap = useAvatars(allIds);
+  const withAv = (p: PlayerStats): PlayerStats => ({
+    ...p,
+    avatar: p.avatar ?? avMap[p.id]?.avatar_url ?? null,
+  });
 
   return (
     <main className="min-h-dvh bg-zinc-950 text-zinc-100">
@@ -194,9 +203,11 @@ function RankingsPage() {
               </Link>
             )}
             {isAdmin && (
-              <button className="flex w-full items-center gap-2.5 rounded-xl border border-amber-400/30 bg-amber-400/5 px-3 py-2.5 text-sm font-semibold text-amber-300 transition hover:bg-amber-400/10">
-                <ShieldCheck className="h-4 w-4" /> Administrador
-              </button>
+              <Link to="/pelada/$id/admin" params={{ id }} className="block">
+                <button className="flex w-full items-center gap-2.5 rounded-xl border border-amber-400/30 bg-amber-400/5 px-3 py-2.5 text-sm font-semibold text-amber-300 transition hover:bg-amber-400/10">
+                  <ShieldCheck className="h-4 w-4" /> Administrador
+                </button>
+              </Link>
             )}
           </div>
         </aside>
@@ -234,15 +245,15 @@ function RankingsPage() {
 
           {/* Podium */}
           <div className="mt-10 grid grid-cols-3 items-end gap-3 md:gap-6">
-            <PodiumLink id={id} player={podium[1]}>
-              <PodiumCard place={2} player={podium[1]} stat={activeTab} color="#9ca3af" label="2nd PLACE" size="sm" />
-            </PodiumLink>
-            <PodiumLink id={id} player={podium[0]}>
-              <PodiumCard place={1} player={podium[0]} stat={activeTab} color="#fbbf24" label="1st PLACE" size="lg" />
-            </PodiumLink>
-            <PodiumLink id={id} player={podium[2]}>
-              <PodiumCard place={3} player={podium[2]} stat={activeTab} color="#f97316" label="3rd PLACE" size="sm" />
-            </PodiumLink>
+            <PodiumButton player={podium[1]} onPick={setModalUser}>
+              <PodiumCard place={2} player={podium[1] && withAv(podium[1])} stat={activeTab} color="#9ca3af" label="2nd PLACE" size="sm" />
+            </PodiumButton>
+            <PodiumButton player={podium[0]} onPick={setModalUser}>
+              <PodiumCard place={1} player={podium[0] && withAv(podium[0])} stat={activeTab} color="#fbbf24" label="1st PLACE" size="lg" />
+            </PodiumButton>
+            <PodiumButton player={podium[2]} onPick={setModalUser}>
+              <PodiumCard place={3} player={podium[2] && withAv(podium[2])} stat={activeTab} color="#f97316" label="3rd PLACE" size="sm" />
+            </PodiumButton>
           </div>
 
           {/* List */}
@@ -254,25 +265,32 @@ function RankingsPage() {
                 </p>
               ) : (
                 rest.map((p, idx) => (
-                  <Link
+                  <button
                     key={p.id}
-                    to="/pelada/$id/perfil/$userId"
-                    params={{ id, userId: p.id }}
-                    className="block transition hover:bg-white/5"
+                    type="button"
+                    onClick={() => setModalUser({ id: p.id, name: p.name })}
+                    className="block w-full text-left transition hover:bg-white/5"
                   >
                     <RankRow
                       position={idx + 4}
-                      player={p}
+                      player={withAv(p)}
                       stat={activeTab}
                       last={idx === rest.length - 1}
                     />
-                  </Link>
+                  </button>
                 ))
               )}
             </div>
           </div>
         </section>
       </div>
+      <PlayerProfileModal
+        open={!!modalUser}
+        onOpenChange={(o) => !o && setModalUser(null)}
+        matchId={id}
+        userId={modalUser?.id ?? null}
+        fallbackName={modalUser?.name}
+      />
     </main>
   );
 }
@@ -346,12 +364,24 @@ function PodiumCard({
   );
 }
 
-function PodiumLink({ id, player, children }: { id: string; player?: PlayerStats; children: React.ReactNode }) {
+function PodiumButton({
+  player,
+  onPick,
+  children,
+}: {
+  player?: PlayerStats;
+  onPick: (p: { id: string; name: string }) => void;
+  children: React.ReactNode;
+}) {
   if (!player) return <>{children}</>;
   return (
-    <Link to="/pelada/$id/perfil/$userId" params={{ id, userId: player.id }} className="block transition hover:scale-[1.02]">
+    <button
+      type="button"
+      onClick={() => onPick({ id: player.id, name: player.name })}
+      className="block w-full text-left transition hover:scale-[1.02]"
+    >
       {children}
-    </Link>
+    </button>
   );
 }
 

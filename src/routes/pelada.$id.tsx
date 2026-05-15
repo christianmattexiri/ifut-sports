@@ -1,5 +1,7 @@
 import { createFileRoute, useNavigate, useParams, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useAvatars } from "@/lib/avatars";
+import { PlayerProfileModal } from "@/components/PlayerProfileModal";
 import {
   ArrowLeft,
   Home,
@@ -44,6 +46,7 @@ function PeladaPage() {
   const [match, setMatch] = useState<Match | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [modalUser, setModalUser] = useState<{ id: string; name: string } | null>(null);
   const [counts, setCounts] = useState<{
     line: number;
     lineLimit: number;
@@ -190,13 +193,15 @@ function PeladaPage() {
               </Link>
             )}
             {isAdmin && (
-            <button
-              type="button"
-              className="flex w-full items-center gap-2.5 rounded-xl border border-amber-400/30 bg-amber-400/5 px-3 py-2.5 text-sm font-semibold text-amber-300 transition hover:bg-amber-400/10"
-            >
-              <ShieldCheck className="h-4 w-4" />
-              Administrador
-            </button>
+            <Link to="/pelada/$id/admin" params={{ id }} className="block">
+              <button
+                type="button"
+                className="flex w-full items-center gap-2.5 rounded-xl border border-amber-400/30 bg-amber-400/5 px-3 py-2.5 text-sm font-semibold text-amber-300 transition hover:bg-amber-400/10"
+              >
+                <ShieldCheck className="h-4 w-4" />
+                Administrador
+              </button>
+            </Link>
             )}
           </div>
         </aside>
@@ -274,6 +279,11 @@ function PeladaPage() {
               ? all.find((p) => p.id === latest.topAssists[0])?.assists ?? 0
               : 0;
             const mvpPlayer = findPlayer(latest?.mvp ?? null);
+            const podiumIds = [
+              ...matadorPlayers.map((p) => p.id),
+              ...maestroPlayers.map((p) => p.id),
+              ...(mvpPlayer ? [mvpPlayer.id] : []),
+            ];
             return (
               <>
                 <div className="mt-10 rounded-2xl border border-white/5 bg-zinc-900/40 px-6 py-8 backdrop-blur-xl">
@@ -316,29 +326,32 @@ function PeladaPage() {
                   </div>
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:items-center">
                     <PodiumCard
-                      matchId={id}
+                      onPick={(p) => setModalUser(p)}
                       icon={<Target className="h-6 w-6" />}
                       title="Matador"
                       subtitle={matadorGoals > 0 ? `${matadorGoals} Gol${matadorGoals > 1 ? "s" : ""}` : "Gols"}
                       color="#fb923c"
                       players={matadorPlayers}
+                      podiumIds={podiumIds}
                     />
                     <PodiumCard
-                      matchId={id}
+                      onPick={(p) => setModalUser(p)}
                       icon={<Crown className="h-6 w-6" />}
                       title="Craque do Jogo"
                       subtitle="MVP"
                       color="#00FF00"
                       players={mvpPlayer ? [mvpPlayer] : []}
                       highlighted
+                      podiumIds={podiumIds}
                     />
                     <PodiumCard
-                      matchId={id}
+                      onPick={(p) => setModalUser(p)}
                       icon={<Sparkles className="h-6 w-6" />}
                       title="Maestro"
                       subtitle={maestroAssists > 0 ? `${maestroAssists} Assist${maestroAssists > 1 ? "s" : ""}` : "Assists"}
                       color="#60a5fa"
                       players={maestroPlayers}
+                      podiumIds={podiumIds}
                     />
                   </div>
                 </div>
@@ -347,6 +360,13 @@ function PeladaPage() {
           })()}
         </section>
       </div>
+      <PlayerProfileModal
+        open={!!modalUser}
+        onOpenChange={(o) => !o && setModalUser(null)}
+        matchId={id}
+        userId={modalUser?.id ?? null}
+        fallbackName={modalUser?.name}
+      />
     </main>
   );
 }
@@ -410,22 +430,28 @@ function QuickCard({
 }
 
 function PodiumCard({
-  matchId,
+  onPick,
   icon,
   title,
   subtitle,
   color,
   highlighted,
   players,
+  podiumIds,
 }: {
-  matchId: string;
+  onPick: (p: { id: string; name: string }) => void;
   icon: React.ReactNode;
   title: string;
   subtitle: string;
   color: string;
   highlighted?: boolean;
   players?: { id: string; name: string }[];
+  podiumIds?: string[];
 }) {
+  const ids = podiumIds ?? (players?.map((p) => p.id) ?? []);
+  const avMap = useAvatars(ids);
+  const first = players?.[0];
+  const av = first ? avMap[first.id]?.avatar_url : null;
   return (
     <div
       className={`flex flex-col items-center gap-3 rounded-2xl border bg-zinc-900/50 px-5 backdrop-blur-xl transition ${
@@ -433,24 +459,33 @@ function PodiumCard({
       }`}
       style={{ ["--pc-color" as string]: color }}
     >
-      <div
-        className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-dashed bg-zinc-900 text-zinc-700"
-        style={{ borderColor: `${color}55` }}
+      <button
+        type="button"
+        onClick={() => first && onPick(first)}
+        disabled={!first}
+        className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 bg-zinc-900 transition hover:scale-105"
+        style={{ borderColor: color }}
       >
-        <UserCircle2 className="h-10 w-10" />
-      </div>
+        {av ? (
+          <img src={av} alt={first?.name ?? ""} className="h-full w-full object-cover" />
+        ) : first ? (
+          <span className="text-2xl font-black text-zinc-300">{first.name[0]?.toUpperCase()}</span>
+        ) : (
+          <UserCircle2 className="h-10 w-10 text-zinc-700" />
+        )}
+      </button>
       {players && players.length > 0 ? (
         <p className="px-2 text-center text-sm font-semibold text-zinc-100">
           {players.map((p, i) => (
             <span key={p.id}>
               {i > 0 && ", "}
-              <Link
-                to="/pelada/$id/perfil/$userId"
-                params={{ id: matchId, userId: p.id }}
+              <button
+                type="button"
+                onClick={() => onPick(p)}
                 className="hover:text-[#00FF00] hover:underline"
               >
                 {p.name}
-              </Link>
+              </button>
             </span>
           ))}
         </p>

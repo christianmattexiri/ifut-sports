@@ -221,13 +221,15 @@ export function PeladaProfile({
               </Link>
             )}
             {isAdmin && (
-              <button
-                type="button"
-                className="flex w-full items-center gap-2.5 rounded-xl border border-amber-400/30 bg-amber-400/5 px-3 py-2.5 text-sm font-semibold text-amber-300 transition hover:bg-amber-400/10"
-              >
-                <ShieldCheck className="h-4 w-4" />
-                Administrador
-              </button>
+              <Link to="/pelada/$id/admin" params={{ id: matchId }} className="block">
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-2.5 rounded-xl border border-amber-400/30 bg-amber-400/5 px-3 py-2.5 text-sm font-semibold text-amber-300 transition hover:bg-amber-400/10"
+                >
+                  <ShieldCheck className="h-4 w-4" />
+                  Administrador
+                </button>
+              </Link>
             )}
           </div>
         </aside>
