@@ -20,6 +20,7 @@ import {
   UserCog,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { isSuperAdminUsername } from "@/lib/admin";
 
 export const Route = createFileRoute("/pelada/$id")({
   component: PeladaPage,
@@ -124,7 +125,8 @@ function PeladaPage() {
       setFirstName(full.split(" ")[0]);
       const match = m as Match | null;
       setMatch(match);
-      setIsAdmin((match?.admin_id ?? null) === uid);
+      const owner = (match?.admin_id ?? null) === uid;
+      setIsAdmin(owner || isSuperAdminUsername(prof?.username));
       setLoading(false);
     })();
   }, [navigate, id]);
