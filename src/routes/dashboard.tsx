@@ -122,21 +122,19 @@ function Dashboard() {
         });
       }
 
-      // Fetch member counts for each pelada (admin counts as 1 + match_members rows)
+      // Fetch GLOBAL participant counts via SECURITY DEFINER RPC so the number
+      // is identical for every viewer (admin or member). RLS would otherwise
+      // hide rows that belong to other users.
       const matchIds = list.map((p) => p.id);
       if (matchIds.length) {
-        const { data: allMembers } = await supabase
-          .from("match_members")
-          .select("match_id")
-          .in("match_id", matchIds);
-        const memberCounts = new Map<string, number>();
-        for (const r of (allMembers ?? []) as any[]) {
-          memberCounts.set(r.match_id, (memberCounts.get(r.match_id) ?? 0) + 1);
+        const { data: counts } = await supabase.rpc("get_match_member_counts", {
+          match_ids: matchIds,
+        });
+        const map = new Map<string, number>();
+        for (const r of (counts ?? []) as any[]) {
+          map.set(r.match_id, Number(r.total) || 1);
         }
-        for (const p of list) {
-          // +1 for the admin (not stored in match_members)
-          p.participants = (memberCounts.get(p.id) ?? 0) + 1;
-        }
+        for (const p of list) p.participants = map.get(p.id) ?? 1;
       }
 
       setPeladas(list);
