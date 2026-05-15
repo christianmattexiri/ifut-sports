@@ -77,6 +77,23 @@ export function computeApitto(v: ApittoMap): { id: string; avg: number; n: numbe
     .sort((a, b) => b.avg - a.avg);
 }
 
+// Returns true if the current leader of a vote map cannot be caught
+// by the runner-up given the remaining (not yet cast) ballots.
+// Formula: leader > runnerUp + remaining
+export function isLeaderMathLocked(
+  map: Record<string, string>,
+  totalEligibleVoters: number,
+): boolean {
+  const tally: Record<string, number> = {};
+  for (const cand of Object.values(map)) tally[cand] = (tally[cand] ?? 0) + 1;
+  const counts = Object.values(tally).sort((a, b) => b - a);
+  const leader = counts[0] ?? 0;
+  const runner = counts[1] ?? 0;
+  const cast = Object.keys(map).length;
+  const remaining = Math.max(0, totalEligibleVoters - cast);
+  return leader > 0 && leader > runner + remaining;
+}
+
 export function onVotesUpdated(cb: () => void): () => void {
   if (typeof window === "undefined") return () => {};
   const h = () => cb();
