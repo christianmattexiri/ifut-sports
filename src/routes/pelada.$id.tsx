@@ -325,11 +325,8 @@ function PeladaPage() {
               <Link to="/pelada/$id/rankings" params={{ id }} className="block"><NavItem icon={<BarChart3 className="h-4 w-4" />} label="Rankings" /></Link>
             )}
             <Link to="/pelada/$id/perfil" params={{ id }} className="block"><NavItem icon={<UserCircle2 className="h-4 w-4" />} label="Meu perfil na pelada" /></Link>
-          </nav>
-
-          <div className="mt-auto pt-6">
             {isAdmin && (
-              <Link to="/pelada/$id/usuarios" params={{ id }} className="mb-2 block">
+              <Link to="/pelada/$id/usuarios" params={{ id }} className="block">
                 <NavItem icon={<UserCog className="h-4 w-4" />} label="Gerenciamento de Usuários" />
               </Link>
             )}
@@ -344,7 +341,7 @@ function PeladaPage() {
               </button>
             </Link>
             )}
-          </div>
+          </nav>
         </aside>
 
         <section className="flex-1 px-5 py-8 md:px-10 md:py-10">
