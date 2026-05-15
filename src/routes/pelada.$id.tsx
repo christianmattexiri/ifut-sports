@@ -2,6 +2,18 @@ import { createFileRoute, useNavigate, useParams, Link } from "@tanstack/react-r
 import { useEffect, useMemo, useState } from "react";
 import { useAvatars } from "@/lib/avatars";
 import { PlayerProfileModal } from "@/components/PlayerProfileModal";
+import { VotingModal } from "@/components/VotingModal";
+import { ApittoResultsModal } from "@/components/ApittoResultsModal";
+import { loadAdminSettings } from "@/routes/pelada.$id_.admin";
+import {
+  loadVotes,
+  saveVotes,
+  computeWinner,
+  computeApitto,
+  userHasVoted,
+  onVotesUpdated,
+  type MatchVotes,
+} from "@/lib/voting";
 import {
   ArrowLeft,
   Home,
@@ -20,6 +32,9 @@ import {
   Target,
   Sparkles,
   UserCog,
+  Skull,
+  Star,
+  Lock,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
@@ -47,6 +62,11 @@ function PeladaPage() {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [modalUser, setModalUser] = useState<{ id: string; name: string } | null>(null);
+  const [viewerId, setViewerId] = useState<string>("");
+  const [voteSettings, setVoteSettings] = useState(() => loadAdminSettings(id).voteModes);
+  const [votes, setVotes] = useState<MatchVotes | null>(null);
+  const [votingOpen, setVotingOpen] = useState(false);
+  const [apittoResultsOpen, setApittoResultsOpen] = useState(false);
   const [counts, setCounts] = useState<{
     line: number;
     lineLimit: number;
@@ -116,6 +136,7 @@ function PeladaPage() {
         return;
       }
       const uid = sess.session.user.id;
+      setViewerId(uid);
       const [{ data: prof }, { data: m }] = await Promise.all([
         supabase.from("profiles").select("full_name, username").eq("id", uid).maybeSingle(),
         supabase
@@ -133,6 +154,21 @@ function PeladaPage() {
       setLoading(false);
     })();
   }, [navigate, id]);
+
+  // Reload admin vote settings if changed in another tab/page.
+  useEffect(() => {
+    const reload = () => setVoteSettings(loadAdminSettings(id).voteModes);
+    window.addEventListener("storage", reload);
+    return () => window.removeEventListener("storage", reload);
+  }, [id]);
+
+  // Load + subscribe to votes for the latest match.
+  useEffect(() => {
+    if (!latest) { setVotes(null); return; }
+    setVotes(loadVotes(id, latest.id));
+    const off = onVotesUpdated(() => setVotes(loadVotes(id, latest!.id)));
+    return off;
+  }, [id, latest]);
 
   const peladaName = match?.name ?? "Minha Pelada";
   const peladaLogo = match?.logo_url ?? null;
