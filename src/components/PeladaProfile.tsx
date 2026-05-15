@@ -505,10 +505,12 @@ function MyMatchAccordion({
 function TeamColumn({
   team,
   myUserId,
+  viewerId,
   colorClass,
 }: {
   team: { label: string; players: { id: string; name: string; goals: number; assists: number }[] };
   myUserId: string;
+  viewerId: string;
   colorClass: string;
 }) {
   return (
@@ -519,19 +521,20 @@ function TeamColumn({
       </div>
       <ul className="space-y-1.5">
         {team.players.map((p) => {
-          const isMe = p.id === myUserId;
+          const isTarget = p.id === myUserId;
+          const isViewer = p.id === viewerId;
           return (
             <li
               key={p.id}
               className={`flex items-center justify-between rounded-lg border px-3 py-2 text-sm transition ${
-                isMe
+                isTarget
                   ? "border-[#00FF00]/60 bg-[#00FF00]/10 shadow-[0_0_15px_-5px_rgba(0,255,0,0.5)]"
                   : "border-white/5 bg-zinc-900/60"
               }`}
             >
-              <span className={isMe ? "font-bold text-[#00FF00]" : "text-zinc-200"}>
+              <span className={isTarget ? "font-bold text-[#00FF00]" : "text-zinc-200"}>
                 {p.name}
-                {isMe && <span className="ml-1 text-[10px] uppercase opacity-70">(Você)</span>}
+                {isViewer && <span className="ml-1 text-[10px] uppercase opacity-70">(Você)</span>}
               </span>
               <span className="flex items-center gap-2 text-xs font-bold tabular-nums">
                 {p.goals > 0 && <span className="text-amber-400">{p.goals}G</span>}
