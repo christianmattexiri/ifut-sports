@@ -130,9 +130,13 @@ function RankingsPage() {
 
   // TODO: Consumir dados reais agregados do histórico de partidas no Supabase
   useEffect(() => {
-    const hist = loadHistory(id);
-    const agg = aggregate(hist);
-    setPlayers(agg.length > 0 ? agg : MOCK);
+    const refresh = () => {
+      const hist = loadHistory(id);
+      const agg = aggregate(hist);
+      setPlayers(agg.length > 0 ? agg : MOCK);
+    };
+    refresh();
+    return onProfileUpdate(() => refresh());
   }, [id]);
 
   const ordered = useMemo(() => {
