@@ -1,7 +1,7 @@
 import { createFileRoute, useParams } from "@tanstack/react-router";
 import { PeladaProfile } from "@/components/PeladaProfile";
 
-export const Route = createFileRoute("/pelada/$id_/perfil/$userId")({
+export const Route = createFileRoute("/pelada/$id_/jogador/$userId")({
   component: PerfilDoJogadorPage,
   head: () => ({ meta: [{ title: "iFut — Perfil do Jogador" }] }),
 });
