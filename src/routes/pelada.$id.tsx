@@ -50,6 +50,18 @@ function PeladaPage() {
     gkLimit: number;
   }>({ line: 0, lineLimit: 16, gks: 0, gkLimit: 2 });
 
+  type LatestMatch = {
+    id: string;
+    date: string;
+    name: string;
+    teamA: { label: string; players: { id: string; name: string; goals: number; assists: number }[] };
+    teamB: { label: string; players: { id: string; name: string; goals: number; assists: number }[] };
+    mvp: string | null;
+    topScorers: string[];
+    topAssists: string[];
+  };
+  const [latest, setLatest] = useState<LatestMatch | null>(null);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     const key = `pelada:${id}:counts`;
@@ -64,6 +76,29 @@ function PeladaPage() {
     read();
     const onStorage = (e: StorageEvent) => {
       if (e.key === key) read();
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [id]);
+
+  // Read latest match from histórico
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const histKey = `pelada:${id}:historico`;
+    const read = () => {
+      try {
+        const raw = localStorage.getItem(histKey);
+        if (!raw) return setLatest(null);
+        const arr = JSON.parse(raw) as LatestMatch[];
+        const sorted = [...arr].sort((a, b) => (a.date < b.date ? 1 : -1));
+        setLatest(sorted[0] ?? null);
+      } catch {
+        setLatest(null);
+      }
+    };
+    read();
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === histKey) read();
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
@@ -136,7 +171,9 @@ function PeladaPage() {
             <Link to="/pelada/$id/lista" params={{ id }} className="block">
               <NavItem icon={<ClipboardList className="h-4 w-4" />} label="Lista de Presença" />
             </Link>
-            <NavItem icon={<History className="h-4 w-4" />} label="Histórico" />
+            <Link to="/pelada/$id/historico" params={{ id }} className="block">
+              <NavItem icon={<History className="h-4 w-4" />} label="Histórico" />
+            </Link>
             <NavItem icon={<BarChart3 className="h-4 w-4" />} label="Rankings" />
             <NavItem icon={<UserCircle2 className="h-4 w-4" />} label="Meu perfil na pelada" />
           </nav>
@@ -204,44 +241,91 @@ function PeladaPage() {
             <QuickCard icon={<UserIcon className="h-6 w-6" />} label="Stats" color="#60a5fa" />
           </div>
 
-          <div className="mt-10 rounded-2xl border border-white/5 bg-zinc-900/40 px-6 py-8 backdrop-blur-xl">
-            <div className="flex items-center justify-center gap-2">
-              <Trophy className="h-5 w-5 text-amber-400" />
-              <h2 className="text-lg font-semibold tracking-wide text-zinc-200">
-                Última Partida
-              </h2>
-            </div>
-            <div className="mt-6 flex items-center justify-center gap-10">
-              <div className="text-center">
-                <p className="text-xs uppercase tracking-wider text-zinc-500">Time A</p>
-                <p className="mt-2 text-5xl font-black text-[#00FF00] drop-shadow-[0_0_20px_rgba(0,255,0,0.6)]">
-                  0
-                </p>
-              </div>
-              <p className="text-2xl font-light text-zinc-600">vs</p>
-              <div className="text-center">
-                <p className="text-xs uppercase tracking-wider text-zinc-500">Time B</p>
-                <p className="mt-2 text-5xl font-black text-red-500 drop-shadow-[0_0_20px_rgba(239,68,68,0.6)]">
-                  0
-                </p>
-              </div>
-            </div>
-            <p className="mt-4 text-center text-xs text-zinc-500">Sem registros ainda</p>
-          </div>
+          {(() => {
+            const all = latest ? [...latest.teamA.players, ...latest.teamB.players] : [];
+            const findName = (pid: string | null) =>
+              pid ? all.find((p) => p.id === pid)?.name ?? null : null;
+            const scoreA = latest ? latest.teamA.players.reduce((a, p) => a + p.goals, 0) : 0;
+            const scoreB = latest ? latest.teamB.players.reduce((a, p) => a + p.goals, 0) : 0;
+            const matadorNames =
+              latest?.topScorers.map((pid) => findName(pid)).filter(Boolean) as string[];
+            const matadorGoals = latest?.topScorers[0]
+              ? all.find((p) => p.id === latest.topScorers[0])?.goals ?? 0
+              : 0;
+            const maestroNames =
+              latest?.topAssists.map((pid) => findName(pid)).filter(Boolean) as string[];
+            const maestroAssists = latest?.topAssists[0]
+              ? all.find((p) => p.id === latest.topAssists[0])?.assists ?? 0
+              : 0;
+            const mvpName = findName(latest?.mvp ?? null);
+            return (
+              <>
+                <div className="mt-10 rounded-2xl border border-white/5 bg-zinc-900/40 px-6 py-8 backdrop-blur-xl">
+                  <div className="flex items-center justify-center gap-2">
+                    <Trophy className="h-5 w-5 text-amber-400" />
+                    <h2 className="text-lg font-semibold tracking-wide text-zinc-200">
+                      Última Partida
+                    </h2>
+                  </div>
+                  <div className="mt-6 flex items-center justify-center gap-10">
+                    <div className="text-center">
+                      <p className="text-xs uppercase tracking-wider text-zinc-500">
+                        {latest?.teamA.label ?? "Time A"}
+                      </p>
+                      <p className="mt-2 text-5xl font-black text-[#00FF00] drop-shadow-[0_0_20px_rgba(0,255,0,0.6)]">
+                        {scoreA}
+                      </p>
+                    </div>
+                    <p className="text-2xl font-light text-zinc-600">vs</p>
+                    <div className="text-center">
+                      <p className="text-xs uppercase tracking-wider text-zinc-500">
+                        {latest?.teamB.label ?? "Time B"}
+                      </p>
+                      <p className="mt-2 text-5xl font-black text-red-500 drop-shadow-[0_0_20px_rgba(239,68,68,0.6)]">
+                        {scoreB}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="mt-4 text-center text-xs text-zinc-500">
+                    {latest ? latest.name : "Sem registros ainda"}
+                  </p>
+                </div>
 
-          <div className="mt-10">
-            <div className="mb-5 flex items-center justify-center gap-2">
-              <Trophy className="h-5 w-5 text-amber-400" />
-              <h2 className="text-lg font-semibold tracking-wide text-zinc-200">
-                Pódio da Última Partida
-              </h2>
-            </div>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:items-center">
-              <PodiumCard icon={<Target className="h-6 w-6" />} title="Matador" subtitle="Gols" color="#fb923c" />
-              <PodiumCard icon={<Sparkles className="h-6 w-6" />} title="Maestro" subtitle="Assists" color="#60a5fa" highlighted />
-              <PodiumCard icon={<Crown className="h-6 w-6" />} title="Craque do Jogo" subtitle="MVP" color="#00FF00" />
-            </div>
-          </div>
+                <div className="mt-10">
+                  <div className="mb-5 flex items-center justify-center gap-2">
+                    <Trophy className="h-5 w-5 text-amber-400" />
+                    <h2 className="text-lg font-semibold tracking-wide text-zinc-200">
+                      Pódio da Última Partida
+                    </h2>
+                  </div>
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:items-center">
+                    <PodiumCard
+                      icon={<Target className="h-6 w-6" />}
+                      title="Matador"
+                      subtitle={matadorGoals > 0 ? `${matadorGoals} Gol${matadorGoals > 1 ? "s" : ""}` : "Gols"}
+                      color="#fb923c"
+                      names={matadorNames}
+                    />
+                    <PodiumCard
+                      icon={<Crown className="h-6 w-6" />}
+                      title="Craque do Jogo"
+                      subtitle="MVP"
+                      color="#00FF00"
+                      names={mvpName ? [mvpName] : []}
+                      highlighted
+                    />
+                    <PodiumCard
+                      icon={<Sparkles className="h-6 w-6" />}
+                      title="Maestro"
+                      subtitle={maestroAssists > 0 ? `${maestroAssists} Assist${maestroAssists > 1 ? "s" : ""}` : "Assists"}
+                      color="#60a5fa"
+                      names={maestroNames}
+                    />
+                  </div>
+                </div>
+              </>
+            );
+          })()}
         </section>
       </div>
     </main>
@@ -310,12 +394,14 @@ function PodiumCard({
   subtitle,
   color,
   highlighted,
+  names,
 }: {
   icon: React.ReactNode;
   title: string;
   subtitle: string;
   color: string;
   highlighted?: boolean;
+  names?: string[];
 }) {
   return (
     <div
@@ -330,7 +416,13 @@ function PodiumCard({
       >
         <UserCircle2 className="h-10 w-10" />
       </div>
-      <p className="text-sm text-zinc-500">Aguardando partida</p>
+      {names && names.length > 0 ? (
+        <p className="px-2 text-center text-sm font-semibold text-zinc-100">
+          {names.join(", ")}
+        </p>
+      ) : (
+        <p className="text-sm text-zinc-500">Aguardando partida</p>
+      )}
       <div className="flex items-center gap-2" style={{ color }}>
         {icon}
         <p className="text-base font-bold uppercase tracking-wider">{title}</p>
