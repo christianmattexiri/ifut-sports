@@ -147,6 +147,13 @@ export type Database = {
     }
     Functions: {
       get_email_by_username: { Args: { uname: string }; Returns: string }
+      get_match_member_counts: {
+        Args: { match_ids: string[] }
+        Returns: {
+          match_id: string
+          total: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
