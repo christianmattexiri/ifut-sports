@@ -346,6 +346,15 @@ function PodiumCard({
   );
 }
 
+function PodiumLink({ id, player, children }: { id: string; player?: PlayerStats; children: React.ReactNode }) {
+  if (!player) return <>{children}</>;
+  return (
+    <Link to="/pelada/$id/perfil/$userId" params={{ id, userId: player.id }} className="block transition hover:scale-[1.02]">
+      {children}
+    </Link>
+  );
+}
+
 function RankRow({
   position,
   player,
