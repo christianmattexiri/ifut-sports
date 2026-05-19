@@ -21,7 +21,7 @@ import { useQuery } from "@tanstack/react-query";
 import { peladaMatchQuery, viewerQuery } from "@/lib/pelada-queries";
 import { type HistMatch } from "./pelada.$id_.historico";
 import { fetchAggregatedStats } from "@/lib/games-storage";
-import { onProfileUpdate } from "@/lib/profile-sync";
+import { onProfileUpdate, onStatsUpdated } from "@/lib/profile-sync";
 import { useAvatars } from "@/lib/avatars";
 import { PlayerProfileModal } from "@/components/PlayerProfileModal";
 
@@ -89,7 +89,8 @@ function RankingsPage() {
     };
     refresh();
     const off = onProfileUpdate(() => refresh());
-    return () => { cancelled = true; off(); };
+    const offStats = onStatsUpdated(() => refresh());
+    return () => { cancelled = true; off(); offStats(); };
   }, [id]);
 
   const ordered = useMemo(() => {
