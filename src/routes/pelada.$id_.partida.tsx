@@ -11,7 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 import { peladaMatchQuery, viewerQuery } from "@/lib/pelada-queries";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { EditMatchDialog, loadHistory, saveHistory, type HistMatch } from "./pelada.$id_.historico";
+import { EditMatchDialog, saveMatchToDb, type HistMatch } from "./pelada.$id_.historico";
 
 export const Route = createFileRoute("/pelada/$id_/partida")({
   component: PartidaPage,
@@ -180,13 +180,15 @@ function PartidaPage() {
     setEditing(m);
   }
 
-  function handleSaveMatch(updated: HistMatch) {
-    const list = loadHistory(id);
-    const next = [updated, ...list].sort((a, b) => (a.date < b.date ? 1 : -1));
-    saveHistory(id, next);
-    // TODO: Persistir partida no Supabase + atualizar Rankings
-    setEditing(null);
-    toast.success("Partida registrada! Pódio atualizado.");
+  async function handleSaveMatch(updated: HistMatch) {
+    try {
+      await saveMatchToDb(id, updated);
+      setEditing(null);
+      toast.success("Partida registrada! Pódio atualizado.");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Erro ao registrar";
+      toast.error(msg);
+    }
   }
 
   const peladaName = match?.name ?? "Minha Pelada";
