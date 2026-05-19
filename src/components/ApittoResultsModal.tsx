@@ -2,30 +2,30 @@ import { useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Star, StarHalf, Crown, Skull } from "lucide-react";
 import { useAvatars } from "@/lib/avatars";
-import { computeApitto, loadVotes } from "@/lib/voting";
+import { computeApitto, type MatchVotes } from "@/lib/voting";
 import { PlayerProfileModal } from "@/components/PlayerProfileModal";
 
 export function ApittoResultsModal({
   open,
   onOpenChange,
   peladaId,
-  histId,
   players,
+  votes,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   peladaId: string;
-  histId: string;
+  histId?: string;
   players: { id: string; name: string }[];
+  votes: MatchVotes | null;
 }) {
   const ranked = useMemo(() => {
-    if (!open) return [];
-    const v = loadVotes(peladaId, histId);
+    if (!open || !votes) return [];
     const byId = new Map(players.map((p) => [p.id, p]));
-    return computeApitto(v.apitto)
+    return computeApitto(votes.apitto)
       .filter((r) => byId.has(r.id))
       .map((r) => ({ ...r, name: byId.get(r.id)!.name }));
-  }, [open, peladaId, histId, players]);
+  }, [open, votes, players]);
   const avatars = useAvatars(ranked.map((r) => r.id));
   const [picked, setPicked] = useState<{ id: string; name: string } | null>(null);
 
