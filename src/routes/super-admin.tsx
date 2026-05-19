@@ -9,7 +9,7 @@ import { ProTag } from "@/routes/pelada.$id";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useServerFn } from "@tanstack/react-start";
-import { listAllUsers, resetUserPassword } from "@/lib/admin-users.functions";
+import { listAllUsers, resetUserPassword, setMatchPro } from "@/lib/admin-users.functions";
 import type { AdminUserRow } from "@/lib/admin-users.types";
 
 export const Route = createFileRoute("/super-admin")({
@@ -38,6 +38,7 @@ function SuperAdminPage() {
   const [resetSaving, setResetSaving] = useState(false);
   const fetchUsers = useServerFn(listAllUsers);
   const doReset = useServerFn(resetUserPassword);
+  const doSetPro = useServerFn(setMatchPro);
 
   useEffect(() => {
     (async () => {
@@ -85,14 +86,15 @@ function SuperAdminPage() {
 
   async function togglePro(row: Row, value: boolean) {
     setSavingId(row.id);
-    const { error } = await supabase
-      .from("matches")
-      .update({ is_pro: value } as any)
-      .eq("id", row.id);
-    setSavingId(null);
-    if (error) { toast.error("Erro ao atualizar"); return; }
-    setRows((rs) => rs.map((r) => (r.id === row.id ? { ...r, is_pro: value } : r)));
-    toast.success(value ? "Pelada ativada como PRO" : "PRO desativado");
+    try {
+      await doSetPro({ data: { matchId: row.id, isPro: value } });
+      setRows((rs) => rs.map((r) => (r.id === row.id ? { ...r, is_pro: value } : r)));
+      toast.success(value ? "Pelada ativada como PRO" : "PRO desativado");
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao atualizar");
+    } finally {
+      setSavingId(null);
+    }
   }
 
   if (allowed === null) {

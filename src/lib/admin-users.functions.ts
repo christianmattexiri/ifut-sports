@@ -89,3 +89,20 @@ export const clearForcePasswordReset = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export const setMatchPro = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({ matchId: z.string().uuid(), isPro: z.boolean() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: prof } = await supabaseAdmin
+      .from("profiles").select("username").eq("id", context.userId).maybeSingle();
+    if (!isSuperAdminUsername(prof?.username)) throw new Error("Acesso restrito");
+    const { error } = await supabaseAdmin
+      .from("matches")
+      .update({ is_pro: data.isPro })
+      .eq("id", data.matchId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
