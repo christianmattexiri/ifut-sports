@@ -52,16 +52,19 @@ export type Database = {
       match_members: {
         Row: {
           created_at: string
+          is_goalkeeper: boolean
           match_id: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          is_goalkeeper?: boolean
           match_id: string
           user_id: string
         }
         Update: {
           created_at?: string
+          is_goalkeeper?: boolean
           match_id?: string
           user_id?: string
         }

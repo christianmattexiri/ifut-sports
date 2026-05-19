@@ -1,0 +1,1 @@
+ALTER TABLE public.match_members ADD COLUMN IF NOT EXISTS is_goalkeeper boolean NOT NULL DEFAULT false;
