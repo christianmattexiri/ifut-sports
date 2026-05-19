@@ -177,7 +177,7 @@ function Dashboard() {
 
       <div className="relative z-10 flex min-h-screen">
         {/* SIDEBAR */}
-        <aside className="hidden w-[280px] shrink-0 flex-col justify-between border-r border-white/5 bg-zinc-900/40 px-5 py-6 backdrop-blur-xl md:flex">
+        <aside className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-[280px] shrink-0 flex-col justify-between overflow-y-auto border-r border-white/5 bg-zinc-900/40 px-5 py-6 pb-6 backdrop-blur-xl md:flex">
           <div>
             <div className="flex items-center justify-center pb-6">
               <img

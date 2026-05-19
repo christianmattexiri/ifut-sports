@@ -357,17 +357,17 @@ function PeladaPage() {
             )}
           </h1>
 
-          <div className="mt-8 flex items-center justify-between gap-4 rounded-2xl border border-[var(--pelada-accent)]/30 bg-zinc-900/50 px-6 py-5 backdrop-blur-xl shadow-[0_0_40px_-15px_color-mix(in_oklab,var(--pelada-accent)_50%,transparent)]">
-            <div className="flex items-center gap-3">
-              <MapPin className="h-5 w-5 text-[var(--pelada-accent)]" />
+          <div className="relative mt-8 flex items-center justify-center gap-4 rounded-2xl border border-[var(--pelada-accent)]/30 bg-zinc-900/50 px-6 py-5 backdrop-blur-xl shadow-[0_0_40px_-15px_color-mix(in_oklab,var(--pelada-accent)_50%,transparent)]">
+            <div className="flex flex-1 items-center justify-center gap-3 text-center">
+              <MapPin className="h-5 w-5 shrink-0 text-[var(--pelada-accent)]" />
               {loading ? (
-                <p className="text-sm text-zinc-400">Carregando...</p>
+                <p className="text-base text-zinc-400">Carregando...</p>
               ) : nextLine ? (
-                <p className="text-sm font-medium text-zinc-200 md:text-base">
-                  Próximo fut: <span className="text-[var(--pelada-accent)]">{nextLine}</span>
+                <p className="text-lg font-bold text-zinc-100 md:text-xl">
+                  📍 Próximo fut: <span className="text-[var(--pelada-accent)]">{nextLine}</span>
                 </p>
               ) : (
-                <p className="text-sm font-medium text-zinc-200 md:text-base">
+                <p className="text-lg font-bold text-zinc-100 md:text-xl">
                   Adicione a <span className="text-[var(--pelada-accent)]">data</span> /{" "}
                   <span className="text-[var(--pelada-accent)]">local</span> /{" "}
                   <span className="text-[var(--pelada-accent)]">horário</span> da próxima pelada.
@@ -378,7 +378,7 @@ function PeladaPage() {
               <button
                 type="button"
                 onClick={() => navigate({ to: "/pelada/$id/lista", params: { id } })}
-                className="rounded-lg p-2 text-zinc-400 transition hover:bg-white/5 hover:text-[var(--pelada-accent)]"
+                className="absolute right-3 top-3 rounded-lg p-2 text-zinc-400 transition hover:bg-white/5 hover:text-[var(--pelada-accent)]"
                 aria-label="Editar"
               >
                 <Pencil className="h-4 w-4" />
@@ -386,8 +386,8 @@ function PeladaPage() {
             )}
           </div>
 
-          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <Link to="/pelada/$id/lista" params={{ id }}>
+          <div className="mt-6 grid grid-cols-3 gap-3 sm:gap-4">
+            <Link to="/pelada/$id/lista" params={{ id }} className="h-full">
               <QuickCard
                 icon={<Users className="h-6 w-6" />}
                 label="Presença"
@@ -398,10 +398,10 @@ function PeladaPage() {
                 ]}
               />
             </Link>
-            <Link to="/pelada/$id/rankings" params={{ id }}>
+            <Link to="/pelada/$id/rankings" params={{ id }} className="h-full">
               <QuickCard icon={<BarChart className="h-6 w-6" />} label="Ranking" color="#fb923c" />
             </Link>
-            <Link to="/pelada/$id/perfil" params={{ id }}>
+            <Link to="/pelada/$id/perfil" params={{ id }} className="h-full">
               <QuickCard icon={<UserIcon className="h-6 w-6" />} label="Stats" color="#60a5fa" />
             </Link>
           </div>
@@ -739,21 +739,21 @@ function QuickCard({
   return (
     <button
       type="button"
-      className="group flex w-full flex-col items-center justify-center gap-2 rounded-2xl border border-white/10 bg-zinc-900/40 px-5 py-6 backdrop-blur-xl transition-all duration-200 hover:scale-[1.02] hover:border-[var(--qc-color)] hover:shadow-[0_0_30px_-8px_var(--qc-color)]"
+      className="group flex h-full w-full flex-col items-center justify-center gap-3 rounded-2xl border border-white/10 bg-zinc-900/40 px-4 py-6 backdrop-blur-xl transition-all duration-200 hover:scale-[1.02] hover:border-[var(--qc-color)] hover:shadow-[0_0_30px_-8px_var(--qc-color)] sm:px-5"
       style={{ ["--qc-color" as string]: color }}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col items-center gap-2 sm:flex-row sm:gap-3">
         <span style={{ color }} className="transition group-hover:drop-shadow-[0_0_10px_currentColor]">
           {icon}
         </span>
-        <span className="text-sm font-semibold uppercase tracking-wider text-zinc-200">{label}</span>
+        <span className="text-sm font-bold uppercase tracking-wider text-zinc-100 sm:text-base">{label}</span>
       </div>
       {badges && badges.length > 0 && (
         <div className="flex flex-wrap items-center justify-center gap-1.5">
           {badges.map((b) => (
             <span
               key={b}
-              className="rounded-md border px-2 py-0.5 text-[11px] font-bold tabular-nums"
+              className="rounded-md border px-2.5 py-1 text-sm font-extrabold tabular-nums sm:text-base"
               style={{ borderColor: `${color}55`, color }}
             >
               {b}

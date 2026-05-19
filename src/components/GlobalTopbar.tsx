@@ -3,7 +3,7 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   Menu, LogOut, UserCircle2, Home, Mail, ShieldCheck,
-  ClipboardList, Trophy, History as HistoryIcon, BarChart3, UserCog, ArrowLeft,
+  ClipboardList, Trophy, History as HistoryIcon, BarChart3, UserCog, ArrowLeft, User as UserIcon,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import {
@@ -41,8 +41,6 @@ export function GlobalTopbar() {
 
   const username = viewer.username ?? "jogador";
   const fullName = viewer.full_name?.trim() || username;
-  const fallbackAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}&backgroundColor=00ff00`;
-  const avatarUrl = viewer.avatar_url || fallbackAvatar;
   const isSuperAdmin = (username || "").toLowerCase() === SUPER_ADMIN_USERNAME;
 
   async function handleSignOut() {
@@ -109,14 +107,10 @@ export function GlobalTopbar() {
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="rounded-full border border-[#00FF00]/40 bg-zinc-900 transition hover:border-[#00FF00]"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#00FF00]/40 bg-zinc-900 text-zinc-200 transition hover:border-[#00FF00] hover:text-[#00FF00]"
               aria-label="Abrir menu do usuário"
             >
-              <img
-                src={avatarUrl}
-                alt={fullName}
-                className="h-9 w-9 rounded-full object-cover"
-              />
+              <UserIcon className="h-4 w-4" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent

@@ -113,6 +113,25 @@ function ListaPresencaPage() {
   }, [viewer, viewerLoading, navigate]);
   const [players, setPlayers] = useState<Player[]>([]);
   const [hydrated, setHydrated] = useState(false);
+  // Resolved from match_members: whether the viewer is registered as a GK
+  // for this pelada (set on invite acceptance). Used so "Colocar meu nome"
+  // adds them in the right slot.
+  const [myIsGK, setMyIsGK] = useState(false);
+  useEffect(() => {
+    if (!viewer) { setMyIsGK(false); return; }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("match_members")
+        .select("is_goalkeeper")
+        .eq("match_id", id)
+        .eq("user_id", viewer.id)
+        .maybeSingle();
+      if (cancelled) return;
+      setMyIsGK(!!data?.is_goalkeeper);
+    })();
+    return () => { cancelled = true; };
+  }, [viewer, id]);
   const [friendOpen, setFriendOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [friendName, setFriendName] = useState("");
@@ -257,7 +276,7 @@ function ListaPresencaPage() {
     } else {
       setPlayers((prev) => [
         ...prev,
-        { id: me.id, name: me.fullName, isGoalkeeper: false, paid: false },
+        { id: me.id, name: me.fullName, isGoalkeeper: myIsGK, paid: false },
       ]);
     }
   };
