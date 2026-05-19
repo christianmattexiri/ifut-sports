@@ -12,6 +12,7 @@ import { Toaster } from "sonner";
 import appCss from "../styles.css?url";
 import { PeladaGlobalShell } from "@/components/PeladaGlobalShell";
 import { GlobalTopbar } from "@/components/GlobalTopbar";
+import { ForcePasswordResetGate } from "@/components/ForcePasswordResetGate";
 
 function NotFoundComponent() {
   return (
@@ -129,6 +130,7 @@ function RootComponent() {
       <GlobalTopbar />
       <Outlet />
       <PeladaGlobalShell />
+      <ForcePasswordResetGate />
       <Toaster richColors position="top-center" theme="dark" />
     </QueryClientProvider>
   );
