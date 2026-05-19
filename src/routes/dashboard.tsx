@@ -1,5 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { peladaMatchQuery, matchAttendanceQuery } from "@/lib/pelada-queries";
 import {
   Home,
   ShieldCheck,
@@ -49,6 +51,7 @@ type Profile = {
 
 function Dashboard() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [ready, setReady] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -145,11 +148,19 @@ function Dashboard() {
       setPeladas(list);
       setPendingInvites(invitesCount ?? 0);
       setReady(true);
+
+      // Prefetch silencioso: assim que os cards aparecem, já buscamos em
+      // background os dados básicos (match + lista de presença) de cada
+      // pelada para que a navegação fique instantânea.
+      for (const p of list) {
+        queryClient.prefetchQuery(peladaMatchQuery(p.id));
+        queryClient.prefetchQuery(matchAttendanceQuery(p.id));
+      }
     })();
     return () => {
       active = false;
     };
-  }, [navigate]);
+  }, [navigate, queryClient]);
 
   async function handleSignOut() {
     await supabase.auth.signOut();
@@ -186,6 +197,8 @@ function Dashboard() {
               <img
                 src={ifutCrest}
                 alt="iFut"
+                loading="lazy"
+                decoding="async"
                 className="h-24 w-auto object-contain drop-shadow-[0_0_20px_rgba(0,255,0,0.45)]"
               />
             </div>
