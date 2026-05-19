@@ -14,6 +14,91 @@ export type Database = {
   }
   public: {
     Tables: {
+      game_player_stats: {
+        Row: {
+          apitto_rating: number | null
+          assists: number | null
+          created_at: string | null
+          game_id: string
+          goals: number | null
+          id: string
+          team: string
+          user_id: string
+        }
+        Insert: {
+          apitto_rating?: number | null
+          assists?: number | null
+          created_at?: string | null
+          game_id: string
+          goals?: number | null
+          id?: string
+          team: string
+          user_id: string
+        }
+        Update: {
+          apitto_rating?: number | null
+          assists?: number | null
+          created_at?: string | null
+          game_id?: string
+          goals?: number | null
+          id?: string
+          team?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_player_stats_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      games: {
+        Row: {
+          created_at: string | null
+          game_date: string
+          id: string
+          match_id: string
+          mvp_id: string | null
+          pereba_id: string | null
+          score_a: number | null
+          score_b: number | null
+          voting_open: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          game_date?: string
+          id?: string
+          match_id: string
+          mvp_id?: string | null
+          pereba_id?: string | null
+          score_a?: number | null
+          score_b?: number | null
+          voting_open?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          game_date?: string
+          id?: string
+          match_id?: string
+          mvp_id?: string | null
+          pereba_id?: string | null
+          score_a?: number | null
+          score_b?: number | null
+          voting_open?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "games_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       match_invitations: {
         Row: {
           created_at: string | null
