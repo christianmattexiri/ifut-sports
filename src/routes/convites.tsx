@@ -382,6 +382,7 @@ function ConvitesPage() {
           </div>
         </DialogContent>
       </Dialog>
+      <InstallPwaModal open={installOpen} onOpenChange={setInstallOpen} />
     </main>
   );
 }
