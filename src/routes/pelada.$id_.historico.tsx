@@ -26,6 +26,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { peladaMatchQuery, viewerQuery } from "@/lib/pelada-queries";
 import {
+  fetchHistory,
+  saveMatch as saveGameMatch,
+  deleteMatch as deleteGameMatch,
+  type HistMatch as DbHistMatch,
+} from "@/lib/games-storage";
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -77,21 +83,25 @@ type Match = {
   admin_id?: string | null;
 };
 
-export const histStorageKey = (id: string) => `pelada:${id}:historico`;
-
-export function loadHistory(id: string): HistMatch[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(histStorageKey(id));
-    return raw ? (JSON.parse(raw) as HistMatch[]) : [];
-  } catch {
-    return [];
-  }
+/**
+ * Persistência agora é via Supabase (tabelas games + game_player_stats),
+ * isoladas por match_id (id da pelada). Estes helpers mantêm uma assinatura
+ * compatível para os consumidores que ainda lêem dados em useEffect.
+ */
+export async function loadHistoryAsync(
+  peladaId: string,
+  peladaName = "Pelada",
+): Promise<HistMatch[]> {
+  const list = await fetchHistory(peladaId, peladaName);
+  return list as HistMatch[];
 }
 
-export function saveHistory(id: string, list: HistMatch[]) {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(histStorageKey(id), JSON.stringify(list));
+export async function saveMatchToDb(peladaId: string, m: HistMatch): Promise<void> {
+  await saveGameMatch(peladaId, m as DbHistMatch);
+}
+
+export async function deleteMatchFromDb(gameId: string): Promise<void> {
+  await deleteGameMatch(gameId);
 }
 
 function teamScore(t: HistTeam) {
@@ -118,16 +128,22 @@ function HistoricoPage() {
   const [openId, setOpenId] = useState<string | null>(null);
   const [editing, setEditing] = useState<HistMatch | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [loadingHist, setLoadingHist] = useState(true);
 
   useEffect(() => {
-    setHistory(loadHistory(id));
-  }, [id]);
+    let cancelled = false;
+    setLoadingHist(true);
+    loadHistoryAsync(id, match?.name ?? "Pelada").then((list) => {
+      if (cancelled) return;
+      setHistory(list);
+      setLoadingHist(false);
+    });
+    return () => { cancelled = true; };
+  }, [id, match?.name]);
 
-  function persist(next: HistMatch[]) {
-    // Sort newest first by date
-    const sorted = [...next].sort((a, b) => (a.date < b.date ? 1 : -1));
-    setHistory(sorted);
-    saveHistory(id, sorted);
+  async function reload() {
+    const list = await loadHistoryAsync(id, match?.name ?? "Pelada");
+    setHistory(list);
   }
 
   function handleNewMatch() {
@@ -162,24 +178,31 @@ function HistoricoPage() {
       topScorers: [],
       topAssists: [],
     };
-    persist([newMatch, ...history]);
     setEditing(newMatch);
   }
 
-  function handleDelete(matchId: string) {
-    const next = history.filter((h) => h.id !== matchId);
-    persist(next);
-    setConfirmDelete(null);
-    toast.success("Partida excluída.");
-    // TODO: Persistir no Supabase (DELETE FROM matches WHERE id=...)
+  async function handleDelete(gameId: string) {
+    try {
+      await deleteMatchFromDb(gameId);
+      await reload();
+      setConfirmDelete(null);
+      toast.success("Partida excluída.");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Erro ao excluir";
+      toast.error(msg);
+    }
   }
 
-  function handleSaveEdit(updated: HistMatch) {
-    const next = history.map((h) => (h.id === updated.id ? updated : h));
-    persist(next);
-    setEditing(null);
-    toast.success("Partida salva com sucesso!");
-    // TODO: Persistir no Supabase e atualizar tabela de Rankings/Profiles
+  async function handleSaveEdit(updated: HistMatch) {
+    try {
+      await saveMatchToDb(id, updated);
+      await reload();
+      setEditing(null);
+      toast.success("Partida salva no servidor!");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Erro ao salvar";
+      toast.error(msg);
+    }
   }
 
   const peladaName = match?.name ?? "Minha Pelada";
