@@ -532,13 +532,13 @@ Bora pro jogo! 🔥
   const subCount = categorized.subs.length;
 
   return (
-    <main className="relative min-h-screen w-full bg-zinc-950 pt-14 text-zinc-100 font-sans antialiased pb-24">
+    <main className="relative min-h-screen w-full max-w-[100vw] overflow-x-hidden bg-zinc-950 pt-14 text-zinc-100 font-sans antialiased pb-24">
       <div
         aria-hidden
         className="pointer-events-none fixed -top-40 left-1/3 h-[480px] w-[480px] rounded-full bg-[var(--pelada-accent)]/10 blur-[160px]"
       />
 
-      <div className="relative z-10 flex min-h-screen">
+      <div className="relative z-10 flex min-h-screen w-full max-w-[100vw]">
         {/* Sidebar */}
         <aside className="sticky top-0 hidden h-screen w-[280px] shrink-0 flex-col border-r border-white/5 bg-zinc-900/40 px-5 pt-5 pb-24 backdrop-blur-xl md:flex">
           <button
@@ -597,8 +597,8 @@ Bora pro jogo! 🔥
         </aside>
 
         {/* Main */}
-        <section className="flex-1 px-4 py-6 md:px-10 md:py-10">
-          <div className="mx-auto max-w-3xl space-y-4">
+        <section className="min-w-0 flex-1 px-3 py-6 sm:px-4 md:px-10 md:py-10">
+          <div className="mx-auto w-full max-w-3xl space-y-4">
             {/* Painel 1 — Próxima Pelada */}
             <div className="relative rounded-2xl border border-[var(--pelada-accent)]/40 bg-zinc-900/50 p-5 backdrop-blur-xl shadow-[0_0_30px_-12px_color-mix(in_oklab,var(--pelada-accent)_60%,transparent)]">
               {isAdmin && (
@@ -669,7 +669,7 @@ Bora pro jogo! 🔥
                   <Pencil className="h-4 w-4" />
                 </button>
               )}
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-2 sm:gap-3">
                 <SlotCard
                   icon={<Users className="h-4 w-4" />}
                   label="Linha"
@@ -692,11 +692,11 @@ Bora pro jogo! 🔥
             </div>
 
             {/* Botões de Ação - Jogador */}
-            <div className="grid grid-cols-1 gap-3 pt-2 sm:grid-cols-2">
+            <div className="flex flex-col gap-3 pt-2 sm:grid sm:grid-cols-2 w-full">
               <button
                 type="button"
                 onClick={toggleMyName}
-                className={`rounded-xl border px-4 py-3 text-sm font-semibold uppercase tracking-wider transition ${
+                className={`w-full rounded-xl border px-4 py-3 text-sm font-semibold uppercase tracking-wider transition ${
                   meInList
                     ? "border-[var(--pelada-accent)]/50 bg-[var(--pelada-accent)]/10 text-[var(--pelada-accent)]"
                     : "border-white/10 bg-zinc-900/50 text-zinc-200 hover:border-[var(--pelada-accent)]/40 hover:text-[var(--pelada-accent)]"
@@ -707,7 +707,7 @@ Bora pro jogo! 🔥
               <button
                 type="button"
                 onClick={() => setFriendOpen(true)}
-                className="rounded-xl border border-blue-400/40 bg-blue-400/5 px-4 py-3 text-sm font-semibold uppercase tracking-wider text-blue-300 transition hover:bg-blue-400/10"
+                className="w-full rounded-xl border border-blue-400/40 bg-blue-400/5 px-4 py-3 text-sm font-semibold uppercase tracking-wider text-blue-300 transition hover:bg-blue-400/10"
               >
                 <UserPlus className="mr-2 inline h-4 w-4" />
                 Chamar Amigo
@@ -726,11 +726,11 @@ Bora pro jogo! 🔥
             </button>
             )}
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-2 w-full sm:flex-row sm:gap-3">
               <button
                 type="button"
                 onClick={shareWhatsApp}
-                className="rounded-xl border border-[var(--pelada-accent)]/40 bg-[var(--pelada-accent)]/5 px-4 py-3 text-sm font-semibold uppercase tracking-wider text-[var(--pelada-accent)] transition hover:bg-[var(--pelada-accent)]/10"
+                className="w-full rounded-xl border border-[var(--pelada-accent)]/40 bg-[var(--pelada-accent)]/5 px-4 py-3 text-sm font-semibold uppercase tracking-wider text-[var(--pelada-accent)] transition hover:bg-[var(--pelada-accent)]/10 sm:flex-1"
               >
                 <Share2 className="mr-2 inline h-4 w-4" />
                 WhatsApp
@@ -738,7 +738,7 @@ Bora pro jogo! 🔥
               <button
                 type="button"
                 onClick={copyList}
-                className="rounded-xl border border-white/10 bg-zinc-900/50 px-4 py-3 text-sm font-semibold uppercase tracking-wider text-zinc-200 transition hover:border-white/20 hover:bg-zinc-900/70"
+                className="w-full rounded-xl border border-white/10 bg-zinc-900/50 px-4 py-3 text-sm font-semibold uppercase tracking-wider text-zinc-200 transition hover:border-white/20 hover:bg-zinc-900/70 sm:flex-1"
               >
                 <ClipboardCopy className="mr-2 inline h-4 w-4" />
                 Copiar Lista
@@ -1054,14 +1054,14 @@ function SlotCard({
   color: string;
 }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-zinc-900/40 px-3 py-4 text-center backdrop-blur-xl">
-      <div className="mb-1 flex items-center justify-center gap-1.5 text-xs uppercase tracking-wider text-zinc-400">
+    <div className="min-w-0 rounded-2xl border border-white/10 bg-zinc-900/40 px-2 py-3 text-center backdrop-blur-xl sm:px-3 sm:py-4">
+      <div className="mb-1 flex items-center justify-center gap-1 text-[10px] uppercase tracking-wider text-zinc-400 sm:gap-1.5 sm:text-xs">
         <span style={{ color }}>{icon}</span>
         {label}
       </div>
-      <p className="text-2xl font-black tracking-tight" style={{ color }}>
+      <p className="text-xl font-black tracking-tight sm:text-2xl" style={{ color }}>
         {value.split("/")[0]}
-        <span className="text-base font-medium text-zinc-500">/{value.split("/")[1]}</span>
+        <span className="text-sm font-medium text-zinc-500 sm:text-base">/{value.split("/")[1]}</span>
       </p>
     </div>
   );
