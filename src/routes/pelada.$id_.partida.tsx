@@ -5,10 +5,9 @@ import {
   ShieldCheck, Trophy, UserCog, Save, RefreshCw, ClipboardCopy,
   MousePointerClick, Scale, Dices,
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
 import { useQuery } from "@tanstack/react-query";
-import { peladaMatchQuery, viewerQuery } from "@/lib/pelada-queries";
+import { peladaMatchQuery, viewerQuery, matchAttendanceQuery } from "@/lib/pelada-queries";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { EditMatchDialog, saveMatchToDb, type HistMatch } from "./pelada.$id_.historico";
@@ -21,6 +20,7 @@ export const Route = createFileRoute("/pelada/$id_/partida")({
       context.queryClient.ensureQueryData(peladaMatchQuery(params.id)),
       context.queryClient.ensureQueryData(viewerQuery()),
     ]);
+    context.queryClient.prefetchQuery(matchAttendanceQuery(params.id));
   },
 });
 
@@ -50,21 +50,8 @@ function PartidaPage() {
   const [pool, setPool] = useState<Player[]>([]);
   const [editing, setEditing] = useState<HistMatch | null>(null);
 
-  // Lista de presença vem do Supabase (match_attendance).
-  const attendanceQuery = useQuery({
-    queryKey: ["match_attendance", id],
-    enabled: !!id,
-    staleTime: 30 * 1000,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("match_attendance")
-        .select("id, player_id, player_name, is_goalkeeper, created_at")
-        .eq("match_id", id)
-        .order("created_at", { ascending: true });
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
+  // Lista de presença: query compartilhada (cacheada pelo loader pai).
+  const attendanceQuery = useQuery(matchAttendanceQuery(id));
 
   const confirmed = useMemo<Player[]>(() => {
     const rows = attendanceQuery.data ?? [];

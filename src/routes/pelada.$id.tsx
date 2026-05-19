@@ -43,7 +43,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
 import { useQuery } from "@tanstack/react-query";
-import { peladaMatchQuery, viewerQuery } from "@/lib/pelada-queries";
+import { peladaMatchQuery, viewerQuery, matchAttendanceQuery } from "@/lib/pelada-queries";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const Route = createFileRoute("/pelada/$id")({
@@ -54,6 +54,9 @@ export const Route = createFileRoute("/pelada/$id")({
       context.queryClient.ensureQueryData(peladaMatchQuery(params.id)),
       context.queryClient.ensureQueryData(viewerQuery()),
     ]);
+    // Pré-busca em background da lista de presença para que Dashboard/Partida
+    // já tenham os dados prontos sem delay nem "0".
+    context.queryClient.prefetchQuery(matchAttendanceQuery(params.id));
   },
 });
 

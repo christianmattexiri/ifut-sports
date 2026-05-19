@@ -23,9 +23,9 @@ function MatchCardImpl({ pelada }: { pelada: Pelada; onClick?: () => void }) {
     <Link
       to="/pelada/$id"
       params={{ id: pelada.id }}
-      className="group relative block cursor-pointer overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/60 p-6 backdrop-blur-xl transition-transform duration-200 hover:scale-[1.02] hover:border-[#00FF00]/30 focus:outline-none focus:ring-2 focus:ring-[#00FF00]/60"
+      className="group relative block cursor-pointer overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/60 p-6 backdrop-blur-xl transition-transform duration-200 md:hover:scale-[1.02] md:hover:border-[#00FF00]/30 focus:outline-none focus:ring-2 focus:ring-[#00FF00]/60"
     >
-      <div className="absolute inset-x-6 -top-px h-px bg-gradient-to-r from-transparent via-[#00FF00]/40 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+      <div className="absolute inset-x-6 -top-px h-px bg-gradient-to-r from-transparent via-[#00FF00]/40 to-transparent opacity-0 transition-opacity md:group-hover:opacity-100" />
 
       <header className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-4">
@@ -34,6 +34,8 @@ function MatchCardImpl({ pelada }: { pelada: Pelada; onClick?: () => void }) {
               <img
                 src={pelada.logoUrl}
                 alt={pelada.name}
+                loading="lazy"
+                decoding="async"
                 className="h-20 w-20 rounded-full border-2 border-[#00FF00]/40 bg-zinc-800 object-cover shadow-[0_0_25px_-8px_rgba(0,255,0,0.55)]"
               />
             ) : (
@@ -60,6 +62,8 @@ function MatchCardImpl({ pelada }: { pelada: Pelada; onClick?: () => void }) {
               key={i}
               src={src}
               alt=""
+              loading="lazy"
+              decoding="async"
               className="h-8 w-8 rounded-full border-2 border-zinc-900 bg-zinc-800 object-cover"
             />
           ))}
@@ -78,7 +82,7 @@ function MatchCardImpl({ pelada }: { pelada: Pelada; onClick?: () => void }) {
         <button
           type="button"
           onClick={stop}
-          className="text-xs font-medium text-zinc-400 transition hover:text-[#00FF00]"
+          className="text-xs font-medium text-zinc-400 transition md:hover:text-[#00FF00]"
         >
           Ver detalhes →
         </button>

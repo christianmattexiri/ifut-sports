@@ -60,3 +60,30 @@ export const viewerQuery = () =>
       } as ViewerProfile;
     },
   });
+
+export type AttendanceRow = {
+  id: string;
+  match_id: string;
+  player_id: string | null;
+  player_name: string;
+  is_goalkeeper: boolean | null;
+  has_paid: boolean | null;
+  created_at: string | null;
+};
+
+export const matchAttendanceQuery = (id: string | undefined) =>
+  queryOptions({
+    queryKey: ["match_attendance", id],
+    enabled: !!id,
+    staleTime: 30 * 1000,
+    gcTime: 30 * 60 * 1000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("match_attendance")
+        .select("id, match_id, player_id, player_name, is_goalkeeper, has_paid, created_at")
+        .eq("match_id", id!)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as AttendanceRow[];
+    },
+  });
