@@ -16,7 +16,7 @@ import {
   computeApitto,
   type MatchVotes,
 } from "@/lib/voting";
-import { loadHistory, saveHistory } from "@/routes/pelada.$id_.historico";
+import { fetchLatest, updateMatchWinners, type HistMatch as DbHistMatch } from "@/lib/games-storage";
 import {
   ArrowLeft,
   Home,
@@ -137,28 +137,17 @@ function PeladaPage() {
     return () => window.removeEventListener("storage", onStorage);
   }, [id]);
 
-  // Read latest match from histórico
+  // Read latest match from Supabase (games + game_player_stats) for this pelada.
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const histKey = `pelada:${id}:historico`;
-    const read = () => {
-      try {
-        const raw = localStorage.getItem(histKey);
-        if (!raw) return setLatest(null);
-        const arr = JSON.parse(raw) as LatestMatch[];
-        const sorted = [...arr].sort((a, b) => (a.date < b.date ? 1 : -1));
-        setLatest(sorted[0] ?? null);
-      } catch {
-        setLatest(null);
-      }
+    let cancelled = false;
+    const read = async () => {
+      const m = await fetchLatest(id, match?.name ?? "Pelada");
+      if (cancelled) return;
+      setLatest((m as unknown as LatestMatch) ?? null);
     };
     read();
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === histKey) read();
-    };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  }, [id]);
+    return () => { cancelled = true; };
+  }, [id, match?.name]);
 
   // Reload admin vote settings if changed in another tab/page.
   useEffect(() => {
@@ -213,35 +202,33 @@ function PeladaPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [latest, votes, voteSettings, validVoterIds, id]);
 
-  // Persist winners back into the history record so Rankings/Profile pick them up,
+  // Persist winners back into the games table so Rankings/Profile pick them up,
   // then mark the votes as closed.
-  function closeAndPersist(current: MatchVotes) {
+  async function closeAndPersist(current: MatchVotes) {
     if (!latest) return;
-    const list = loadHistory(id);
-    const idx = list.findIndex((h) => h.id === latest.id);
-    if (idx >= 0) {
-      const h = { ...list[idx] };
-      if (voteSettings.mvp && !h.mvp) {
-        const w = computeWinner(current.mvpVotes).id;
-        if (w) h.mvp = w;
-      }
-      if (voteSettings.pereba) {
-        const w = computeWinner(current.perebaVotes).id;
-        if (w) h.pereba = w;
-      }
-      // Apitto: 1º colocado vira MVP, último vira Pereba.
-      // Idempotente: só seta se ainda não estiver definido (não soma duas vezes
-      // se o modal de resultados for reaberto).
-      if (voteSettings.apitto) {
-        const ranked = computeApitto(current.apitto);
-        if (ranked.length > 0) {
-          if (!h.mvp) h.mvp = ranked[0].id;
-          if (ranked.length > 1 && !h.pereba) h.pereba = ranked[ranked.length - 1].id;
+    const patch: { mvp_id?: string | null; pereba_id?: string | null } = {};
+    const updated: LatestMatch = { ...latest };
+    if (voteSettings.mvp && !updated.mvp) {
+      const w = computeWinner(current.mvpVotes).id;
+      if (w) { updated.mvp = w; patch.mvp_id = w; }
+    }
+    if (voteSettings.pereba) {
+      const w = computeWinner(current.perebaVotes).id;
+      if (w) { (updated as DbHistMatch).pereba = w; patch.pereba_id = w; }
+    }
+    if (voteSettings.apitto) {
+      const ranked = computeApitto(current.apitto);
+      if (ranked.length > 0) {
+        if (!updated.mvp) { updated.mvp = ranked[0].id; patch.mvp_id = ranked[0].id; }
+        if (ranked.length > 1 && !(updated as DbHistMatch).pereba) {
+          (updated as DbHistMatch).pereba = ranked[ranked.length - 1].id;
+          patch.pereba_id = ranked[ranked.length - 1].id;
         }
       }
-      list[idx] = h;
-      saveHistory(id, list);
-      setLatest(h as typeof latest);
+    }
+    if (Object.keys(patch).length > 0) {
+      try { await updateMatchWinners(latest.id, patch); } catch { /* ignore */ }
+      setLatest(updated);
     }
     saveVotes(id, latest.id, { ...current, closed: true, closedAt: new Date().toISOString() });
   }
