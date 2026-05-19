@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { MatchVotes } from "@/lib/voting";
@@ -68,10 +69,27 @@ export function useMatchVotes(gameId: string | undefined) {
 /** Subscribes to realtime changes for this game's votes/voting_open. */
 export function useMatchVotesRealtime(gameId: string | undefined) {
   const qc = useQueryClient();
-  if (typeof window === "undefined" || !gameId) return;
-  // Effect-less wrapper: rely on React Query refetch on focus/interval.
-  // (A full realtime subscription would require useEffect.)
-  void qc;
+  useEffect(() => {
+    if (typeof window === "undefined" || !gameId) return;
+    const invalidate = () =>
+      qc.invalidateQueries({ queryKey: ["match-votes", gameId] });
+    const channel = supabase
+      .channel(`game-votes:${gameId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "game_votes", filter: `game_id=eq.${gameId}` },
+        invalidate,
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "games", filter: `id=eq.${gameId}` },
+        invalidate,
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [gameId, qc]);
 }
 
 export function useSubmitVote(gameId: string) {
