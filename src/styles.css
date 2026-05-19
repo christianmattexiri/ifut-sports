@@ -152,4 +152,39 @@
     overflow-x: hidden;
     max-width: 100vw;
   }
+
+  /* Remove o highlight cinza/azul nativo de toque no mobile (iOS/Android) */
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Feedback tátil global: efeito de "pressionar" em elementos clicáveis.
+     Usa transform/transition padrão; pode ser sobrescrito por classes locais. */
+  button:not(:disabled),
+  a[href],
+  [role="button"]:not([aria-disabled="true"]),
+  summary,
+  label[for] {
+    transition-property: transform, opacity, filter, background-color, border-color, color;
+    transition-duration: 150ms;
+    transition-timing-function: ease-in-out;
+    -webkit-touch-callout: none;
+  }
+  button:not(:disabled):active,
+  a[href]:active,
+  [role="button"]:not([aria-disabled="true"]):active,
+  summary:active,
+  label[for]:active {
+    transform: scale(0.97);
+  }
+  @media (hover: hover) {
+    button:not(:disabled):hover,
+    a[href]:hover,
+    [role="button"]:not([aria-disabled="true"]):hover {
+      filter: brightness(1.08);
+    }
+  }
 }
