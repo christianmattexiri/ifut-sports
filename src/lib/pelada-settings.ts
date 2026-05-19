@@ -59,8 +59,7 @@ export function useUpdatePeladaSettings(id: string) {
     mutationFn: async (settings: AdminSettings) => {
       const { error } = await supabase
         .from("matches")
-        // @ts-expect-error - settings column added via migration; types regen pending
-        .update({ settings })
+        .update({ settings } as never)
         .eq("id", id);
       if (error) throw error;
       return settings;
