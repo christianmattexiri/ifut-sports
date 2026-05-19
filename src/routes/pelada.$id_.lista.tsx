@@ -246,6 +246,10 @@ function ListaPresencaPage() {
     setPlayers((prev) => prev.map((p) => (p.id === pid ? { ...p, paid: !p.paid } : p)));
   };
 
+  const toggleGK = (pid: string) => {
+    setPlayers((prev) => prev.map((p) => (p.id === pid ? { ...p, isGoalkeeper: !p.isGoalkeeper } : p)));
+  };
+
   const toggleMyName = () => {
     if (!me) return;
     if (meInList) {
@@ -281,7 +285,10 @@ function ListaPresencaPage() {
         linhasPrincipal.push(`${i + 1}.`);
       }
     }
-    const linhasSubs = categorized.subs.map((p, i) => `${i + 1}. ${p.name}`);
+    const linhasSubs = categorized.subs.map((p, i) => {
+      const tags = `${p.paid ? " ✅" : ""}${p.isGoalkeeper ? " 🧤" : ""}`;
+      return `${i + 1}. ${p.name}${tags}`;
+    });
 
     return `🤖 Mensagem automática: Lista de presença para ${today}
 
@@ -678,6 +685,8 @@ Bora pro jogo! 🔥
                       position={idx + 1}
                       player={{ ...p, avatarUrl: av }}
                       isSub={isSub}
+                      canToggleGK={isAdmin}
+                      onToggleGK={() => toggleGK(p.id)}
                       onTogglePaid={() => togglePaid(p.id)}
                       onRemove={() => removePlayer(p.id)}
                     />
@@ -948,12 +957,16 @@ function PlayerRow({
   position,
   player,
   isSub,
+  canToggleGK,
+  onToggleGK,
   onTogglePaid,
   onRemove,
 }: {
   position: number;
   player: Player;
   isSub: boolean;
+  canToggleGK?: boolean;
+  onToggleGK?: () => void;
   onTogglePaid: () => void;
   onRemove: () => void;
 }) {
@@ -981,6 +994,21 @@ function PlayerRow({
         <span className="rounded-md bg-orange-500/20 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-orange-300">
           Suplente
         </span>
+      )}
+      {canToggleGK && (
+        <button
+          type="button"
+          onClick={onToggleGK}
+          aria-label={player.isGoalkeeper ? "Tornar jogador de linha" : "Tornar goleiro"}
+          title={player.isGoalkeeper ? "Tornar jogador de linha" : "Tornar goleiro"}
+          className={`rounded-md p-1.5 transition ${
+            player.isGoalkeeper
+              ? "bg-blue-500/20 text-blue-300 hover:bg-blue-500/30"
+              : "text-zinc-500 hover:bg-blue-500/10 hover:text-blue-300"
+          }`}
+        >
+          <Hand className="h-4 w-4" />
+        </button>
       )}
       <button
         type="button"

@@ -15,6 +15,12 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import ifutCrest from "@/assets/ifut-crest.png";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/convites")({
   component: ConvitesPage,
@@ -48,6 +54,7 @@ function ConvitesPage() {
   const [loading, setLoading] = useState(true);
   const [closing, setClosing] = useState<Set<string>>(new Set());
   const [me, setMe] = useState<{ id: string; firstName: string } | null>(null);
+  const [positionFor, setPositionFor] = useState<Invitation | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -137,8 +144,14 @@ function ConvitesPage() {
     }, 250);
   }
 
-  async function handleAccept(invite: Invitation) {
+  function handleAccept(invite: Invitation) {
     if (!me) return;
+    setPositionFor(invite);
+  }
+
+  async function confirmAccept(invite: Invitation, isGoalkeeper: boolean) {
+    if (!me) return;
+    setPositionFor(null);
     setClosing((s) => new Set(s).add(invite.id));
 
     // 1) update invitation status
@@ -160,7 +173,7 @@ function ConvitesPage() {
     // 2) link user as a member of the pelada
     const { error: memErr } = await supabase
       .from("match_members")
-      .insert({ match_id: invite.match_id, user_id: me.id });
+      .insert({ match_id: invite.match_id, user_id: me.id, is_goalkeeper: isGoalkeeper });
 
     // ignore duplicate membership (already a member)
     if (memErr && !/duplicate/i.test(memErr.message)) {
@@ -324,6 +337,38 @@ function ConvitesPage() {
           )}
         </section>
       </div>
+
+      <Dialog open={!!positionFor} onOpenChange={(v) => !v && setPositionFor(null)}>
+        <DialogContent className="max-w-md border border-[#00FF00]/40 bg-zinc-950 text-zinc-100 shadow-[0_0_60px_-10px_rgba(0,255,0,0.5)]">
+          <DialogHeader>
+            <DialogTitle className="text-center text-xl font-bold text-white">
+              Qual sua posição principal nesta pelada?
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-3 py-3">
+            <button
+              type="button"
+              onClick={() => positionFor && confirmAccept(positionFor, false)}
+              className="group flex flex-col items-center justify-center gap-3 rounded-2xl border border-[#00FF00]/40 bg-zinc-900/60 p-6 transition hover:border-[#00FF00] hover:bg-[#00FF00]/10 hover:shadow-[0_0_30px_-5px_rgba(0,255,0,0.6)]"
+            >
+              <span className="text-5xl">👟</span>
+              <span className="text-sm font-bold uppercase tracking-wider text-zinc-100 group-hover:text-[#00FF00]">
+                Jogador de Linha
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => positionFor && confirmAccept(positionFor, true)}
+              className="group flex flex-col items-center justify-center gap-3 rounded-2xl border border-blue-400/40 bg-zinc-900/60 p-6 transition hover:border-blue-400 hover:bg-blue-400/10 hover:shadow-[0_0_30px_-5px_rgba(96,165,250,0.6)]"
+            >
+              <span className="text-5xl">🧤</span>
+              <span className="text-sm font-bold uppercase tracking-wider text-zinc-100 group-hover:text-blue-300">
+                Goleiro
+              </span>
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }
