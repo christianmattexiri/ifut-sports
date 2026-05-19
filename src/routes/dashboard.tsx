@@ -273,11 +273,7 @@ function Dashboard() {
           ) : (
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
               {peladas.map((p) => (
-                <MatchCard
-                  key={p.id}
-                  pelada={p}
-                  onClick={() => navigate({ to: "/pelada/$id", params: { id: p.id } })}
-                />
+                <MatchCard key={p.id} pelada={p} />
               ))}
             </div>
           )}
