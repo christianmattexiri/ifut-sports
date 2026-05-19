@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { peladaMatchQuery, viewerQuery } from "@/lib/pelada-queries";
 import { useAvatars } from "@/lib/avatars";
 import {
@@ -65,6 +65,8 @@ type Match = {
 
 type Player = {
   id: string;
+  rowId: string;
+  userId: string | null;
   name: string;
   isGoalkeeper: boolean;
   paid: boolean;
@@ -99,6 +101,7 @@ const DEFAULT_SETTINGS: Settings = {
 function ListaPresencaPage() {
   const navigate = useNavigate();
   const { id } = useParams({ from: "/pelada/$id_/lista" });
+  const queryClient = useQueryClient();
   const { data: matchData } = useQuery(peladaMatchQuery(id));
   const match = (matchData ?? null) as Match | null;
   const { data: viewer, isLoading: viewerLoading } = useQuery(viewerQuery());
@@ -111,8 +114,24 @@ function ListaPresencaPage() {
   useEffect(() => {
     if (!viewerLoading && viewer === null) navigate({ to: "/" });
   }, [viewer, viewerLoading, navigate]);
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [hydrated, setHydrated] = useState(false);
+
+  // ===== Lista de presença: agora vem do Supabase (match_attendance) =====
+  const attendanceQuery = useQuery({
+    queryKey: ["match_attendance", id],
+    enabled: !!id,
+    staleTime: 30 * 1000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("match_attendance")
+        .select("id, match_id, player_id, player_name, is_goalkeeper, has_paid, created_at")
+        .eq("match_id", id)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const invalidateAttendance = () =>
+    queryClient.invalidateQueries({ queryKey: ["match_attendance", id] });
   // Resolved from match_members: whether the viewer is registered as a GK
   // for this pelada (set on invite acceptance). Used so "Colocar meu nome"
   // adds them in the right slot.
@@ -162,12 +181,11 @@ function ListaPresencaPage() {
     }
   }, [id]);
 
-  // Hydrate persisted state from localStorage
+  // Settings ainda em localStorage (não é foco desta migração)
+  const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
-      const rawP = localStorage.getItem(`pelada:${id}:players`);
-      if (rawP) setPlayers(JSON.parse(rawP));
       const rawS = localStorage.getItem(`pelada:${id}:settings`);
       if (rawS) setSettings((s) => ({ ...s, ...JSON.parse(rawS) }));
     } catch {
@@ -175,15 +193,30 @@ function ListaPresencaPage() {
     }
     setHydrated(true);
   }, [id]);
-
-  useEffect(() => {
-    if (!hydrated || typeof window === "undefined") return;
-    localStorage.setItem(`pelada:${id}:players`, JSON.stringify(players));
-  }, [players, id, hydrated]);
   useEffect(() => {
     if (!hydrated || typeof window === "undefined") return;
     localStorage.setItem(`pelada:${id}:settings`, JSON.stringify(settings));
   }, [settings, id, hydrated]);
+
+  // Players derivados da query de match_attendance
+  const players = useMemo<Player[]>(() => {
+    const rows = attendanceQuery.data ?? [];
+    return rows.map((r) => {
+      const userId = (r.player_id as string | null) ?? null;
+      const rowId = r.id as string;
+      const stableId = userId ?? rowId;
+      return {
+        id: stableId,
+        rowId,
+        userId,
+        name: (r.player_name as string) ?? "Jogador",
+        isGoalkeeper: !!r.is_goalkeeper,
+        paid: !!r.has_paid,
+        rating: undefined,
+      };
+    });
+  }, [attendanceQuery.data]);
+  const isListLoading = attendanceQuery.isLoading;
 
   // Hydrate match-derived defaults into settings once match arrives.
   useEffect(() => {
@@ -197,7 +230,10 @@ function ListaPresencaPage() {
   }, [match]);
 
   const { lineLimit, gkLimit, subLimit } = settings;
-  const meInList = useMemo(() => (me ? players.some((p) => p.id === me.id) : false), [players, me]);
+  const meInList = useMemo(
+    () => (me ? players.some((p) => p.userId === me.id) : false),
+    [players, me],
+  );
 
   // Categorize players based on entry order: line / goalkeepers / suplentes
   const categorized = useMemo(() => {
@@ -220,7 +256,9 @@ function ListaPresencaPage() {
     () => [...categorized.line, ...categorized.gks, ...categorized.subs],
     [categorized],
   );
-  const avatarMap = useAvatars(orderedPlayers.map((p) => p.id));
+  const avatarMap = useAvatars(
+    orderedPlayers.map((p) => p.userId).filter((v): v is string => !!v),
+  );
 
   // Persist counts so other pages (Pelada home) can read them
   useEffect(() => {
@@ -239,7 +277,12 @@ function ListaPresencaPage() {
     );
   }, [id, categorized, lineLimit, gkLimit, subLimit]);
 
-  const addPlayer = (name: string, isGK = false, userId?: string, rating?: number) => {
+  const addPlayer = async (
+    name: string,
+    isGK = false,
+    userId?: string,
+    rating?: number,
+  ) => {
     if (!name.trim()) return;
     const totalConfirmed = categorized.line.length + categorized.gks.length;
     const totalSubs = categorized.subs.length;
@@ -247,38 +290,78 @@ function ListaPresencaPage() {
       toast.error("Lista cheia (incluindo suplentes)");
       return;
     }
-    const id = userId ?? crypto.randomUUID();
     if (typeof rating === "number") {
-      setRatings((prev) => ({ ...prev, [id]: rating }));
+      const key = userId ?? `friend:${name.trim()}`;
+      setRatings((prev) => ({ ...prev, [key]: rating }));
     }
-    setPlayers((prev) => [
-      ...prev,
-      { id, name: name.trim(), isGoalkeeper: isGK, paid: false, rating },
-    ]);
+    const { error } = await supabase.from("match_attendance").insert({
+      match_id: id,
+      player_id: userId ?? null,
+      player_name: name.trim(),
+      is_goalkeeper: isGK,
+      has_paid: false,
+    });
+    if (error) {
+      toast.error("Não foi possível adicionar à lista");
+      return;
+    }
+    await invalidateAttendance();
   };
 
-  const removePlayer = (pid: string) => {
-    setPlayers((prev) => prev.filter((p) => p.id !== pid));
+  const removePlayer = async (rowId: string) => {
+    const { error } = await supabase.from("match_attendance").delete().eq("id", rowId);
+    if (error) {
+      toast.error("Não foi possível remover");
+      return;
+    }
+    await invalidateAttendance();
   };
 
-  const togglePaid = (pid: string) => {
-    setPlayers((prev) => prev.map((p) => (p.id === pid ? { ...p, paid: !p.paid } : p)));
+  const togglePaid = async (rowId: string) => {
+    const cur = players.find((p) => p.rowId === rowId);
+    if (!cur) return;
+    const { error } = await supabase
+      .from("match_attendance")
+      .update({ has_paid: !cur.paid })
+      .eq("id", rowId);
+    if (error) {
+      toast.error("Não foi possível atualizar pagamento");
+      return;
+    }
+    await invalidateAttendance();
   };
 
-  const toggleGK = (pid: string) => {
-    setPlayers((prev) => prev.map((p) => (p.id === pid ? { ...p, isGoalkeeper: !p.isGoalkeeper } : p)));
+  const toggleGK = async (rowId: string) => {
+    const cur = players.find((p) => p.rowId === rowId);
+    if (!cur) return;
+    const { error } = await supabase
+      .from("match_attendance")
+      .update({ is_goalkeeper: !cur.isGoalkeeper })
+      .eq("id", rowId);
+    if (error) {
+      toast.error("Não foi possível alternar goleiro");
+      return;
+    }
+    await invalidateAttendance();
   };
 
-  const toggleMyName = () => {
+  const toggleMyName = async () => {
     if (!me) return;
     if (meInList) {
-      setPlayers((prev) => prev.filter((p) => p.id !== me.id));
+      const mine = players.find((p) => p.userId === me.id);
+      if (mine) await removePlayer(mine.rowId);
     } else {
-      setPlayers((prev) => [
-        ...prev,
-        { id: me.id, name: me.fullName, isGoalkeeper: myIsGK, paid: false },
-      ]);
+      await addPlayer(me.fullName, myIsGK, me.id);
     }
+  };
+
+  const clearList = async () => {
+    const { error } = await supabase.from("match_attendance").delete().eq("match_id", id);
+    if (error) {
+      toast.error("Não foi possível limpar a lista");
+      return;
+    }
+    await invalidateAttendance();
   };
 
   const handleSubmitFriend = () => {
@@ -678,7 +761,7 @@ Bora pro jogo! 🔥
               type="button"
               onClick={() => {
                 if (confirm("Limpar toda a lista?")) {
-                  setPlayers([]);
+                  clearList();
                 }
               }}
               className="w-full rounded-xl border border-red-700/60 bg-red-900/10 px-4 py-3 text-sm font-bold uppercase tracking-wider text-red-400 transition hover:bg-red-900/20"
@@ -690,14 +773,26 @@ Bora pro jogo! 🔥
 
             {/* Lista de Jogadores */}
             <div className="space-y-2 pt-2">
-              {orderedPlayers.length === 0 ? (
+              {isListLoading ? (
+                <div className="space-y-2">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="h-14 animate-pulse rounded-xl border border-white/5 bg-zinc-900/40"
+                    />
+                  ))}
+                </div>
+              ) : orderedPlayers.length === 0 ? (
                 <p className="py-10 text-center text-sm text-zinc-500">
-                  Nenhum jogador na lista ainda. Seja o primeiro!
+                  Lista vazia, adicione o primeiro jogador
                 </p>
               ) : (
                 orderedPlayers.map((p, idx) => {
                   const isSub = idx >= lineLimit + gkLimit;
-                  const av = avatarMap[p.id]?.avatar_url ?? p.avatarUrl ?? null;
+                  const av =
+                    (p.userId ? avatarMap[p.userId]?.avatar_url : null) ??
+                    p.avatarUrl ??
+                    null;
                   return (
                     <PlayerRow
                       key={p.id}
@@ -705,9 +800,9 @@ Bora pro jogo! 🔥
                       player={{ ...p, avatarUrl: av }}
                       isSub={isSub}
                       canToggleGK={isAdmin}
-                      onToggleGK={() => toggleGK(p.id)}
-                      onTogglePaid={() => togglePaid(p.id)}
-                      onRemove={() => removePlayer(p.id)}
+                      onToggleGK={() => toggleGK(p.rowId)}
+                      onTogglePaid={() => togglePaid(p.rowId)}
+                      onRemove={() => removePlayer(p.rowId)}
                     />
                   );
                 })
@@ -867,7 +962,7 @@ Bora pro jogo! 🔥
           </DialogHeader>
           <AddMemberPicker
             peladaId={id}
-            excludeIds={players.map((p) => p.id)}
+            excludeIds={players.map((p) => p.userId).filter((v): v is string => !!v)}
             open={addOpen}
             onAdd={(profile, isGK) => {
               const display = profile.full_name?.trim() || profile.username || "Jogador";
