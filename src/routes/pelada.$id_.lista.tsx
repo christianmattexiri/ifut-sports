@@ -29,7 +29,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { peladaMatchQuery, viewerQuery } from "@/lib/pelada-queries";
+import { peladaMatchQuery, viewerQuery, matchAttendanceQuery } from "@/lib/pelada-queries";
 import { useAvatars } from "@/lib/avatars";
 import {
   Dialog,
@@ -115,21 +115,8 @@ function ListaPresencaPage() {
     if (!viewerLoading && viewer === null) navigate({ to: "/" });
   }, [viewer, viewerLoading, navigate]);
 
-  // ===== Lista de presença: agora vem do Supabase (match_attendance) =====
-  const attendanceQuery = useQuery({
-    queryKey: ["match_attendance", id],
-    enabled: !!id,
-    staleTime: 30 * 1000,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("match_attendance")
-        .select("id, match_id, player_id, player_name, is_goalkeeper, has_paid, created_at")
-        .eq("match_id", id)
-        .order("created_at", { ascending: true });
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
+  // ===== Lista de presença: query compartilhada (lift state up) =====
+  const attendanceQuery = useQuery(matchAttendanceQuery(id));
   const invalidateAttendance = () =>
     queryClient.invalidateQueries({ queryKey: ["match_attendance", id] });
   // Resolved from match_members: whether the viewer is registered as a GK
