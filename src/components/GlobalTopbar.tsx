@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { peladaMatchQuery, viewerQuery } from "@/lib/pelada-queries";
-import { loadAdminSettings } from "@/routes/pelada.$id_.admin";
+import { peladaSettingsQuery } from "@/lib/pelada-settings";
 import ifutCrest from "@/assets/ifut-crest.png";
 import { toast } from "sonner";
 
@@ -155,12 +155,8 @@ function MobileMenuContent({
   onClose: () => void;
 }) {
   const { data: match } = useQuery(peladaMatchQuery(peladaId ?? undefined));
-  const [modulesRankings, setModulesRankings] = useState(true);
-  useEffect(() => {
-    if (!peladaId) return;
-    const s = loadAdminSettings(peladaId);
-    setModulesRankings(!!s.modules.rankings);
-  }, [peladaId]);
+  const { data: settings } = useQuery(peladaSettingsQuery(peladaId ?? undefined));
+  const modulesRankings = settings ? !!settings.modules.rankings : true;
 
   const isPeladaAdmin = !!match && match.admin_id === viewerId;
 
