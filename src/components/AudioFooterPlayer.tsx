@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Pause, Pencil, Music as MusicIcon, Headphones } from "lucide-react";
+import { Pause, Pencil, Play } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -52,9 +52,19 @@ export function AudioFooterPlayer({ peladaId, mode, canEdit, titlePrefix, disabl
   }, [key]);
 
   const videoId = useMemo(() => (saved?.url ? ytId(saved.url) : null), [saved]);
+  // Render iframe once per video; control via postMessage so mobile (iOS) plays
+  // inside the same user gesture that toggled the button.
   const src = videoId
-    ? `https://www.youtube.com/embed/${videoId}?enablejsapi=1&autoplay=${playing ? 1 : 0}&controls=0&modestbranding=1&playsinline=1&loop=1&playlist=${videoId}`
+    ? `https://www.youtube.com/embed/${videoId}?enablejsapi=1&autoplay=0&controls=0&modestbranding=1&playsinline=1&loop=1&playlist=${videoId}`
     : "";
+
+  function togglePlay() {
+    const win = iframeRef.current?.contentWindow;
+    if (!win || !videoId) return;
+    const func = playing ? "pauseVideo" : "playVideo";
+    win.postMessage(JSON.stringify({ event: "command", func, args: [] }), "*");
+    setPlaying((p) => !p);
+  }
 
   function openEdit() {
     setEditUrl(saved?.url ?? "");
@@ -78,15 +88,12 @@ export function AudioFooterPlayer({ peladaId, mode, canEdit, titlePrefix, disabl
           <button
             type="button"
             disabled={disabled || !videoId}
-            onClick={() => setPlaying((p) => !p)}
+            onClick={togglePlay}
             className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[var(--pelada-accent)] text-black shadow-[0_0_20px_-6px_var(--pelada-accent)] transition active:scale-95 disabled:cursor-not-allowed disabled:bg-zinc-800 disabled:text-zinc-500 disabled:shadow-none"
             aria-label={playing ? "Pausar" : "Tocar"}
           >
-            {playing ? <Pause className="h-4 w-4" /> : <MusicIcon className="h-4 w-4" />}
+            {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 translate-x-[1px]" fill="currentColor" />}
           </button>
-          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-amber-400/20 to-amber-600/10 text-amber-300 ring-1 ring-amber-400/30">
-            {mode === "musica" ? <MusicIcon className="h-4 w-4" /> : <Headphones className="h-4 w-4" />}
-          </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-[11px] uppercase tracking-wider text-zinc-500">
               {mode === "musica" ? "Música da Pelada" : titlePrefix}
