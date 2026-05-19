@@ -129,6 +129,7 @@ function HistoricoPage() {
   const [editing, setEditing] = useState<HistMatch | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [loadingHist, setLoadingHist] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -182,14 +183,18 @@ function HistoricoPage() {
   }
 
   async function handleDelete(gameId: string) {
+    if (isDeleting) return;
+    setIsDeleting(true);
     try {
       await deleteMatchFromDb(gameId);
       await reload();
       setConfirmDelete(null);
       toast.success("Partida excluída.");
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Erro ao excluir";
-      toast.error(msg);
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao excluir: Verifique os dados");
+    } finally {
+      setIsDeleting(false);
     }
   }
 
@@ -333,9 +338,10 @@ function HistoricoPage() {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => confirmDelete && handleDelete(confirmDelete)}
+              disabled={isDeleting}
               className="bg-red-600 text-white hover:bg-red-500"
             >
-              Excluir
+              {isDeleting ? "Excluindo..." : "Excluir"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
