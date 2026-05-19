@@ -296,7 +296,7 @@ function Dashboard() {
             <button
               type="button"
               onClick={() => setCreateOpen(true)}
-              className="inline-flex w-full max-w-xl items-center justify-center gap-2 rounded-2xl bg-[#00FF00] px-6 py-4 text-base font-bold text-black shadow-[0_0_40px_-6px_rgba(0,255,0,0.9)] transition-transform duration-200 hover:scale-[1.02] hover:bg-[#22ff22] focus:outline-none focus:ring-2 focus:ring-[#00FF00]/60 focus:ring-offset-2 focus:ring-offset-zinc-950"
+              className="inline-flex w-full max-w-xl items-center justify-center gap-2 rounded-2xl bg-[#00FF00] px-6 py-4 text-base font-bold text-black shadow-[0_0_40px_-6px_rgba(0,255,0,0.9)] transition-transform duration-200 md:hover:scale-[1.02] md:hover:bg-[#22ff22] focus:outline-none focus:ring-2 focus:ring-[#00FF00]/60 focus:ring-offset-2 focus:ring-offset-zinc-950"
             >
               <Plus className="h-5 w-5" strokeWidth={2.5} />
               Criar pelada
@@ -396,7 +396,7 @@ function CreatePeladaDialog({
               className={`group relative flex flex-row items-center gap-4 rounded-2xl border p-4 text-left transition-all duration-200 md:flex-col md:items-center md:justify-between md:gap-5 md:p-6 md:text-center ${
                 locked
                   ? "cursor-not-allowed border-white/10 bg-zinc-900/60 opacity-60"
-                  : "border-green-500/50 bg-zinc-900 hover:border-[#00FF00] hover:shadow-[0_0_30px_-5px_rgba(0,255,0,0.7)] md:hover:scale-[1.03]"
+                  : "border-green-500/50 bg-zinc-900 md:hover:border-[#00FF00] md:hover:shadow-[0_0_30px_-5px_rgba(0,255,0,0.7)] md:hover:scale-[1.03]"
               }`}
             >
               {locked && (
@@ -616,7 +616,7 @@ function CreateFixoDialog({
           <button
             type="submit"
             disabled={submitting}
-            className="mt-2 w-full rounded-xl bg-[#00FF00] py-3 text-base font-bold text-black shadow-[0_0_30px_-6px_rgba(0,255,0,0.9)] transition hover:scale-[1.01] hover:bg-[#22ff22] disabled:opacity-60"
+           className="mt-2 w-full rounded-xl bg-[#00FF00] py-3 text-base font-bold text-black shadow-[0_0_30px_-6px_rgba(0,255,0,0.9)] transition md:hover:scale-[1.01] md:hover:bg-[#22ff22] disabled:opacity-60"
           >
             {submitting ? "Criando..." : "CRIAR"}
           </button>
