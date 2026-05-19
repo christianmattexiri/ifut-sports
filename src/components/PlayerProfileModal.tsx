@@ -3,7 +3,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Target, Handshake, Trophy, Gamepad2, ExternalLink } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { loadHistory, type HistMatch } from "@/routes/pelada.$id_.historico";
+import { loadHistoryAsync, type HistMatch } from "@/routes/pelada.$id_.historico";
 import { onProfileUpdate } from "@/lib/profile-sync";
 
 export function PlayerProfileModal({
@@ -26,7 +26,8 @@ export function PlayerProfileModal({
 
   useEffect(() => {
     if (!open || !userId) return;
-    setHistory(loadHistory(matchId));
+    let cancelled = false;
+    loadHistoryAsync(matchId).then((h) => { if (!cancelled) setHistory(h); });
     (async () => {
       const { data } = await supabase
         .from("profiles")
@@ -43,6 +44,7 @@ export function PlayerProfileModal({
         setAvatar(null);
       }
     })();
+    return () => { cancelled = true; };
   }, [open, userId, matchId, fallbackName]);
 
   useEffect(() => {
