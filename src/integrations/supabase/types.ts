@@ -22,6 +22,7 @@ export type Database = {
           game_id: string
           goals: number | null
           id: string
+          player_name: string | null
           team: string
           user_id: string
         }
@@ -32,6 +33,7 @@ export type Database = {
           game_id: string
           goals?: number | null
           id?: string
+          player_name?: string | null
           team: string
           user_id: string
         }
@@ -42,6 +44,7 @@ export type Database = {
           game_id?: string
           goals?: number | null
           id?: string
+          player_name?: string | null
           team?: string
           user_id?: string
         }
