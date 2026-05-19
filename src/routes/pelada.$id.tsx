@@ -19,6 +19,8 @@ import {
   useCloseVoting,
 } from "@/lib/votes-cloud";
 import { fetchLatest, updateMatchWinners, type HistMatch as DbHistMatch } from "@/lib/games-storage";
+import { emitStatsUpdated } from "@/lib/profile-sync";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Home,
@@ -76,6 +78,7 @@ type Match = {
 function PeladaPage() {
   const navigate = useNavigate();
   const { id } = useParams({ from: "/pelada/$id" });
+  const queryClient = useQueryClient();
   const { data: match, isLoading: matchLoading } = useQuery(peladaMatchQuery(id));
   const { data: viewer, isLoading: viewerLoading } = useQuery(viewerQuery());
   const { data: attendance } = useQuery(matchAttendanceQuery(id));
