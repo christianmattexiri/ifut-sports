@@ -1,4 +1,6 @@
+import { memo } from "react";
 import { Clock, CheckCircle2, Users } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { ProTag } from "@/routes/pelada.$id";
 
 export type Pelada = {
@@ -12,11 +14,16 @@ export type Pelada = {
   isPro?: boolean;
 };
 
-export function MatchCard({ pelada, onClick }: { pelada: Pelada; onClick?: () => void }) {
+function MatchCardImpl({ pelada }: { pelada: Pelada; onClick?: () => void }) {
+  const stop = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
   return (
-    <article
-      onClick={onClick}
-      className="group relative cursor-pointer overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/60 p-6 backdrop-blur-xl transition-transform duration-200 hover:scale-[1.02] hover:border-[#00FF00]/30"
+    <Link
+      to="/pelada/$id"
+      params={{ id: pelada.id }}
+      className="group relative block cursor-pointer overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/60 p-6 backdrop-blur-xl transition-transform duration-200 hover:scale-[1.02] hover:border-[#00FF00]/30 focus:outline-none focus:ring-2 focus:ring-[#00FF00]/60"
     >
       <div className="absolute inset-x-6 -top-px h-px bg-gradient-to-r from-transparent via-[#00FF00]/40 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
 
@@ -70,11 +77,14 @@ export function MatchCard({ pelada, onClick }: { pelada: Pelada; onClick?: () =>
         </span>
         <button
           type="button"
+          onClick={stop}
           className="text-xs font-medium text-zinc-400 transition hover:text-[#00FF00]"
         >
           Ver detalhes →
         </button>
       </footer>
-    </article>
+    </Link>
   );
 }
+
+export const MatchCard = memo(MatchCardImpl);
