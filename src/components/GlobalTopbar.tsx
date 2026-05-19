@@ -58,8 +58,11 @@ export function GlobalTopbar() {
   }
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-40 h-14 border-b border-white/10 bg-zinc-950/95 backdrop-blur supports-[backdrop-filter]:bg-zinc-950/80">
-      <div className="flex h-full items-center justify-between px-3 md:px-5">
+    <header
+      className="fixed top-0 left-0 right-0 z-40 border-b border-white/10 bg-zinc-950/95 backdrop-blur supports-[backdrop-filter]:bg-zinc-950/80"
+      style={{ paddingTop: "env(safe-area-inset-top)" }}
+    >
+      <div className="flex h-14 items-center justify-between px-3 md:px-5">
         {/* LEFT: hamburger (mobile) */}
         <div className="flex items-center gap-2">
           <Sheet open={open} onOpenChange={setOpen}>
