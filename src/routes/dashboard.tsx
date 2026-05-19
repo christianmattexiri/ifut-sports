@@ -288,6 +288,7 @@ function Dashboard() {
       <CreatePeladaDialog
         open={createOpen}
         onOpenChange={setCreateOpen}
+        isSuperAdmin={isSuperAdmin}
         onSelectFixo={() => {
           setCreateOpen(false);
           setFixoOpen(true);
