@@ -19,7 +19,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
 import { useQuery } from "@tanstack/react-query";
 import { peladaMatchQuery, viewerQuery } from "@/lib/pelada-queries";
-import { loadHistory, type HistMatch } from "./pelada.$id_.historico";
+import { type HistMatch } from "./pelada.$id_.historico";
+import { fetchAggregatedStats } from "@/lib/games-storage";
 import { onProfileUpdate } from "@/lib/profile-sync";
 import { useAvatars } from "@/lib/avatars";
 import { PlayerProfileModal } from "@/components/PlayerProfileModal";
@@ -59,45 +60,9 @@ const TABS: { key: Stat; label: string; emoji: string }[] = [
   { key: "derrotas", label: "Lanternas", emoji: "💀" },
 ];
 
-function aggregate(history: HistMatch[]): PlayerStats[] {
-  const map = new Map<string, PlayerStats>();
-  const ensure = (id: string, name: string) => {
-    let p = map.get(id);
-    if (!p) {
-      p = { id, name, gols: 0, assistencias: 0, mvps: 0, vitorias: 0, derrotas: 0, jogos: 0 };
-      map.set(id, p);
-    }
-    return p;
-  };
-  for (const m of history) {
-    const scoreA = m.teamA.players.reduce((a, p) => a + (p.goals || 0), 0);
-    const scoreB = m.teamB.players.reduce((a, p) => a + (p.goals || 0), 0);
-    const aWon = scoreA > scoreB;
-    const bWon = scoreB > scoreA;
-    for (const pl of m.teamA.players) {
-      const s = ensure(pl.id, pl.name);
-      s.gols += pl.goals || 0;
-      s.assistencias += pl.assists || 0;
-      s.jogos += 1;
-      if (aWon) s.vitorias += 1;
-      else if (bWon) s.derrotas += 1;
-    }
-    for (const pl of m.teamB.players) {
-      const s = ensure(pl.id, pl.name);
-      s.gols += pl.goals || 0;
-      s.assistencias += pl.assists || 0;
-      s.jogos += 1;
-      if (bWon) s.vitorias += 1;
-      else if (aWon) s.derrotas += 1;
-    }
-    if (m.mvp) {
-      const all = [...m.teamA.players, ...m.teamB.players];
-      const mvpPlayer = all.find((p) => p.id === m.mvp);
-      if (mvpPlayer) ensure(mvpPlayer.id, mvpPlayer.name).mvps += 1;
-    }
-  }
-  return Array.from(map.values());
-}
+// Aggregation now happens server-side via fetchAggregatedStats.
+// HistMatch is re-imported only to keep the module surface stable for now.
+void ({} as HistMatch);
 
 function RankingsPage() {
   const navigate = useNavigate();
@@ -115,16 +80,16 @@ function RankingsPage() {
   const [players, setPlayers] = useState<PlayerStats[]>([]);
   const [modalUser, setModalUser] = useState<{ id: string; name: string } | null>(null);
 
-  // TODO: Consumir dados reais agregados do histórico de partidas no Supabase
   useEffect(() => {
-    const refresh = () => {
-      // Strict per-pelada isolation: only show stats aggregated from this
-      // pelada's match history. New peladas start empty.
-      const hist = loadHistory(id);
-      setPlayers(aggregate(hist));
+    let cancelled = false;
+    const refresh = async () => {
+      const rows = await fetchAggregatedStats(id);
+      if (cancelled) return;
+      setPlayers(rows as PlayerStats[]);
     };
     refresh();
-    return onProfileUpdate(() => refresh());
+    const off = onProfileUpdate(() => refresh());
+    return () => { cancelled = true; off(); };
   }, [id]);
 
   const ordered = useMemo(() => {
