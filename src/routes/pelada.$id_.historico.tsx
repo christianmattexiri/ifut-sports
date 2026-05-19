@@ -703,9 +703,17 @@ function StatStepper({
       <input
         type="number"
         min={0}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value) || 0)}
-        className="w-12 rounded border border-white/10 bg-zinc-900 px-1.5 py-0.5 text-center text-sm tabular-nums text-zinc-100 focus:border-[var(--pelada-accent)]/40 focus:outline-none"
+        inputMode="numeric"
+        value={value === 0 ? "" : value}
+        onFocus={(e) => e.currentTarget.select()}
+        onChange={(e) => {
+          const raw = e.target.value;
+          if (raw === "") return onChange(0);
+          const n = Number(raw);
+          if (Number.isFinite(n) && n >= 0) onChange(n);
+        }}
+        placeholder="0"
+        className="w-12 appearance-none rounded border border-white/10 bg-zinc-900 px-1.5 py-0.5 text-center text-sm tabular-nums text-zinc-100 placeholder:text-zinc-600 focus:border-[var(--pelada-accent)]/40 focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
       />
       <button
         type="button"
