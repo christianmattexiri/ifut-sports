@@ -18,6 +18,8 @@ import { supabase } from "@/integrations/supabase/client";
 import ifutCrest from "@/assets/ifut-crest.png";
 import { MatchCard, type Pelada } from "@/components/MatchCard";
 import { ProfileDialog } from "@/components/ProfileDialog";
+import { InstallPwaModal } from "@/components/InstallPwaModal";
+import { Smartphone } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -52,6 +54,7 @@ function Dashboard() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [fixoOpen, setFixoOpen] = useState(false);
+  const [installOpen, setInstallOpen] = useState(false);
   const [peladas, setPeladas] = useState<Pelada[]>([]);
   const [pendingInvites, setPendingInvites] = useState(0);
 
@@ -205,6 +208,14 @@ function Dashboard() {
                   />
                 </Link>
               )}
+              <button
+                type="button"
+                onClick={() => setInstallOpen(true)}
+                className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold text-yellow-400 transition hover:bg-yellow-400/10"
+              >
+                <Smartphone className="h-4 w-4" />
+                📱 Instalar App
+              </button>
             </nav>
           </div>
 
@@ -307,6 +318,7 @@ function Dashboard() {
         fallbackAvatar={fallbackAvatar}
         onUpdated={(data) => setProfile((p) => (p ? { ...p, ...data } : p))}
       />
+      <InstallPwaModal open={installOpen} onOpenChange={setInstallOpen} />
     </main>
   );
 }

@@ -11,10 +11,12 @@ import {
   MapPin,
   Check,
   X,
+  Smartphone,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import ifutCrest from "@/assets/ifut-crest.png";
+import { InstallPwaModal } from "@/components/InstallPwaModal";
 import {
   Dialog,
   DialogContent,
@@ -55,6 +57,7 @@ function ConvitesPage() {
   const [closing, setClosing] = useState<Set<string>>(new Set());
   const [me, setMe] = useState<{ id: string; firstName: string } | null>(null);
   const [positionFor, setPositionFor] = useState<Invitation | null>(null);
+  const [installOpen, setInstallOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -214,17 +217,27 @@ function ConvitesPage() {
               />
             </nav>
           </div>
+          <div className="space-y-2">
+          <button
+            type="button"
+            onClick={() => setInstallOpen(true)}
+            className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-yellow-400/30 bg-yellow-400/5 px-2 py-1.5 text-xs font-semibold text-yellow-400 transition hover:bg-yellow-400/15"
+          >
+            <Smartphone className="h-3.5 w-3.5" />
+            📱 Instalar App
+          </button>
           <button
             type="button"
             onClick={async () => {
               await supabase.auth.signOut();
               navigate({ to: "/" });
             }}
-            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-xs font-medium text-zinc-200 transition hover:bg-red-500/20 hover:text-red-200"
+            className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-xs font-medium text-zinc-200 transition hover:bg-red-500/20 hover:text-red-200"
           >
             <LogOut className="h-3.5 w-3.5" />
             Sair
           </button>
+          </div>
         </aside>
 
         <section className="flex-1 px-5 py-8 md:px-10 md:py-10">
@@ -369,6 +382,7 @@ function ConvitesPage() {
           </div>
         </DialogContent>
       </Dialog>
+      <InstallPwaModal open={installOpen} onOpenChange={setInstallOpen} />
     </main>
   );
 }
