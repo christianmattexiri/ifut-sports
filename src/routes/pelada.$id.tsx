@@ -7,15 +7,17 @@ import { ApittoResultsModal } from "@/components/ApittoResultsModal";
 import { AdminVotingAuditModal } from "@/components/AdminVotingAuditModal";
 import { peladaSettingsQuery, DEFAULT_SETTINGS } from "@/lib/pelada-settings";
 import {
-  loadVotes,
-  saveVotes,
   computeWinner,
   userHasVoted,
-  onVotesUpdated,
   isLeaderMathLocked,
   computeApitto,
   type MatchVotes,
 } from "@/lib/voting";
+import {
+  matchVotesQuery,
+  useMatchVotesRealtime,
+  useCloseVoting,
+} from "@/lib/votes-cloud";
 import { fetchLatest, updateMatchWinners, type HistMatch as DbHistMatch } from "@/lib/games-storage";
 import {
   ArrowLeft,
@@ -99,7 +101,6 @@ function PeladaPage() {
   const podiumDisplay = adminSettings.podium;
   const modules = adminSettings.modules;
   const accent = adminSettings.accent || "var(--pelada-accent)";
-  const [votes, setVotes] = useState<MatchVotes | null>(null);
   const [votingOpen, setVotingOpen] = useState(false);
   const [apittoResultsOpen, setApittoResultsOpen] = useState(false);
   const [auditOpen, setAuditOpen] = useState(false);
@@ -173,13 +174,14 @@ function PeladaPage() {
     return () => { cancelled = true; };
   }, [id, match?.name]);
 
-  // Load + subscribe to votes for the latest match.
-  useEffect(() => {
-    if (!latest) { setVotes(null); return; }
-    setVotes(loadVotes(id, latest.id));
-    const off = onVotesUpdated(() => setVotes(loadVotes(id, latest!.id)));
-    return off;
-  }, [id, latest]);
+  // Cloud votes (Supabase) + realtime subscription.
+  const { data: votesData } = useQuery({
+    ...matchVotesQuery(latest?.id),
+    enabled: !!latest?.id,
+  });
+  useMatchVotesRealtime(latest?.id);
+  const votes: MatchVotes | null = votesData?.votes ?? null;
+  const closeVotingMutation = useCloseVoting(latest?.id ?? "");
 
   // Resolve which match players are real registered users (valid voters).
   // Guests added via "Chamar amigo" get random UUIDs that don't exist in profiles.
@@ -247,7 +249,7 @@ function PeladaPage() {
       try { await updateMatchWinners(latest.id, patch); } catch { /* ignore */ }
       setLatest(updated);
     }
-    saveVotes(id, latest.id, { ...current, closed: true, closedAt: new Date().toISOString() });
+    try { await closeVotingMutation.mutateAsync(); } catch { /* ignore */ }
   }
 
   // Auto-open voting modal once per session if the viewer is eligible.
