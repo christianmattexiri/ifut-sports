@@ -102,6 +102,44 @@ export type Database = {
           },
         ]
       }
+      match_attendance: {
+        Row: {
+          created_at: string | null
+          has_paid: boolean | null
+          id: string
+          is_goalkeeper: boolean | null
+          match_id: string
+          player_id: string | null
+          player_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          has_paid?: boolean | null
+          id?: string
+          is_goalkeeper?: boolean | null
+          match_id: string
+          player_id?: string | null
+          player_name: string
+        }
+        Update: {
+          created_at?: string | null
+          has_paid?: boolean | null
+          id?: string
+          is_goalkeeper?: boolean | null
+          match_id?: string
+          player_id?: string | null
+          player_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_attendance_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       match_invitations: {
         Row: {
           created_at: string | null
