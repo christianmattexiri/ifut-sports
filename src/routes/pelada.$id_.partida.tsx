@@ -40,7 +40,6 @@ function PartidaPage() {
   useEffect(() => {
     if (!viewerLoading && viewer === null) navigate({ to: "/" });
   }, [viewer, viewerLoading, navigate]);
-  const [confirmed, setConfirmed] = useState<Player[]>([]);
   const [ratings, setRatings] = useState<Record<string, number>>({});
   const [saved, setSaved] = useState<SavedTeams | null>(null);
   const [sorteioOpen, setSorteioOpen] = useState(false);
@@ -51,21 +50,40 @@ function PartidaPage() {
   const [pool, setPool] = useState<Player[]>([]);
   const [editing, setEditing] = useState<HistMatch | null>(null);
 
+  // Lista de presença vem do Supabase (match_attendance).
+  const attendanceQuery = useQuery({
+    queryKey: ["match_attendance", id],
+    enabled: !!id,
+    staleTime: 30 * 1000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("match_attendance")
+        .select("id, player_id, player_name, is_goalkeeper, created_at")
+        .eq("match_id", id)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const confirmed = useMemo<Player[]>(() => {
+    const rows = attendanceQuery.data ?? [];
+    return rows.map((r) => {
+      const userId = (r.player_id as string | null) ?? null;
+      const rowId = r.id as string;
+      return {
+        id: userId ?? rowId,
+        name: (r.player_name as string) ?? "Jogador",
+        isGoalkeeper: !!r.is_goalkeeper,
+      };
+    });
+  }, [attendanceQuery.data]);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
-      const rawP = localStorage.getItem(`pelada:${id}:players`);
       const rawR = localStorage.getItem(`pelada:${id}:ratings`);
       const rawT = localStorage.getItem(`pelada:${id}:teams`);
-      const rawS = localStorage.getItem(`pelada:${id}:settings`);
-      const settings = rawS ? JSON.parse(rawS) : { lineLimit: 16, gkLimit: 2 };
-      const all = rawP ? (JSON.parse(rawP) as Player[]) : [];
-      const line: Player[] = [], gks: Player[] = [];
-      for (const p of all) {
-        if (p.isGoalkeeper) { if (gks.length < settings.gkLimit) gks.push(p); }
-        else { if (line.length < settings.lineLimit) line.push(p); }
-      }
-      setConfirmed([...line, ...gks]);
       if (rawR) setRatings(JSON.parse(rawR));
       if (rawT) {
         const t = JSON.parse(rawT);
@@ -228,7 +246,9 @@ function PartidaPage() {
               ⚽ Partida
             </h1>
             <p className="text-sm text-zinc-400">
-              {confirmed.length} jogador{confirmed.length === 1 ? "" : "es"} confirmado{confirmed.length === 1 ? "" : "s"} na lista de presença.
+              {attendanceQuery.isLoading
+                ? "Carregando lista de presença…"
+                : `${confirmed.length} jogador${confirmed.length === 1 ? "" : "es"} confirmado${confirmed.length === 1 ? "" : "s"} na lista de presença.`}
             </p>
 
             <button
