@@ -3,31 +3,14 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { isSuperAdminUsername } from "@/lib/admin";
-
-async function assertSuperAdmin(userId: string) {
-  const { data: prof } = await supabaseAdmin
-    .from("profiles")
-    .select("username")
-    .eq("id", userId)
-    .maybeSingle();
-  if (!isSuperAdminUsername(prof?.username)) {
-    throw new Error("Acesso restrito");
-  }
-}
-
-export type AdminUserRow = {
-  id: string;
-  email: string | null;
-  full_name: string | null;
-  username: string | null;
-  avatar_url: string | null;
-  peladas: { id: string; name: string; role: "admin" | "member" }[];
-};
+import type { AdminUserRow } from "@/lib/admin-users.types";
 
 export const listAllUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<AdminUserRow[]> => {
-    await assertSuperAdmin(context.userId);
+    const { data: prof } = await supabaseAdmin
+      .from("profiles").select("username").eq("id", context.userId).maybeSingle();
+    if (!isSuperAdminUsername(prof?.username)) throw new Error("Acesso restrito");
 
     const { data: profs, error: pErr } = await supabaseAdmin
       .from("profiles")
@@ -81,7 +64,9 @@ export const resetUserPassword = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    await assertSuperAdmin(context.userId);
+    const { data: prof } = await supabaseAdmin
+      .from("profiles").select("username").eq("id", context.userId).maybeSingle();
+    if (!isSuperAdminUsername(prof?.username)) throw new Error("Acesso restrito");
     const { error } = await supabaseAdmin.auth.admin.updateUserById(data.userId, {
       password: data.newPassword,
       user_metadata: { force_password_reset: true },

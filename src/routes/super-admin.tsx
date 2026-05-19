@@ -9,7 +9,8 @@ import { ProTag } from "@/routes/pelada.$id";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useServerFn } from "@tanstack/react-start";
-import { listAllUsers, resetUserPassword, type AdminUserRow } from "@/lib/admin-users.functions";
+import { listAllUsers, resetUserPassword } from "@/lib/admin-users.functions";
+import type { AdminUserRow } from "@/lib/admin-users.types";
 
 export const Route = createFileRoute("/super-admin")({
   component: SuperAdminPage,
