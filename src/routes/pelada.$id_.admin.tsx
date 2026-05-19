@@ -11,6 +11,15 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+import {
+  DEFAULT_SETTINGS,
+  peladaSettingsQuery,
+  useUpdatePeladaSettings,
+  type AdminSettings,
+  type Modules,
+  type VoteModes,
+} from "@/lib/pelada-settings";
 
 export const Route = createFileRoute("/pelada/$id_/admin")({
   component: AdminPage,
@@ -32,45 +41,6 @@ type Match = {
   location: string | null; logo_url: string | null; admin_id?: string | null; is_pro?: boolean | null;
 };
 
-type Modules = {
-  rankings: boolean; somMvp: boolean; financas: boolean; votacoes: boolean; musica: boolean;
-};
-type VoteModes = { mvp: boolean; pereba: boolean; apitto: boolean };
-type PodiumDisplay = {
-  matador: boolean; maestro: boolean; mvp: boolean; pereba: boolean; apitto: boolean;
-};
-type AdminSettings = {
-  accent: string;
-  modules: Modules;
-  voteModes: VoteModes;
-  podium: PodiumDisplay;
-};
-
-const DEFAULT_SETTINGS: AdminSettings = {
-  accent: "#00FF00",
-  modules: { rankings: true, somMvp: false, financas: true, votacoes: true, musica: false },
-  voteModes: { mvp: true, pereba: false, apitto: false },
-  podium: { matador: true, maestro: true, mvp: true, pereba: true, apitto: true },
-};
-
-export const adminSettingsKey = (id: string) => `pelada:${id}:adminSettings`;
-
-export function loadAdminSettings(id: string): AdminSettings {
-  if (typeof window === "undefined") return DEFAULT_SETTINGS;
-  try {
-    const raw = localStorage.getItem(adminSettingsKey(id));
-    if (!raw) return DEFAULT_SETTINGS;
-    const parsed = JSON.parse(raw);
-    return {
-      ...DEFAULT_SETTINGS,
-      ...parsed,
-      podium: { ...DEFAULT_SETTINGS.podium, ...(parsed?.podium ?? {}) },
-      voteModes: { ...DEFAULT_SETTINGS.voteModes, ...(parsed?.voteModes ?? {}) },
-      modules: { ...DEFAULT_SETTINGS.modules, ...(parsed?.modules ?? {}) },
-    };
-  } catch { return DEFAULT_SETTINGS; }
-}
-
 function AdminPage() {
   const navigate = useNavigate();
   const { id } = useParams({ from: "/pelada/$id_/admin" });
@@ -84,10 +54,12 @@ function AdminPage() {
   const [settings, setSettings] = useState<AdminSettings>(DEFAULT_SETTINGS);
   const [uploading, setUploading] = useState(false);
   const [isPro, setIsPro] = useState(false);
+  const { data: cloudSettings } = useQuery(peladaSettingsQuery(id));
+  const updateSettings = useUpdatePeladaSettings(id);
 
   useEffect(() => {
-    setSettings(loadAdminSettings(id));
-  }, [id]);
+    if (cloudSettings) setSettings(cloudSettings);
+  }, [cloudSettings]);
 
   // Live theme preview via CSS var (scoped to this pelada via localStorage key read on dashboard).
   useEffect(() => {
@@ -147,10 +119,12 @@ function AdminPage() {
       .update({ name, day_of_week: day, match_time: time, location: loc, logo_url: logo })
       .eq("id", id);
     if (error) { toast.error("Erro ao salvar"); return; }
-    if (typeof window !== "undefined") {
-      localStorage.setItem(adminSettingsKey(id), JSON.stringify(settings));
+    try {
+      await updateSettings.mutateAsync(settings);
+      toast.success("Configurações salvas!");
+    } catch {
+      toast.error("Erro ao salvar configurações");
     }
-    toast.success("Configurações salvas!");
   }
 
   function setVoteMode(k: keyof VoteModes, v: boolean) {

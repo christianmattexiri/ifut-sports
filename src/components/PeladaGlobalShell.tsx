@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { loadAdminSettings } from "@/routes/pelada.$id_.admin";
 import { AudioFooterPlayer } from "@/components/AudioFooterPlayer";
 import { peladaMatchQuery, viewerQuery } from "@/lib/pelada-queries";
+import { peladaSettingsQuery, DEFAULT_SETTINGS } from "@/lib/pelada-settings";
 
 /**
  * Mounted once at the root. Detects when the user is inside any
@@ -20,9 +20,8 @@ export function PeladaGlobalShell() {
     return m ? m[1] : null;
   }, [pathname]);
 
-  const [settings, setSettings] = useState(() =>
-    peladaId ? loadAdminSettings(peladaId) : null,
-  );
+  const { data: cloudSettings } = useQuery(peladaSettingsQuery(peladaId ?? undefined));
+  const settings = peladaId ? cloudSettings ?? DEFAULT_SETTINGS : null;
   const [latestMvp, setLatestMvp] = useState<{ id: string; name: string } | null>(null);
 
   // Shared React Query cache — same keys used by every pelada route, so this
@@ -31,23 +30,6 @@ export function PeladaGlobalShell() {
   const { data: viewer } = useQuery(viewerQuery());
   const isPro = !!match?.is_pro;
   const viewerId = viewer?.id ?? "";
-
-  // Reload settings when pelada changes or admin saves (storage event).
-  useEffect(() => {
-    if (!peladaId) {
-      setSettings(null);
-      return;
-    }
-    setSettings(loadAdminSettings(peladaId));
-    const onStorage = (e: StorageEvent) => {
-      if (!e.key) return;
-      if (e.key.includes(`pelada:${peladaId}:adminSettings`)) {
-        setSettings(loadAdminSettings(peladaId));
-      }
-    };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  }, [peladaId]);
 
   // Read latest MVP from histórico (used by Som do MVP player).
   useEffect(() => {

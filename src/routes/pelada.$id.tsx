@@ -5,7 +5,7 @@ import { PlayerProfileModal } from "@/components/PlayerProfileModal";
 import { VotingModal } from "@/components/VotingModal";
 import { ApittoResultsModal } from "@/components/ApittoResultsModal";
 import { AdminVotingAuditModal } from "@/components/AdminVotingAuditModal";
-import { loadAdminSettings } from "@/routes/pelada.$id_.admin";
+import { peladaSettingsQuery, DEFAULT_SETTINGS } from "@/lib/pelada-settings";
 import {
   loadVotes,
   saveVotes,
@@ -90,7 +90,8 @@ function PeladaPage() {
   useEffect(() => {
     if (!viewerLoading && !viewer) navigate({ to: "/" });
   }, [viewer, viewerLoading, navigate]);
-  const [adminSettings, setAdminSettings] = useState(() => loadAdminSettings(id));
+  const { data: cloudSettings } = useQuery(peladaSettingsQuery(id));
+  const adminSettings = cloudSettings ?? DEFAULT_SETTINGS;
   // Vote modes are gated by the master "Votações" module switch.
   const voteSettings = adminSettings.modules.votacoes
     ? adminSettings.voteModes
@@ -171,13 +172,6 @@ function PeladaPage() {
     read();
     return () => { cancelled = true; };
   }, [id, match?.name]);
-
-  // Reload admin vote settings if changed in another tab/page.
-  useEffect(() => {
-    const reload = () => setAdminSettings(loadAdminSettings(id));
-    window.addEventListener("storage", reload);
-    return () => window.removeEventListener("storage", reload);
-  }, [id]);
 
   // Load + subscribe to votes for the latest match.
   useEffect(() => {

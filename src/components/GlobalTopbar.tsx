@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { peladaMatchQuery, viewerQuery } from "@/lib/pelada-queries";
-import { loadAdminSettings } from "@/routes/pelada.$id_.admin";
+import { peladaSettingsQuery } from "@/lib/pelada-settings";
 import ifutCrest from "@/assets/ifut-crest.png";
 import { toast } from "sonner";
 
@@ -58,8 +58,11 @@ export function GlobalTopbar() {
   }
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-40 h-14 border-b border-white/10 bg-zinc-950/95 backdrop-blur supports-[backdrop-filter]:bg-zinc-950/80">
-      <div className="flex h-full items-center justify-between px-3 md:px-5">
+    <header
+      className="fixed top-0 left-0 right-0 z-40 border-b border-white/10 bg-zinc-950/95 backdrop-blur supports-[backdrop-filter]:bg-zinc-950/80"
+      style={{ paddingTop: "env(safe-area-inset-top)" }}
+    >
+      <div className="flex h-14 items-center justify-between px-3 md:px-5">
         {/* LEFT: hamburger (mobile) */}
         <div className="flex items-center gap-2">
           <Sheet open={open} onOpenChange={setOpen}>
@@ -155,12 +158,8 @@ function MobileMenuContent({
   onClose: () => void;
 }) {
   const { data: match } = useQuery(peladaMatchQuery(peladaId ?? undefined));
-  const [modulesRankings, setModulesRankings] = useState(true);
-  useEffect(() => {
-    if (!peladaId) return;
-    const s = loadAdminSettings(peladaId);
-    setModulesRankings(!!s.modules.rankings);
-  }, [peladaId]);
+  const { data: settings } = useQuery(peladaSettingsQuery(peladaId ?? undefined));
+  const modulesRankings = settings ? !!settings.modules.rankings : true;
 
   const isPeladaAdmin = !!match && match.admin_id === viewerId;
 
