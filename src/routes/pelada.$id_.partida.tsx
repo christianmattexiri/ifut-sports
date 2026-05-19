@@ -6,8 +6,9 @@ import {
   MousePointerClick, Scale, Dices,
 } from "lucide-react";
 import { isSuperAdminUsername } from "@/lib/admin";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { peladaMatchQuery, viewerQuery, matchAttendanceQuery } from "@/lib/pelada-queries";
+import { peladaSettingsQuery, DEFAULT_SETTINGS } from "@/lib/pelada-settings";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { EditMatchDialog, saveMatchToDb, type HistMatch } from "./pelada.$id_.historico";
@@ -31,9 +32,12 @@ type SavedTeams = { teamA: Player[]; teamB: Player[] };
 function PartidaPage() {
   const navigate = useNavigate();
   const { id } = useParams({ from: "/pelada/$id_/partida" });
+  const queryClient = useQueryClient();
   const { data: matchData } = useQuery(peladaMatchQuery(id));
   const match = (matchData ?? null) as Match | null;
   const { data: viewer, isLoading: viewerLoading } = useQuery(viewerQuery());
+  const { data: cloudSettings } = useQuery(peladaSettingsQuery(id));
+  const settings = cloudSettings ?? DEFAULT_SETTINGS;
   const isAdmin =
     !!viewer && !!match &&
     (match.admin_id === viewer.id || isSuperAdminUsername(viewer.username));
@@ -187,7 +191,20 @@ function PartidaPage() {
 
   async function handleSaveMatch(updated: HistMatch) {
     try {
-      await saveMatchToDb(id, updated);
+      // Abre a votação automaticamente se algum modo estiver ativo e o admin
+      // não tiver escolhido vencedores manualmente. Evita o falso positivo
+      // de auto-encerramento e destrava o Pódio.
+      const voteOn =
+        settings.modules.votacoes &&
+        (settings.voteModes.mvp ||
+          settings.voteModes.pereba ||
+          settings.voteModes.apitto);
+      const manualWinners = !!updated.mvp || !!updated.pereba;
+      const votingOpen = !!voteOn && !manualWinners;
+      await saveMatchToDb(id, updated, { votingOpen });
+      // Força Pódio e telas iniciais a relerem o estado fresco do banco.
+      queryClient.invalidateQueries({ queryKey: ["match-votes", updated.id] });
+      queryClient.invalidateQueries();
       setEditing(null);
       toast.success("Partida registrada! Pódio atualizado.");
     } catch (e) {
