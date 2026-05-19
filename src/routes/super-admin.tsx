@@ -1,11 +1,15 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, ShieldCheck, Trophy } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Trophy, KeyRound, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { ProTag } from "@/routes/pelada.$id";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { useServerFn } from "@tanstack/react-start";
+import { listAllUsers, resetUserPassword, type AdminUserRow } from "@/lib/admin-users.functions";
 
 export const Route = createFileRoute("/super-admin")({
   component: SuperAdminPage,
@@ -26,6 +30,13 @@ function SuperAdminPage() {
   const [allowed, setAllowed] = useState<boolean | null>(null);
   const [rows, setRows] = useState<Row[]>([]);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [users, setUsers] = useState<AdminUserRow[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [resetTarget, setResetTarget] = useState<AdminUserRow | null>(null);
+  const [newPw, setNewPw] = useState("");
+  const [resetSaving, setResetSaving] = useState(false);
+  const fetchUsers = useServerFn(listAllUsers);
+  const doReset = useServerFn(resetUserPassword);
 
   useEffect(() => {
     (async () => {
@@ -58,8 +69,18 @@ function SuperAdminPage() {
         admin_id: r.admin_id, is_pro: !!r.is_pro,
         admin_username: usernameMap.get(r.admin_id) ?? null,
       })));
+
+      setUsersLoading(true);
+      try {
+        const u = await fetchUsers();
+        setUsers(u);
+      } catch (e: any) {
+        toast.error(e?.message ?? "Erro ao carregar usuários");
+      } finally {
+        setUsersLoading(false);
+      }
     })();
-  }, [navigate]);
+  }, [navigate, fetchUsers]);
 
   async function togglePro(row: Row, value: boolean) {
     setSavingId(row.id);
@@ -94,7 +115,18 @@ function SuperAdminPage() {
           </div>
         </div>
 
-        <div className="mt-6 rounded-2xl border border-white/10 bg-zinc-900/40 p-4 backdrop-blur-xl">
+        <Tabs defaultValue="peladas" className="mt-6">
+          <TabsList className="bg-zinc-900/60 border border-white/10">
+            <TabsTrigger value="peladas" className="data-[state=active]:bg-amber-400 data-[state=active]:text-zinc-950">
+              <Trophy className="mr-1.5 h-3.5 w-3.5" /> Peladas
+            </TabsTrigger>
+            <TabsTrigger value="users" className="data-[state=active]:bg-amber-400 data-[state=active]:text-zinc-950">
+              <Users className="mr-1.5 h-3.5 w-3.5" /> Usuários
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="peladas" className="mt-4">
+        <div className="rounded-2xl border border-white/10 bg-zinc-900/40 p-4 backdrop-blur-xl">
           <p className="mb-3 text-xs uppercase tracking-wider text-zinc-500">
             {rows.length} peladas no total
           </p>
@@ -133,7 +165,113 @@ function SuperAdminPage() {
             )}
           </div>
         </div>
+          </TabsContent>
+
+          <TabsContent value="users" className="mt-4">
+            <div className="rounded-2xl border border-white/10 bg-zinc-900/40 p-4 backdrop-blur-xl">
+              <p className="mb-3 text-xs uppercase tracking-wider text-zinc-500">
+                {usersLoading ? "Carregando..." : `${users.length} usuários cadastrados`}
+              </p>
+              <div className="space-y-2">
+                {users.map((u) => {
+                  const initials = (u.full_name ?? u.username ?? "?")
+                    .split(" ").map((s) => s[0]).filter(Boolean).slice(0, 2).join("").toUpperCase();
+                  return (
+                    <div key={u.id} className="flex items-start gap-3 rounded-xl border border-white/5 bg-zinc-950/60 px-3 py-3">
+                      <div className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-full border border-white/10 bg-zinc-900 text-sm font-bold text-zinc-300">
+                        {u.avatar_url ? <img src={u.avatar_url} alt="" className="h-full w-full object-cover" /> : initials}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-bold text-zinc-100">
+                          {u.full_name || u.username || "—"}{" "}
+                          <span className="text-xs font-normal text-zinc-500">@{u.username ?? "—"}</span>
+                        </p>
+                        <p className="truncate text-xs text-zinc-400">{u.email ?? "—"}</p>
+                        <div className="mt-1.5 flex flex-wrap gap-1">
+                          {u.peladas.length === 0 && (
+                            <span className="text-[10px] uppercase tracking-wider text-zinc-600">Sem peladas</span>
+                          )}
+                          {u.peladas.map((p) => (
+                            <span
+                              key={`${p.id}-${p.role}`}
+                              className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                                p.role === "admin"
+                                  ? "bg-amber-400/15 text-amber-300 border border-amber-400/30"
+                                  : "bg-white/5 text-zinc-300 border border-white/10"
+                              }`}
+                              title={p.role === "admin" ? "Admin" : "Membro"}
+                            >
+                              {p.name}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => { setResetTarget(u); setNewPw(""); }}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-amber-400/30 bg-amber-400/10 px-2.5 py-1.5 text-xs font-bold uppercase tracking-wider text-amber-300 hover:bg-amber-400/20"
+                      >
+                        <KeyRound className="h-3.5 w-3.5" /> Resetar
+                      </button>
+                    </div>
+                  );
+                })}
+                {!usersLoading && users.length === 0 && (
+                  <p className="py-8 text-center text-sm text-zinc-500">Nenhum usuário encontrado.</p>
+                )}
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
+
+      <Dialog open={!!resetTarget} onOpenChange={(o) => !o && setResetTarget(null)}>
+        <DialogContent className="border-amber-400/30 bg-zinc-900 text-zinc-100">
+          <DialogHeader>
+            <DialogTitle className="text-amber-300">
+              Resetar senha de {resetTarget?.full_name || resetTarget?.username}
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-zinc-400">
+            Defina uma senha provisória. O usuário será obrigado a alterá-la no próximo login.
+          </p>
+          <input
+            type="text"
+            autoFocus
+            placeholder="Nova senha provisória (mín. 6)"
+            value={newPw}
+            onChange={(e) => setNewPw(e.target.value)}
+            className="mt-2 w-full rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-amber-400"
+          />
+          <DialogFooter>
+            <button
+              onClick={() => setResetTarget(null)}
+              className="rounded-lg border border-white/10 px-3 py-2 text-xs font-bold uppercase text-zinc-300 hover:bg-white/5"
+            >
+              Cancelar
+            </button>
+            <button
+              disabled={resetSaving || newPw.length < 6}
+              onClick={async () => {
+                if (!resetTarget) return;
+                setResetSaving(true);
+                try {
+                  await doReset({ data: { userId: resetTarget.id, newPassword: newPw } });
+                  toast.success("Senha resetada! O usuário será obrigado a alterá-la no próximo login.");
+                  setResetTarget(null);
+                  setNewPw("");
+                } catch (e: any) {
+                  toast.error(e?.message ?? "Erro ao resetar senha");
+                } finally {
+                  setResetSaving(false);
+                }
+              }}
+              className="rounded-lg bg-amber-400 px-3 py-2 text-xs font-bold uppercase text-zinc-950 hover:bg-amber-300 disabled:opacity-60"
+            >
+              {resetSaving ? "Salvando..." : "Confirmar reset"}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }
