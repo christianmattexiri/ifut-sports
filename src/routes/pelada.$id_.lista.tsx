@@ -673,19 +673,19 @@ Bora pro jogo! 🔥
                 <SlotCard
                   icon={<Users className="h-4 w-4" />}
                   label="Linha"
-                  value={`${lineCount}/${lineLimit}`}
+                  value={isListLoading ? "…" : `${lineCount}/${lineLimit}`}
                   color="var(--pelada-accent)"
                 />
                 <SlotCard
                   icon={<Hand className="h-4 w-4" />}
                   label="Goleiros"
-                  value={`${gkCount}/${gkLimit}`}
+                  value={isListLoading ? "…" : `${gkCount}/${gkLimit}`}
                   color="var(--pelada-accent)"
                 />
                 <SlotCard
                   icon={<ClipboardList className="h-4 w-4" />}
                   label="Suplentes"
-                  value={`${subCount}/${subLimit}`}
+                  value={isListLoading ? "…" : `${subCount}/${subLimit}`}
                   color="var(--pelada-accent)"
                 />
               </div>
