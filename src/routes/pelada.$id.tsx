@@ -205,6 +205,13 @@ function PeladaPage() {
     if (!anyMode) return;
     if (validVoterIds.length === 0) return;
     const total = validVoterIds.length;
+    // Safeguard contra falso positivo: nunca encerrar quando ninguém votou.
+    // Sem isso, 0 votos == 0 quórum fecharia a urna na criação da partida.
+    const totalVotes =
+      Object.keys(votes.mvpVotes).length +
+      Object.keys(votes.perebaVotes).length +
+      Object.keys(votes.apitto).length;
+    if (totalVotes === 0) return;
     const allDone = validVoterIds.every((vid) => userHasVoted(votes, vid, voteSettings));
     // Mathematical lock applies to MVP/Pereba (winner-take-all). Apitto is averaged
     // and only closes by full quorum or admin force.
