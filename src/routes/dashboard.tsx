@@ -314,10 +314,12 @@ function CreatePeladaDialog({
   open,
   onOpenChange,
   onSelectFixo,
+  isSuperAdmin,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   onSelectFixo: () => void;
+  isSuperAdmin: boolean;
 }) {
   const options = [
     {
@@ -325,18 +327,21 @@ function CreatePeladaDialog({
       emoji: "⚽",
       title: "Futebol Avulso",
       desc: "Pelada de um dia só",
+      key: "avulso" as const,
     },
     {
       icon: RefreshCw,
       emoji: null,
       title: "Futebol Fixo",
       desc: "Pelada recorrente (ex: toda quarta)",
+      key: "fixo" as const,
     },
     {
       icon: Trophy,
       emoji: null,
       title: "Organizar Campeonato",
       desc: "Módulo de torneio",
+      key: "torneio" as const,
     },
   ] as const;
 
@@ -350,27 +355,40 @@ function CreatePeladaDialog({
         </DialogTitle>
 
         <div className="mt-6 grid grid-cols-1 gap-3 md:gap-6 md:grid-cols-3">
-          {options.map(({ icon: Icon, emoji, title, desc }) => (
+          {options.map(({ icon: Icon, emoji, title, desc, key }) => {
+            const locked = (key === "avulso" || key === "torneio") && !isSuperAdmin;
+            return (
             <button
               key={title}
               type="button"
+              disabled={locked}
               onClick={() => {
-                if (title === "Futebol Fixo") {
+                if (locked) return;
+                if (key === "fixo") {
                   onSelectFixo();
                   return;
                 }
                 toast("Em breve", { description: title });
                 onOpenChange(false);
               }}
-              className="group flex flex-row items-center gap-4 rounded-2xl border border-green-500/50 bg-zinc-900 p-4 text-left transition-all duration-200 hover:border-[#00FF00] hover:shadow-[0_0_30px_-5px_rgba(0,255,0,0.7)] md:flex-col md:items-center md:justify-between md:gap-5 md:p-6 md:text-center md:hover:scale-[1.03]"
+              className={`group relative flex flex-row items-center gap-4 rounded-2xl border p-4 text-left transition-all duration-200 md:flex-col md:items-center md:justify-between md:gap-5 md:p-6 md:text-center ${
+                locked
+                  ? "cursor-not-allowed border-white/10 bg-zinc-900/60 opacity-60"
+                  : "border-green-500/50 bg-zinc-900 hover:border-[#00FF00] hover:shadow-[0_0_30px_-5px_rgba(0,255,0,0.7)] md:hover:scale-[1.03]"
+              }`}
             >
+              {locked && (
+                <span className="absolute right-2 top-2 rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-zinc-900 shadow-[0_0_10px_-2px_rgba(251,191,36,0.7)]">
+                  Em breve
+                </span>
+              )}
               {emoji ? (
-                <span className="shrink-0 text-4xl leading-none drop-shadow-[0_0_12px_rgba(0,255,0,0.8)] md:text-6xl">
+                <span className={`shrink-0 text-4xl leading-none md:text-6xl ${locked ? "grayscale" : "drop-shadow-[0_0_12px_rgba(0,255,0,0.8)]"}`}>
                   {emoji}
                 </span>
               ) : (
                 <Icon
-                  className="h-12 w-12 shrink-0 text-[#00FF00] drop-shadow-[0_0_8px_rgba(0,255,0,0.8)] md:h-16 md:w-16"
+                  className={`h-12 w-12 shrink-0 md:h-16 md:w-16 ${locked ? "text-zinc-500" : "text-[#00FF00] drop-shadow-[0_0_8px_rgba(0,255,0,0.8)]"}`}
                   strokeWidth={2}
                 />
               )}
@@ -378,11 +396,16 @@ function CreatePeladaDialog({
                 <h3 className="text-base font-semibold text-white md:text-xl">{title}</h3>
                 <p className="text-xs text-zinc-400 md:text-sm">{desc}</p>
               </div>
-              <span className="ml-auto shrink-0 rounded-full border border-[#00FF00]/60 px-3 py-1 text-xs font-medium text-[#00FF00] transition group-hover:bg-[#00FF00]/10 md:ml-0 md:px-5 md:py-1.5 md:text-sm">
-                Selecionar
+              <span className={`ml-auto shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition md:ml-0 md:px-5 md:py-1.5 md:text-sm ${
+                locked
+                  ? "border-white/10 text-zinc-500"
+                  : "border-[#00FF00]/60 text-[#00FF00] group-hover:bg-[#00FF00]/10"
+              }`}>
+                {locked ? "Em breve" : "Selecionar"}
               </span>
             </button>
-          ))}
+          );
+          })}
         </div>
       </DialogContent>
     </Dialog>
