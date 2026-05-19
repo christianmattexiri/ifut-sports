@@ -21,7 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
 import { ProfileDialog } from "@/components/ProfileDialog";
 import { onProfileUpdate } from "@/lib/profile-sync";
-import { loadHistory, type HistMatch } from "@/routes/pelada.$id_.historico";
+import { loadHistoryAsync, type HistMatch } from "@/routes/pelada.$id_.historico";
 
 type Match = {
   id: string;
@@ -57,7 +57,9 @@ export function PeladaProfile({
   const isSelf = !!viewerId && viewerId === targetUserId;
 
   useEffect(() => {
-    setHistory(loadHistory(matchId));
+    let cancelled = false;
+    loadHistoryAsync(matchId).then((h) => { if (!cancelled) setHistory(h); });
+    return () => { cancelled = true; };
   }, [matchId]);
 
   // Load match + viewer (for admin sidebar) + target profile.
@@ -96,15 +98,12 @@ export function PeladaProfile({
         setUsername(targetProf.username || "");
         setAvatarUrl(targetProf.avatar_url ?? null);
       } else {
-        const hist = loadHistory(matchId);
+        const hist = await loadHistoryAsync(matchId);
         let foundName = "Jogador";
         for (const h of hist) {
           const all = [...h.teamA.players, ...h.teamB.players];
           const p = all.find((x) => x.id === targetUserId);
-          if (p) {
-            foundName = p.name;
-            break;
-          }
+          if (p) { foundName = p.name; break; }
         }
         setFullName(foundName);
         setUsername("");
