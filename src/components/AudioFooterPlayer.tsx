@@ -32,6 +32,33 @@ function ytId(url: string): string | null {
   }
 }
 
+// Carrega o script da YouTube IFrame API uma única vez por página.
+// Usar a API oficial (em vez de postMessage cru) garante que o
+// player.playVideo() rode síncrono dentro do clique do usuário —
+// requisito do iOS/Android para liberar áudio no primeiro toque.
+let ytApiPromise: Promise<unknown> | null = null;
+function loadYouTubeApi(): Promise<unknown> {
+  if (typeof window === "undefined") return Promise.resolve(null);
+  const w = window as unknown as { YT?: { Player: unknown }; onYouTubeIframeAPIReady?: () => void };
+  if (w.YT && w.YT.Player) return Promise.resolve(w.YT);
+  if (ytApiPromise) return ytApiPromise;
+  ytApiPromise = new Promise((resolve) => {
+    const existing = document.querySelector('script[src="https://www.youtube.com/iframe_api"]');
+    const prev = w.onYouTubeIframeAPIReady;
+    w.onYouTubeIframeAPIReady = () => {
+      prev?.();
+      resolve(w.YT);
+    };
+    if (!existing) {
+      const s = document.createElement("script");
+      s.src = "https://www.youtube.com/iframe_api";
+      s.async = true;
+      document.head.appendChild(s);
+    }
+  });
+  return ytApiPromise;
+}
+
 export function AudioFooterPlayer({ peladaId, mode, canEdit, titlePrefix, disabled, disabledHint, scopeKey }: Props) {
   const scope = mode === "musica" ? "global" : (scopeKey || "current");
   const key = storageKey(peladaId, mode, scope);
@@ -40,7 +67,9 @@ export function AudioFooterPlayer({ peladaId, mode, canEdit, titlePrefix, disabl
   const [editOpen, setEditOpen] = useState(false);
   const [editUrl, setEditUrl] = useState("");
   const [editTitle, setEditTitle] = useState("");
-  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const playerRef = useRef<{ playVideo: () => void; pauseVideo: () => void; destroy: () => void } | null>(null);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -52,18 +81,51 @@ export function AudioFooterPlayer({ peladaId, mode, canEdit, titlePrefix, disabl
   }, [key]);
 
   const videoId = useMemo(() => (saved?.url ? ytId(saved.url) : null), [saved]);
-  // Render iframe once per video; control via postMessage so mobile (iOS) plays
-  // inside the same user gesture that toggled the button.
-  const src = videoId
-    ? `https://www.youtube.com/embed/${videoId}?enablejsapi=1&autoplay=0&controls=0&modestbranding=1&playsinline=1&loop=1&playlist=${videoId}`
-    : "";
+
+  // Cria/atualiza o player via YouTube IFrame API.
+  useEffect(() => {
+    if (!videoId || !containerRef.current) return;
+    let cancelled = false;
+    setReady(false);
+    playerRef.current?.destroy?.();
+    playerRef.current = null;
+    loadYouTubeApi().then((YT) => {
+      if (cancelled || !YT || !containerRef.current) return;
+      const Ctor = (YT as { Player: new (el: Element, opts: unknown) => typeof playerRef.current }).Player;
+      playerRef.current = new Ctor(containerRef.current, {
+        videoId,
+        playerVars: {
+          autoplay: 0,
+          controls: 0,
+          modestbranding: 1,
+          playsinline: 1,
+          loop: 1,
+          playlist: videoId,
+        },
+        events: {
+          onReady: () => { if (!cancelled) setReady(true); },
+          onStateChange: (e: { data: number }) => {
+            // 1 = playing, 2 = paused, 0 = ended
+            if (e.data === 1) setPlaying(true);
+            else if (e.data === 2 || e.data === 0) setPlaying(false);
+          },
+        },
+      });
+    });
+    return () => {
+      cancelled = true;
+      playerRef.current?.destroy?.();
+      playerRef.current = null;
+    };
+  }, [videoId]);
 
   function togglePlay() {
-    const win = iframeRef.current?.contentWindow;
-    if (!win || !videoId) return;
-    const func = playing ? "pauseVideo" : "playVideo";
-    win.postMessage(JSON.stringify({ event: "command", func, args: [] }), "*");
-    setPlaying((p) => !p);
+    const p = playerRef.current;
+    if (!p) return;
+    // Chamada síncrona dentro do clique — necessária para iOS/Android
+    // liberarem o áudio na primeira interação.
+    if (playing) p.pauseVideo();
+    else p.playVideo();
   }
 
   function openEdit() {
@@ -87,7 +149,7 @@ export function AudioFooterPlayer({ peladaId, mode, canEdit, titlePrefix, disabl
         >
           <button
             type="button"
-            disabled={disabled || !videoId}
+            disabled={disabled || !videoId || !ready}
             onClick={togglePlay}
             className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[var(--pelada-accent)] text-black shadow-[0_0_20px_-6px_var(--pelada-accent)] transition active:scale-95 disabled:cursor-not-allowed disabled:bg-zinc-800 disabled:text-zinc-500 disabled:shadow-none"
             aria-label={playing ? "Pausar" : "Tocar"}
@@ -114,18 +176,13 @@ export function AudioFooterPlayer({ peladaId, mode, canEdit, titlePrefix, disabl
             </button>
           )}
         </div>
-        {/* Hidden YouTube player */}
-        {src && (
-          <iframe
-            ref={iframeRef}
-            src={src}
-            allow="autoplay"
-            title="audio"
-            width={0}
-            height={0}
-            style={{ position: "absolute", width: 0, height: 0, border: 0, opacity: 0, pointerEvents: "none" }}
-          />
-        )}
+        {/* Container montado pela YouTube IFrame API. Permanece invisível. */}
+        <div
+          aria-hidden
+          style={{ position: "absolute", width: 0, height: 0, overflow: "hidden", opacity: 0, pointerEvents: "none" }}
+        >
+          {videoId && <div ref={containerRef} />}
+        </div>
       </footer>
 
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
