@@ -76,6 +76,7 @@ function PeladaPage() {
   const { id } = useParams({ from: "/pelada/$id" });
   const { data: match, isLoading: matchLoading } = useQuery(peladaMatchQuery(id));
   const { data: viewer, isLoading: viewerLoading } = useQuery(viewerQuery());
+  const { data: attendance } = useQuery(matchAttendanceQuery(id));
   const loading = matchLoading || viewerLoading;
   const viewerId = viewer?.id ?? "";
   const firstName = (viewer?.full_name?.trim() || viewer?.username || "").split(" ")[0] || "";
@@ -139,6 +140,25 @@ function PeladaPage() {
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
   }, [id]);
+
+  // Derive live counts directly from Supabase attendance so the home tile
+  // shows correct numbers on first access (before localStorage is hydrated
+  // by the Lista page). Respects current lineLimit/gkLimit from localStorage.
+  useEffect(() => {
+    if (!attendance) return;
+    setCounts((c) => {
+      let line = 0;
+      let gks = 0;
+      for (const r of attendance) {
+        if (r.is_goalkeeper) {
+          if (gks < c.gkLimit) gks++;
+        } else {
+          if (line < c.lineLimit) line++;
+        }
+      }
+      return { ...c, line, gks };
+    });
+  }, [attendance]);
 
   // Read latest match from Supabase (games + game_player_stats) for this pelada.
   useEffect(() => {
