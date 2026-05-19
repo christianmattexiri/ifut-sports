@@ -258,6 +258,9 @@ function PeladaPage() {
     if (Object.keys(patch).length > 0) {
       try { await updateMatchWinners(latest.id, patch); } catch { /* ignore */ }
       setLatest(updated);
+      // Notifica Rankings/Perfil e invalida caches para refletir o novo MVP/Pereba.
+      emitStatsUpdated(latest.id);
+      queryClient.invalidateQueries();
     }
     try { await closeVotingMutation.mutateAsync(); } catch { /* ignore */ }
   }
