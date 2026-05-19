@@ -88,6 +88,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:description", content: "iFut Auth Hub provides secure user authentication for the iFut App SaaS." },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/ec42802c-8904-4ac0-ae82-940a59824fad/id-preview-4ca2881a--b1b7059b-28f4-4d2c-86bd-8b7ea57f6e7d.lovable.app-1778872908551.png" },
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/ec42802c-8904-4ac0-ae82-940a59824fad/id-preview-4ca2881a--b1b7059b-28f4-4d2c-86bd-8b7ea57f6e7d.lovable.app-1778872908551.png" },
+      { name: "theme-color", content: "#0a0a0a" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "iFut" },
+      { name: "mobile-web-app-capable", content: "yes" },
     ],
     links: [
       {
@@ -100,6 +105,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap",
       },
+      { rel: "manifest", href: "/manifest.json" },
+      { rel: "icon", type: "image/png", sizes: "192x192", href: "/icons/icon-192.png" },
+      { rel: "icon", type: "image/png", sizes: "512x512", href: "/icons/icon-512.png" },
+      { rel: "apple-touch-icon", sizes: "180x180", href: "/icons/icon-180.png" },
+      { rel: "apple-touch-icon", href: "/icons/icon-180.png" },
     ],
   }),
   shellComponent: RootShell,
