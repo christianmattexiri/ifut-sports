@@ -471,9 +471,23 @@ export function EditMatchDialog({
 }: {
   match: HistMatch;
   onClose: () => void;
-  onSave: (m: HistMatch) => void;
+  onSave: (m: HistMatch) => void | Promise<void>;
 }) {
   const [draft, setDraft] = useState<HistMatch>(match);
+  const [isSaving, setIsSaving] = useState(false);
+
+  async function handleSubmit() {
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      await onSave(draft);
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao salvar: Verifique os dados");
+    } finally {
+      setIsSaving(false);
+    }
+  }
 
   const allPlayers = useMemo(
     () => [...draft.teamA.players, ...draft.teamB.players],
@@ -680,6 +694,7 @@ export function EditMatchDialog({
           <button
             type="button"
             onClick={onClose}
+            disabled={isSaving}
             className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 px-4 py-2 text-sm text-zinc-300 transition hover:bg-white/5"
           >
             <X className="h-4 w-4" />
@@ -687,11 +702,12 @@ export function EditMatchDialog({
           </button>
           <button
             type="button"
-            onClick={() => onSave(draft)}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--pelada-accent)]/50 bg-[var(--pelada-accent)]/15 px-4 py-2 text-sm font-bold uppercase tracking-wider text-[var(--pelada-accent)] transition hover:bg-[var(--pelada-accent)]/25 hover:shadow-[0_0_20px_-5px_color-mix(in_oklab,var(--pelada-accent)_70%,transparent)]"
+            onClick={handleSubmit}
+            disabled={isSaving}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--pelada-accent)]/50 bg-[var(--pelada-accent)]/15 px-4 py-2 text-sm font-bold uppercase tracking-wider text-[var(--pelada-accent)] transition hover:bg-[var(--pelada-accent)]/25 hover:shadow-[0_0_20px_-5px_color-mix(in_oklab,var(--pelada-accent)_70%,transparent)] disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Save className="h-4 w-4" />
-            Salvar
+            {isSaving ? "Salvando..." : "Salvar"}
           </button>
         </DialogFooter>
       </DialogContent>
