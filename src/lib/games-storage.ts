@@ -114,24 +114,39 @@ export async function fetchLatest(peladaId: string, peladaName = "Pelada"): Prom
  * Insert OR update a game and replace its player stats atomically (best-effort
  * on the client). On the second save we delete previous stats rows and re-insert.
  */
-export async function saveMatch(peladaId: string, m: HistMatch): Promise<void> {
+export async function saveMatch(
+  peladaId: string,
+  m: HistMatch,
+  opts?: { votingOpen?: boolean },
+): Promise<void> {
   const score_a = m.teamA.players.reduce((s, p) => s + (p.goals || 0), 0);
   const score_b = m.teamB.players.reduce((s, p) => s + (p.goals || 0), 0);
 
+  const baseRow: {
+    id: string;
+    match_id: string;
+    game_date: string;
+    score_a: number;
+    score_b: number;
+    mvp_id: string | null;
+    pereba_id: string | null;
+    voting_open?: boolean;
+  } = {
+    id: m.id,
+    match_id: peladaId,
+    game_date: m.date,
+    score_a,
+    score_b,
+    mvp_id: m.mvp && isUuid(m.mvp) ? m.mvp : null,
+    pereba_id: m.pereba && isUuid(m.pereba) ? m.pereba : null,
+  };
+  if (typeof opts?.votingOpen === "boolean") {
+    baseRow.voting_open = opts.votingOpen;
+  }
+
   const { error: gErr } = await supabase
     .from("games")
-    .upsert(
-      {
-        id: m.id,
-        match_id: peladaId,
-        game_date: m.date,
-        score_a,
-        score_b,
-        mvp_id: m.mvp && isUuid(m.mvp) ? m.mvp : null,
-        pereba_id: m.pereba && isUuid(m.pereba) ? m.pereba : null,
-      },
-      { onConflict: "id" },
-    );
+    .upsert(baseRow, { onConflict: "id" });
   if (gErr) throw new Error(`Falha ao salvar partida: ${gErr.message}`);
 
   // Replace stats rows

@@ -96,8 +96,12 @@ export async function loadHistoryAsync(
   return list as HistMatch[];
 }
 
-export async function saveMatchToDb(peladaId: string, m: HistMatch): Promise<void> {
-  await saveGameMatch(peladaId, m as DbHistMatch);
+export async function saveMatchToDb(
+  peladaId: string,
+  m: HistMatch,
+  opts?: { votingOpen?: boolean },
+): Promise<void> {
+  await saveGameMatch(peladaId, m as DbHistMatch, opts);
 }
 
 export async function deleteMatchFromDb(gameId: string): Promise<void> {
