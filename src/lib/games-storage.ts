@@ -180,7 +180,7 @@ export async function updateMatchWinners(
   gameId: string,
   patch: { mvp_id?: string | null; pereba_id?: string | null },
 ): Promise<void> {
-  const clean: Record<string, string | null> = {};
+  const clean: { mvp_id?: string | null; pereba_id?: string | null } = {};
   if (patch.mvp_id !== undefined) clean.mvp_id = patch.mvp_id && isUuid(patch.mvp_id) ? patch.mvp_id : null;
   if (patch.pereba_id !== undefined) clean.pereba_id = patch.pereba_id && isUuid(patch.pereba_id) ? patch.pereba_id : null;
   if (Object.keys(clean).length === 0) return;
