@@ -739,21 +739,21 @@ function QuickCard({
   return (
     <button
       type="button"
-      className="group flex w-full flex-col items-center justify-center gap-2 rounded-2xl border border-white/10 bg-zinc-900/40 px-5 py-6 backdrop-blur-xl transition-all duration-200 hover:scale-[1.02] hover:border-[var(--qc-color)] hover:shadow-[0_0_30px_-8px_var(--qc-color)]"
+      className="group flex h-full w-full flex-col items-center justify-center gap-3 rounded-2xl border border-white/10 bg-zinc-900/40 px-4 py-6 backdrop-blur-xl transition-all duration-200 hover:scale-[1.02] hover:border-[var(--qc-color)] hover:shadow-[0_0_30px_-8px_var(--qc-color)] sm:px-5"
       style={{ ["--qc-color" as string]: color }}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col items-center gap-2 sm:flex-row sm:gap-3">
         <span style={{ color }} className="transition group-hover:drop-shadow-[0_0_10px_currentColor]">
           {icon}
         </span>
-        <span className="text-sm font-semibold uppercase tracking-wider text-zinc-200">{label}</span>
+        <span className="text-sm font-bold uppercase tracking-wider text-zinc-100 sm:text-base">{label}</span>
       </div>
       {badges && badges.length > 0 && (
         <div className="flex flex-wrap items-center justify-center gap-1.5">
           {badges.map((b) => (
             <span
               key={b}
-              className="rounded-md border px-2 py-0.5 text-[11px] font-bold tabular-nums"
+              className="rounded-md border px-2.5 py-1 text-sm font-extrabold tabular-nums sm:text-base"
               style={{ borderColor: `${color}55`, color }}
             >
               {b}
