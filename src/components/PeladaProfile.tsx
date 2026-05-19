@@ -20,7 +20,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
 import { ProfileDialog } from "@/components/ProfileDialog";
-import { onProfileUpdate } from "@/lib/profile-sync";
+import { onProfileUpdate, onStatsUpdated } from "@/lib/profile-sync";
 import { loadHistoryAsync, type HistMatch } from "@/routes/pelada.$id_.historico";
 
 type Match = {
@@ -59,7 +59,10 @@ export function PeladaProfile({
   useEffect(() => {
     let cancelled = false;
     loadHistoryAsync(matchId).then((h) => { if (!cancelled) setHistory(h); });
-    return () => { cancelled = true; };
+    const offStats = onStatsUpdated(() => {
+      loadHistoryAsync(matchId).then((h) => { if (!cancelled) setHistory(h); });
+    });
+    return () => { cancelled = true; offStats(); };
   }, [matchId]);
 
   // Load match + viewer (for admin sidebar) + target profile.
