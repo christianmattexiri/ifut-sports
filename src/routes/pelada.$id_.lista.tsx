@@ -246,6 +246,10 @@ function ListaPresencaPage() {
     setPlayers((prev) => prev.map((p) => (p.id === pid ? { ...p, paid: !p.paid } : p)));
   };
 
+  const toggleGK = (pid: string) => {
+    setPlayers((prev) => prev.map((p) => (p.id === pid ? { ...p, isGoalkeeper: !p.isGoalkeeper } : p)));
+  };
+
   const toggleMyName = () => {
     if (!me) return;
     if (meInList) {
@@ -281,7 +285,10 @@ function ListaPresencaPage() {
         linhasPrincipal.push(`${i + 1}.`);
       }
     }
-    const linhasSubs = categorized.subs.map((p, i) => `${i + 1}. ${p.name}`);
+    const linhasSubs = categorized.subs.map((p, i) => {
+      const tags = `${p.paid ? " ✅" : ""}${p.isGoalkeeper ? " 🧤" : ""}`;
+      return `${i + 1}. ${p.name}${tags}`;
+    });
 
     return `🤖 Mensagem automática: Lista de presença para ${today}
 
@@ -678,6 +685,8 @@ Bora pro jogo! 🔥
                       position={idx + 1}
                       player={{ ...p, avatarUrl: av }}
                       isSub={isSub}
+                      canToggleGK={isAdmin}
+                      onToggleGK={() => toggleGK(p.id)}
                       onTogglePaid={() => togglePaid(p.id)}
                       onRemove={() => removePlayer(p.id)}
                     />
