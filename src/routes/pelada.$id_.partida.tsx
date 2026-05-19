@@ -5,7 +5,6 @@ import {
   ShieldCheck, Trophy, UserCog, Save, RefreshCw, ClipboardCopy,
   MousePointerClick, Scale, Dices,
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
 import { useQuery } from "@tanstack/react-query";
 import { peladaMatchQuery, viewerQuery, matchAttendanceQuery } from "@/lib/pelada-queries";
