@@ -58,6 +58,39 @@ export type Database = {
           },
         ]
       }
+      game_votes: {
+        Row: {
+          apitto_ratings: Json | null
+          created_at: string
+          game_id: string
+          id: string
+          mvp_id: string | null
+          pereba_id: string | null
+          updated_at: string
+          voter_id: string
+        }
+        Insert: {
+          apitto_ratings?: Json | null
+          created_at?: string
+          game_id: string
+          id?: string
+          mvp_id?: string | null
+          pereba_id?: string | null
+          updated_at?: string
+          voter_id: string
+        }
+        Update: {
+          apitto_ratings?: Json | null
+          created_at?: string
+          game_id?: string
+          id?: string
+          mvp_id?: string | null
+          pereba_id?: string | null
+          updated_at?: string
+          voter_id?: string
+        }
+        Relationships: []
+      }
       games: {
         Row: {
           created_at: string | null
@@ -216,6 +249,7 @@ export type Database = {
           match_time: string | null
           match_type: string | null
           name: string
+          settings: Json
         }
         Insert: {
           admin_id: string
@@ -228,6 +262,7 @@ export type Database = {
           match_time?: string | null
           match_type?: string | null
           name: string
+          settings?: Json
         }
         Update: {
           admin_id?: string
@@ -240,6 +275,7 @@ export type Database = {
           match_time?: string | null
           match_type?: string | null
           name?: string
+          settings?: Json
         }
         Relationships: []
       }
