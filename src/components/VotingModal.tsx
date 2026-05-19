@@ -2,11 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Star, StarHalf, Check, ChevronRight } from "lucide-react";
 import { useAvatars } from "@/lib/avatars";
-import {
-  loadVotes,
-  saveVotes,
-  type MatchVotes,
-} from "@/lib/voting";
+import { useSubmitVote } from "@/lib/votes-cloud";
 
 type Player = { id: string; name: string };
 type Modes = { mvp: boolean; pereba: boolean; apitto: boolean };
@@ -14,7 +10,6 @@ type Modes = { mvp: boolean; pereba: boolean; apitto: boolean };
 export function VotingModal({
   open,
   onOpenChange,
-  peladaId,
   histId,
   voterId,
   players,
@@ -22,7 +17,7 @@ export function VotingModal({
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
-  peladaId: string;
+  peladaId?: string;
   histId: string;
   voterId: string;
   players: Player[];
@@ -33,6 +28,7 @@ export function VotingModal({
     [players, voterId],
   );
   const avatars = useAvatars(candidates.map((p) => p.id));
+  const submitVote = useSubmitVote(histId);
 
   const [step, setStep] = useState<"mvp" | "pereba" | "apitto">(
     modes.apitto ? "apitto" : modes.mvp ? "mvp" : "pereba",
@@ -47,27 +43,24 @@ export function VotingModal({
     if (open) setApittoIdx(0);
   }, [open]);
 
-  function persistAndClose(updater: (v: MatchVotes) => MatchVotes) {
-    const cur = loadVotes(peladaId, histId);
-    const next = updater(cur);
-    saveVotes(peladaId, histId, next);
-    onOpenChange(false);
+  async function submitMvpPereba() {
+    try {
+      await submitVote.mutateAsync({
+        voterId,
+        mvpId: modes.mvp ? mvp : null,
+        perebaId: modes.pereba ? pereba : null,
+      });
+    } finally {
+      onOpenChange(false);
+    }
   }
 
-  function submitMvpPereba() {
-    persistAndClose((v) => {
-      const out = { ...v, mvpVotes: { ...v.mvpVotes }, perebaVotes: { ...v.perebaVotes } };
-      if (modes.mvp && mvp) out.mvpVotes[voterId] = mvp;
-      if (modes.pereba && pereba) out.perebaVotes[voterId] = pereba;
-      return out;
-    });
-  }
-
-  function submitApitto() {
-    persistAndClose((v) => ({
-      ...v,
-      apitto: { ...v.apitto, [voterId]: ratings },
-    }));
+  async function submitApitto() {
+    try {
+      await submitVote.mutateAsync({ voterId, apittoRatings: ratings });
+    } finally {
+      onOpenChange(false);
+    }
   }
 
   if (modes.apitto) {
