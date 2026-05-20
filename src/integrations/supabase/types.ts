@@ -144,6 +144,7 @@ export type Database = {
           match_id: string
           player_id: string | null
           player_name: string
+          rating: number | null
         }
         Insert: {
           created_at?: string | null
@@ -153,6 +154,7 @@ export type Database = {
           match_id: string
           player_id?: string | null
           player_name: string
+          rating?: number | null
         }
         Update: {
           created_at?: string | null
@@ -162,6 +164,7 @@ export type Database = {
           match_id?: string
           player_id?: string | null
           player_name?: string
+          rating?: number | null
         }
         Relationships: [
           {
