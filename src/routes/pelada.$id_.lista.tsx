@@ -1243,12 +1243,27 @@ function AddMemberPicker({
         É goleiro?
       </label>
 
+      <div className="space-y-2">
+        <label className="text-xs font-medium uppercase tracking-wider text-zinc-400">
+          Nota: <span className="text-amber-300">{rating}</span>
+        </label>
+        <input
+          type="range"
+          min={1}
+          max={10}
+          step={0.5}
+          value={rating}
+          onChange={(e) => setRating(Number(e.target.value))}
+          className="w-full accent-amber-300"
+        />
+      </div>
+
       <button
         type="button"
         disabled={!selected}
         onClick={() => {
           const p = available.find((x) => x.id === selected);
-          if (p) onAdd(p, isGK);
+          if (p) onAdd(p, isGK, rating);
         }}
         className="w-full rounded-xl border border-amber-400/50 bg-amber-400/10 px-4 py-2.5 text-sm font-semibold uppercase tracking-wider text-amber-300 transition hover:bg-amber-400/20 disabled:cursor-not-allowed disabled:opacity-50"
       >
