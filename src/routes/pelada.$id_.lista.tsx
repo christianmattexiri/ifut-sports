@@ -153,20 +153,9 @@ function ListaPresencaPage() {
   const [sorteioOpen, setSorteioOpen] = useState(false);
   const [sepOpen, setSepOpen] = useState(false);
   const [sepMode, setSepMode] = useState<"manual" | "fair" | "random">("manual");
-  const [ratings, setRatings] = useState<Record<string, number>>({});
   const [teamA, setTeamA] = useState<Player[]>([]);
   const [teamB, setTeamB] = useState<Player[]>([]);
   const [pool, setPool] = useState<Player[]>([]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const raw = localStorage.getItem(`pelada:${id}:ratings`);
-      if (raw) setRatings(JSON.parse(raw));
-    } catch {
-      /* ignore */
-    }
-  }, [id]);
 
   // Settings ainda em localStorage (não é foco desta migração)
   const [hydrated, setHydrated] = useState(false);
@@ -199,7 +188,7 @@ function ListaPresencaPage() {
         name: (r.player_name as string) ?? "Jogador",
         isGoalkeeper: !!r.is_goalkeeper,
         paid: !!r.has_paid,
-        rating: undefined,
+        rating: Number(r.rating ?? 5),
       };
     });
   }, [attendanceQuery.data]);
