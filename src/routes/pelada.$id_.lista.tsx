@@ -836,7 +836,7 @@ Bora pro jogo! 🔥
               | Interface de Separação
             </DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-1 gap-4 py-2 md:grid-cols-3">
+          <div className={pool.length > 0 ? "grid grid-cols-1 gap-4 py-2 md:grid-cols-3" : "grid grid-cols-1 gap-4 py-2 md:grid-cols-2"}>
             <TeamColumn
               title="Time A"
               players={teamA}
@@ -844,10 +844,12 @@ Bora pro jogo! 🔥
               accent="var(--pelada-accent)"
               onPlayerClick={(pid) => backToPool(pid)}
             />
-            <PoolColumn
-              players={pool}
-              onMove={(pid, t) => moveTo(pid, t)}
-            />
+            {pool.length > 0 && (
+              <PoolColumn
+                players={pool}
+                onMove={(pid, t) => moveTo(pid, t)}
+              />
+            )}
             <TeamColumn
               title="Time B"
               players={teamB}
