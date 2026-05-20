@@ -4,7 +4,8 @@ import { Target, Handshake, Trophy, Gamepad2, ExternalLink } from "lucide-react"
 import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { loadHistoryAsync, type HistMatch } from "@/routes/pelada.$id_.historico";
-import { onProfileUpdate } from "@/lib/profile-sync";
+import { onProfileUpdate, onStatsUpdated } from "@/lib/profile-sync";
+import { fetchPlayerMvpSummary, type PlayerMvpSummary } from "@/lib/games-storage";
 
 export function PlayerProfileModal({
   open,
@@ -23,11 +24,13 @@ export function PlayerProfileModal({
   const [username, setUsername] = useState<string>("");
   const [avatar, setAvatar] = useState<string | null>(null);
   const [history, setHistory] = useState<HistMatch[]>([]);
+  const [mvpSummary, setMvpSummary] = useState<PlayerMvpSummary>({ total: 0, recent: [] });
 
   useEffect(() => {
     if (!open || !userId) return;
     let cancelled = false;
     loadHistoryAsync(matchId).then((h) => { if (!cancelled) setHistory(h); });
+    fetchPlayerMvpSummary(matchId, userId, 3).then((s) => { if (!cancelled) setMvpSummary(s); });
     (async () => {
       const { data } = await supabase
         .from("profiles")
@@ -46,6 +49,14 @@ export function PlayerProfileModal({
     })();
     return () => { cancelled = true; };
   }, [open, userId, matchId, fallbackName]);
+
+  useEffect(() => {
+    if (!open || !userId) return () => {};
+    return onStatsUpdated(() => {
+      loadHistoryAsync(matchId).then(setHistory);
+      fetchPlayerMvpSummary(matchId, userId, 3).then(setMvpSummary);
+    });
+  }, [open, userId, matchId]);
 
   useEffect(() => {
     return onProfileUpdate((u) => {
@@ -75,10 +86,10 @@ export function PlayerProfileModal({
     }
     const games = my.length;
     return {
-      goals, assists, mvp, games, wins, draws, losses,
+      goals, assists, mvp: mvpSummary.total || mvp, games, wins, draws, losses,
       winRate: games ? Math.round((wins / games) * 100) : 0,
     };
-  }, [history, userId]);
+  }, [history, userId, mvpSummary.total]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
