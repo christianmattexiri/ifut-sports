@@ -30,8 +30,61 @@ export type HistMatch = {
   topAssists: string[];
 };
 
+type VoteWinnerRow = {
+  game_id: string;
+  mvp_id: string | null;
+  pereba_id: string | null;
+  apitto_ratings: Record<string, number> | null;
+};
+
 function isUuid(v: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+}
+
+function topVote(tally: Map<string, number>, lowest = false): string | null {
+  let winner: string | null = null;
+  let best = lowest ? Number.POSITIVE_INFINITY : 0;
+  for (const [id, count] of tally.entries()) {
+    if ((lowest && count < best) || (!lowest && count > best)) {
+      winner = id;
+      best = count;
+    }
+  }
+  return winner;
+}
+
+function closedVoteWinners(
+  rows: VoteWinnerRow[],
+): Map<string, { mvp_id: string | null; pereba_id: string | null }> {
+  const grouped = new Map<string, VoteWinnerRow[]>();
+  for (const row of rows) grouped.set(row.game_id, [...(grouped.get(row.game_id) ?? []), row]);
+  const resolved = new Map<string, { mvp_id: string | null; pereba_id: string | null }>();
+  for (const [gameId, votes] of grouped.entries()) {
+    const mvpTally = new Map<string, number>();
+    const perebaTally = new Map<string, number>();
+    const apitto = new Map<string, { sum: number; n: number }>();
+    for (const vote of votes) {
+      if (vote.mvp_id && isUuid(vote.mvp_id))
+        mvpTally.set(vote.mvp_id, (mvpTally.get(vote.mvp_id) ?? 0) + 1);
+      if (vote.pereba_id && isUuid(vote.pereba_id))
+        perebaTally.set(vote.pereba_id, (perebaTally.get(vote.pereba_id) ?? 0) + 1);
+      for (const [playerId, rating] of Object.entries(vote.apitto_ratings ?? {})) {
+        if (!isUuid(playerId) || typeof rating !== "number") continue;
+        const cur = apitto.get(playerId) ?? { sum: 0, n: 0 };
+        cur.sum += rating;
+        cur.n += 1;
+        apitto.set(playerId, cur);
+      }
+    }
+    const apittoRanked = [...apitto.entries()]
+      .map(([id, r]) => ({ id, avg: r.n ? r.sum / r.n : 0 }))
+      .sort((a, b) => b.avg - a.avg);
+    resolved.set(gameId, {
+      mvp_id: topVote(mvpTally) ?? apittoRanked[0]?.id ?? null,
+      pereba_id: topVote(perebaTally) ?? apittoRanked[apittoRanked.length - 1]?.id ?? null,
+    });
+  }
+  return resolved;
 }
 
 function buildHistMatch(
@@ -86,7 +139,7 @@ function buildHistMatch(
 export async function fetchHistory(peladaId: string, peladaName = "Pelada"): Promise<HistMatch[]> {
   const { data: games, error } = await supabase
     .from("games")
-    .select("id, game_date, score_a, score_b, mvp_id, pereba_id, created_at")
+    .select("id, game_date, score_a, score_b, mvp_id, pereba_id, voting_open, created_at")
     .eq("match_id", peladaId)
     .order("game_date", { ascending: false })
     .order("created_at", { ascending: false });
@@ -102,10 +155,35 @@ export async function fetchHistory(peladaId: string, peladaName = "Pelada"): Pro
     arr.push(s);
     byGame.set(s.game_id, arr);
   }
-  return games.map((g) => buildHistMatch(g, byGame.get(g.id) ?? [], peladaName));
+  const closedWithoutWinners = games
+    .filter((g) => g.voting_open === false && (!g.mvp_id || !g.pereba_id))
+    .map((g) => g.id);
+  const { data: voteRows } =
+    closedWithoutWinners.length > 0
+      ? await supabase
+          .from("game_votes")
+          .select("game_id, mvp_id, pereba_id, apitto_ratings")
+          .in("game_id", closedWithoutWinners)
+      : { data: [] };
+  const fallbackWinners = closedVoteWinners((voteRows ?? []) as VoteWinnerRow[]);
+  return games.map((g) => {
+    const fallback = fallbackWinners.get(g.id);
+    return buildHistMatch(
+      {
+        ...g,
+        mvp_id: g.mvp_id ?? fallback?.mvp_id ?? null,
+        pereba_id: g.pereba_id ?? fallback?.pereba_id ?? null,
+      },
+      byGame.get(g.id) ?? [],
+      peladaName,
+    );
+  });
 }
 
-export async function fetchLatest(peladaId: string, peladaName = "Pelada"): Promise<HistMatch | null> {
+export async function fetchLatest(
+  peladaId: string,
+  peladaName = "Pelada",
+): Promise<HistMatch | null> {
   const list = await fetchHistory(peladaId, peladaName);
   return list[0] ?? null;
 }
@@ -144,9 +222,7 @@ export async function saveMatch(
     baseRow.voting_open = opts.votingOpen;
   }
 
-  const { error: gErr } = await supabase
-    .from("games")
-    .upsert(baseRow, { onConflict: "id" });
+  const { error: gErr } = await supabase.from("games").upsert(baseRow, { onConflict: "id" });
   if (gErr) throw new Error(`Falha ao salvar partida: ${gErr.message}`);
 
   // Replace stats rows
@@ -196,10 +272,13 @@ export async function updateMatchWinners(
   patch: { mvp_id?: string | null; pereba_id?: string | null },
 ): Promise<void> {
   const clean: { mvp_id?: string | null; pereba_id?: string | null } = {};
-  if (patch.mvp_id !== undefined) clean.mvp_id = patch.mvp_id && isUuid(patch.mvp_id) ? patch.mvp_id : null;
-  if (patch.pereba_id !== undefined) clean.pereba_id = patch.pereba_id && isUuid(patch.pereba_id) ? patch.pereba_id : null;
+  if (patch.mvp_id !== undefined)
+    clean.mvp_id = patch.mvp_id && isUuid(patch.mvp_id) ? patch.mvp_id : null;
+  if (patch.pereba_id !== undefined)
+    clean.pereba_id = patch.pereba_id && isUuid(patch.pereba_id) ? patch.pereba_id : null;
   if (Object.keys(clean).length === 0) return;
-  await supabase.from("games").update(clean).eq("id", gameId);
+  const { error } = await supabase.from("games").update(clean).eq("id", gameId);
+  if (error) throw new Error(`Falha ao gravar vencedores: ${error.message}`);
 }
 
 /** Aggregated player stats across all games of one pelada (for Rankings). */
@@ -214,10 +293,15 @@ export type AggregatedStat = {
   jogos: number;
 };
 
+export type PlayerMvpSummary = {
+  total: number;
+  recent: Array<{ id: string; date: string; name: string }>;
+};
+
 export async function fetchAggregatedStats(peladaId: string): Promise<AggregatedStat[]> {
   const { data: games } = await supabase
     .from("games")
-    .select("id, score_a, score_b, mvp_id")
+    .select("id, score_a, score_b, mvp_id, pereba_id, voting_open")
     .eq("match_id", peladaId);
   if (!games || games.length === 0) return [];
   const gameIds = games.map((g) => g.id);
@@ -225,7 +309,26 @@ export async function fetchAggregatedStats(peladaId: string): Promise<Aggregated
     .from("game_player_stats")
     .select("game_id, user_id, player_name, team, goals, assists")
     .in("game_id", gameIds);
-  const gameById = new Map(games.map((g) => [g.id, g]));
+  const closedWithoutWinners = games
+    .filter((g) => g.voting_open === false && (!g.mvp_id || !g.pereba_id))
+    .map((g) => g.id);
+  const { data: voteRows } =
+    closedWithoutWinners.length > 0
+      ? await supabase
+          .from("game_votes")
+          .select("game_id, mvp_id, pereba_id, apitto_ratings")
+          .in("game_id", closedWithoutWinners)
+      : { data: [] };
+  const fallbackWinners = closedVoteWinners((voteRows ?? []) as VoteWinnerRow[]);
+  const gamesWithWinners = games.map((g) => {
+    const fallback = fallbackWinners.get(g.id);
+    return {
+      ...g,
+      mvp_id: g.mvp_id ?? fallback?.mvp_id ?? null,
+      pereba_id: g.pereba_id ?? fallback?.pereba_id ?? null,
+    };
+  });
+  const gameById = new Map(gamesWithWinners.map((g) => [g.id, g]));
   const map = new Map<string, AggregatedStat>();
   const ensure = (id: string, name: string) => {
     let p = map.get(id);
@@ -253,11 +356,24 @@ export async function fetchAggregatedStats(peladaId: string): Promise<Aggregated
     else if (my < opp) row.derrotas += 1;
   }
   // MVP counts
-  for (const g of games) {
+  for (const g of gamesWithWinners) {
     if (g.mvp_id) {
       const entry = map.get(g.mvp_id);
       if (entry) entry.mvps += 1;
     }
   }
   return Array.from(map.values());
+}
+
+export async function fetchPlayerMvpSummary(
+  peladaId: string,
+  userId: string,
+  limit = 5,
+): Promise<PlayerMvpSummary> {
+  const history = await fetchHistory(peladaId, "Pelada");
+  const wins = history.filter((m) => m.mvp === userId).sort((a, b) => (a.date < b.date ? 1 : -1));
+  return {
+    total: wins.length,
+    recent: wins.slice(0, limit).map((m) => ({ id: m.id, date: m.date, name: m.name })),
+  };
 }
