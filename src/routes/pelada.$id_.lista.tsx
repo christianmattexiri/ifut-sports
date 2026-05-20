@@ -153,20 +153,9 @@ function ListaPresencaPage() {
   const [sorteioOpen, setSorteioOpen] = useState(false);
   const [sepOpen, setSepOpen] = useState(false);
   const [sepMode, setSepMode] = useState<"manual" | "fair" | "random">("manual");
-  const [ratings, setRatings] = useState<Record<string, number>>({});
   const [teamA, setTeamA] = useState<Player[]>([]);
   const [teamB, setTeamB] = useState<Player[]>([]);
   const [pool, setPool] = useState<Player[]>([]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const raw = localStorage.getItem(`pelada:${id}:ratings`);
-      if (raw) setRatings(JSON.parse(raw));
-    } catch {
-      /* ignore */
-    }
-  }, [id]);
 
   // Settings ainda em localStorage (não é foco desta migração)
   const [hydrated, setHydrated] = useState(false);
@@ -199,7 +188,7 @@ function ListaPresencaPage() {
         name: (r.player_name as string) ?? "Jogador",
         isGoalkeeper: !!r.is_goalkeeper,
         paid: !!r.has_paid,
-        rating: undefined,
+        rating: Number(r.rating ?? 5),
       };
     });
   }, [attendanceQuery.data]);
@@ -277,16 +266,13 @@ function ListaPresencaPage() {
       toast.error("Lista cheia (incluindo suplentes)");
       return;
     }
-    if (typeof rating === "number") {
-      const key = userId ?? `friend:${name.trim()}`;
-      setRatings((prev) => ({ ...prev, [key]: rating }));
-    }
     const { error } = await supabase.from("match_attendance").insert({
       match_id: id,
       player_id: userId ?? null,
       player_name: name.trim(),
       is_goalkeeper: isGK,
       has_paid: false,
+      rating: typeof rating === "number" ? rating : 5,
     });
     if (error) {
       toast.error("Não foi possível adicionar à lista");
@@ -420,9 +406,9 @@ Bora pro jogo! 🔥
     () =>
       [...categorized.line, ...categorized.gks].map((p) => ({
         ...p,
-        rating: ratings[p.id] ?? p.rating ?? 5,
+        rating: p.rating ?? 5,
       })),
-    [categorized, ratings],
+    [categorized],
   );
 
   function shuffle<T>(arr: T[]): T[] {
@@ -850,7 +836,7 @@ Bora pro jogo! 🔥
               | Interface de Separação
             </DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-1 gap-4 py-2 md:grid-cols-3">
+          <div className={pool.length > 0 ? "grid grid-cols-1 gap-4 py-2 md:grid-cols-3" : "grid grid-cols-1 gap-4 py-2 md:grid-cols-2"}>
             <TeamColumn
               title="Time A"
               players={teamA}
@@ -858,10 +844,12 @@ Bora pro jogo! 🔥
               accent="var(--pelada-accent)"
               onPlayerClick={(pid) => backToPool(pid)}
             />
-            <PoolColumn
-              players={pool}
-              onMove={(pid, t) => moveTo(pid, t)}
-            />
+            {pool.length > 0 && (
+              <PoolColumn
+                players={pool}
+                onMove={(pid, t) => moveTo(pid, t)}
+              />
+            )}
             <TeamColumn
               title="Time B"
               players={teamB}
@@ -951,9 +939,9 @@ Bora pro jogo! 🔥
             peladaId={id}
             excludeIds={players.map((p) => p.userId).filter((v): v is string => !!v)}
             open={addOpen}
-            onAdd={(profile, isGK) => {
+            onAdd={(profile, isGK, rating) => {
               const display = profile.full_name?.trim() || profile.username || "Jogador";
-              addPlayer(display, isGK, profile.id);
+              addPlayer(display, isGK, profile.id, rating);
               setAddOpen(false);
             }}
           />
@@ -1159,12 +1147,13 @@ function AddMemberPicker({
   peladaId: string;
   excludeIds: string[];
   open: boolean;
-  onAdd: (profile: MemberProfile, isGK: boolean) => void;
+  onAdd: (profile: MemberProfile, isGK: boolean, rating: number) => void;
 }) {
   const [members, setMembers] = useState<MemberProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<string>("");
   const [isGK, setIsGK] = useState(false);
+  const [rating, setRating] = useState(5);
 
   useEffect(() => {
     if (!open) return;
@@ -1172,6 +1161,7 @@ function AddMemberPicker({
     setLoading(true);
     setSelected("");
     setIsGK(false);
+    setRating(5);
     (async () => {
       const { data: m } = await supabase
         .from("matches")
@@ -1253,12 +1243,27 @@ function AddMemberPicker({
         É goleiro?
       </label>
 
+      <div className="space-y-2">
+        <label className="text-xs font-medium uppercase tracking-wider text-zinc-400">
+          Nota: <span className="text-amber-300">{rating}</span>
+        </label>
+        <input
+          type="range"
+          min={1}
+          max={10}
+          step={0.5}
+          value={rating}
+          onChange={(e) => setRating(Number(e.target.value))}
+          className="w-full accent-amber-300"
+        />
+      </div>
+
       <button
         type="button"
         disabled={!selected}
         onClick={() => {
           const p = available.find((x) => x.id === selected);
-          if (p) onAdd(p, isGK);
+          if (p) onAdd(p, isGK, rating);
         }}
         className="w-full rounded-xl border border-amber-400/50 bg-amber-400/10 px-4 py-2.5 text-sm font-semibold uppercase tracking-wider text-amber-300 transition hover:bg-amber-400/20 disabled:cursor-not-allowed disabled:opacity-50"
       >

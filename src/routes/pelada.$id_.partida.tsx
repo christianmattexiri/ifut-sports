@@ -44,7 +44,6 @@ function PartidaPage() {
   useEffect(() => {
     if (!viewerLoading && viewer === null) navigate({ to: "/" });
   }, [viewer, viewerLoading, navigate]);
-  const [ratings, setRatings] = useState<Record<string, number>>({});
   const [saved, setSaved] = useState<SavedTeams | null>(null);
   const [sorteioOpen, setSorteioOpen] = useState(false);
   const [sepOpen, setSepOpen] = useState(false);
@@ -66,37 +65,14 @@ function PartidaPage() {
         id: userId ?? rowId,
         name: (r.player_name as string) ?? "Jogador",
         isGoalkeeper: !!r.is_goalkeeper,
+        rating: Number(r.rating ?? 5),
         userId,
       };
     });
   }, [attendanceQuery.data]);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const rawR = localStorage.getItem(`pelada:${id}:ratings`);
-      const rawT = localStorage.getItem(`pelada:${id}:teams`);
-      if (rawR) setRatings(JSON.parse(rawR));
-      if (rawT) {
-        const t = JSON.parse(rawT);
-        if (t.teamA && t.teamB) setSaved({ teamA: t.teamA, teamB: t.teamB });
-      }
-    } catch { /* ignore */ }
-  }, [id]);
-
-  const enriched = useMemo(
-    () =>
-      confirmed.map((p) => {
-        const r =
-          (p.userId ? ratings[p.userId] : undefined) ??
-          ratings[p.id] ??
-          ratings[`friend:${p.name.trim()}`] ??
-          p.rating ??
-          5;
-        return { ...p, rating: r };
-      }),
-    [confirmed, ratings],
-  );
+  const enriched = confirmed;
+  const isSorteioSalvo = !!saved && saved.teamA.length > 0;
 
   function shuffle<T>(arr: T[]): T[] {
     const a = [...arr];
@@ -275,7 +251,7 @@ function PartidaPage() {
             </button>
             {!isAdmin && <p className="text-center text-xs text-zinc-500">Somente o admin pode sortear.</p>}
 
-            {saved && isAdmin && (
+            {isAdmin && isSorteioSalvo && (
               <div className="flex flex-col gap-3 pt-2">
                 <button type="button" onClick={copyTeams} className="inline-flex items-center justify-center gap-2 rounded-xl border border-[var(--pelada-accent)]/50 bg-[var(--pelada-accent)]/10 px-4 py-2 text-sm font-bold uppercase tracking-wider text-[var(--pelada-accent)] transition hover:bg-[var(--pelada-accent)]/20">
                   <ClipboardCopy className="h-4 w-4" /> Copiar Times
@@ -303,7 +279,7 @@ function PartidaPage() {
       <Dialog open={sepOpen} onOpenChange={setSepOpen}>
         <DialogContent className="max-w-6xl border-[var(--pelada-accent)]/40 bg-zinc-950 text-zinc-100">
           <DialogHeader><DialogTitle className="text-2xl font-black uppercase tracking-wider text-[var(--pelada-accent)]">Interface de Separação</DialogTitle></DialogHeader>
-          <div className={`grid grid-cols-1 gap-4 py-2 ${pool.length > 0 ? "md:grid-cols-3" : "md:grid-cols-2"}`}>
+          <div className={pool.length > 0 ? "grid grid-cols-1 gap-4 py-2 md:grid-cols-3" : "grid grid-cols-1 gap-4 py-2 md:grid-cols-2"}>
             <TeamColumn title="Time A" players={teamA} max={Math.ceil(enriched.length / 2)} accent="var(--pelada-accent)" onClick={(pid) => backToPool(pid)} />
             {pool.length > 0 && <PoolColumn players={pool} onMove={moveTo} />}
             <TeamColumn title="Time B" players={teamB} max={Math.ceil(enriched.length / 2)} accent="var(--pelada-accent)" onClick={(pid) => backToPool(pid)} />
