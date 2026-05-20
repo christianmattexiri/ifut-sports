@@ -62,30 +62,6 @@ function UsuariosPage() {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [pendingInviteIds, setPendingInviteIds] = useState<Set<string>>(new Set());
-  const [ratings, setRatings] = useState<Record<string, number>>({});
-
-  // Hydrate ratings from localStorage
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const raw = localStorage.getItem(`pelada:${id}:ratings`);
-      if (raw) setRatings(JSON.parse(raw));
-    } catch {
-      /* ignore */
-    }
-  }, [id]);
-
-  const updateRating = (pid: string, value: number) => {
-    const v = Math.max(1, Math.min(10, Math.round(value * 10) / 10));
-    setRatings((prev) => {
-      const next = { ...prev, [pid]: v };
-      if (typeof window !== "undefined") {
-        localStorage.setItem(`pelada:${id}:ratings`, JSON.stringify(next));
-      }
-      // TODO: Salvar nota na tabela associativa match_players (rating numeric)
-      return next;
-    });
-  };
 
   useEffect(() => {
     (async () => {
@@ -296,8 +272,6 @@ function UsuariosPage() {
                     key={m.id}
                     profile={m}
                     isAdmin={m.id === match?.admin_id}
-                    rating={ratings[m.id]}
-                    onRatingChange={(v) => updateRating(m.id, v)}
                     onRemove={() => removeMember(m.id)}
                   />
                 ))
