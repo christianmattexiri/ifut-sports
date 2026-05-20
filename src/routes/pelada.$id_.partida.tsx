@@ -44,7 +44,6 @@ function PartidaPage() {
   useEffect(() => {
     if (!viewerLoading && viewer === null) navigate({ to: "/" });
   }, [viewer, viewerLoading, navigate]);
-  const [ratings, setRatings] = useState<Record<string, number>>({});
   const [saved, setSaved] = useState<SavedTeams | null>(null);
   const [sorteioOpen, setSorteioOpen] = useState(false);
   const [sepOpen, setSepOpen] = useState(false);
@@ -66,37 +65,14 @@ function PartidaPage() {
         id: userId ?? rowId,
         name: (r.player_name as string) ?? "Jogador",
         isGoalkeeper: !!r.is_goalkeeper,
+        rating: Number(r.rating ?? 5),
         userId,
       };
     });
   }, [attendanceQuery.data]);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const rawR = localStorage.getItem(`pelada:${id}:ratings`);
-      const rawT = localStorage.getItem(`pelada:${id}:teams`);
-      if (rawR) setRatings(JSON.parse(rawR));
-      if (rawT) {
-        const t = JSON.parse(rawT);
-        if (t.teamA && t.teamB) setSaved({ teamA: t.teamA, teamB: t.teamB });
-      }
-    } catch { /* ignore */ }
-  }, [id]);
-
-  const enriched = useMemo(
-    () =>
-      confirmed.map((p) => {
-        const r =
-          (p.userId ? ratings[p.userId] : undefined) ??
-          ratings[p.id] ??
-          ratings[`friend:${p.name.trim()}`] ??
-          p.rating ??
-          5;
-        return { ...p, rating: r };
-      }),
-    [confirmed, ratings],
-  );
+  const enriched = confirmed;
+  const isSorteioSalvo = !!saved && saved.teamA.length > 0;
 
   function shuffle<T>(arr: T[]): T[] {
     const a = [...arr];
