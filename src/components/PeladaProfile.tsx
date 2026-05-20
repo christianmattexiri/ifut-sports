@@ -22,6 +22,7 @@ import { isSuperAdminUsername } from "@/lib/admin";
 import { ProfileDialog } from "@/components/ProfileDialog";
 import { onProfileUpdate, onStatsUpdated } from "@/lib/profile-sync";
 import { loadHistoryAsync, type HistMatch } from "@/routes/pelada.$id_.historico";
+import { fetchPlayerMvpSummary, type PlayerMvpSummary } from "@/lib/games-storage";
 
 type Match = {
   id: string;
@@ -51,6 +52,7 @@ export function PeladaProfile({
   const [username, setUsername] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [history, setHistory] = useState<HistMatch[]>([]);
+  const [mvpSummary, setMvpSummary] = useState<PlayerMvpSummary>({ total: 0, recent: [] });
   const [openId, setOpenId] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
 
@@ -59,11 +61,13 @@ export function PeladaProfile({
   useEffect(() => {
     let cancelled = false;
     loadHistoryAsync(matchId).then((h) => { if (!cancelled) setHistory(h); });
+    fetchPlayerMvpSummary(matchId, targetUserId).then((s) => { if (!cancelled) setMvpSummary(s); });
     const offStats = onStatsUpdated(() => {
       loadHistoryAsync(matchId).then((h) => { if (!cancelled) setHistory(h); });
+      fetchPlayerMvpSummary(matchId, targetUserId).then((s) => { if (!cancelled) setMvpSummary(s); });
     });
     return () => { cancelled = true; offStats(); };
-  }, [matchId]);
+  }, [matchId, targetUserId]);
 
   // Load match + viewer (for admin sidebar) + target profile.
   useEffect(() => {
@@ -157,8 +161,8 @@ export function PeladaProfile({
     }
     const games = myMatches.length;
     const winRate = games > 0 ? Math.round((wins / games) * 100) : 0;
-    return { goals, assists, mvp, wins, draws, losses, games, winRate };
-  }, [myMatches, targetUserId]);
+    return { goals, assists, mvp: mvpSummary.total || mvp, wins, draws, losses, games, winRate };
+  }, [myMatches, targetUserId, mvpSummary.total]);
 
   const peladaName = match?.name ?? "Minha Pelada";
   const peladaLogo = match?.logo_url ?? null;
