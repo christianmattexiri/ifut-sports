@@ -266,16 +266,13 @@ function ListaPresencaPage() {
       toast.error("Lista cheia (incluindo suplentes)");
       return;
     }
-    if (typeof rating === "number") {
-      const key = userId ?? `friend:${name.trim()}`;
-      setRatings((prev) => ({ ...prev, [key]: rating }));
-    }
     const { error } = await supabase.from("match_attendance").insert({
       match_id: id,
       player_id: userId ?? null,
       player_name: name.trim(),
       is_goalkeeper: isGK,
       has_paid: false,
+      rating: typeof rating === "number" ? rating : 5,
     });
     if (error) {
       toast.error("Não foi possível adicionar à lista");
@@ -409,9 +406,9 @@ Bora pro jogo! 🔥
     () =>
       [...categorized.line, ...categorized.gks].map((p) => ({
         ...p,
-        rating: ratings[p.id] ?? p.rating ?? 5,
+        rating: p.rating ?? 5,
       })),
-    [categorized, ratings],
+    [categorized],
   );
 
   function shuffle<T>(arr: T[]): T[] {
