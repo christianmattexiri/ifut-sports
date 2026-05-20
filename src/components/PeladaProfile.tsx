@@ -296,6 +296,27 @@ export function PeladaProfile({
               <RecordCell value={`${stats.winRate}%`} label="Win Rate" color="text-white" />
             </div>
 
+            {mvpSummary.recent.length > 0 && (
+              <div className="mt-4 rounded-2xl border border-amber-400/30 bg-amber-400/5 px-4 py-4">
+                <div className="flex items-center gap-2 text-amber-400">
+                  <Trophy className="h-4 w-4" />
+                  <h3 className="text-xs font-bold uppercase tracking-[0.22em]">
+                    Últimos MVPs
+                  </h3>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {mvpSummary.recent.map((m) => (
+                    <span
+                      key={m.id}
+                      className="rounded-lg border border-amber-400/20 bg-zinc-950/50 px-3 py-1.5 text-xs font-semibold text-zinc-200"
+                    >
+                      {formatDate(m.date)}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="mt-10">
               <div className="mb-4 flex items-center gap-2">
                 <Clock className="h-5 w-5 text-amber-400" />
