@@ -939,9 +939,9 @@ Bora pro jogo! 🔥
             peladaId={id}
             excludeIds={players.map((p) => p.userId).filter((v): v is string => !!v)}
             open={addOpen}
-            onAdd={(profile, isGK) => {
+            onAdd={(profile, isGK, rating) => {
               const display = profile.full_name?.trim() || profile.username || "Jogador";
-              addPlayer(display, isGK, profile.id);
+              addPlayer(display, isGK, profile.id, rating);
               setAddOpen(false);
             }}
           />
@@ -1147,12 +1147,13 @@ function AddMemberPicker({
   peladaId: string;
   excludeIds: string[];
   open: boolean;
-  onAdd: (profile: MemberProfile, isGK: boolean) => void;
+  onAdd: (profile: MemberProfile, isGK: boolean, rating: number) => void;
 }) {
   const [members, setMembers] = useState<MemberProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<string>("");
   const [isGK, setIsGK] = useState(false);
+  const [rating, setRating] = useState(5);
 
   useEffect(() => {
     if (!open) return;
@@ -1160,6 +1161,7 @@ function AddMemberPicker({
     setLoading(true);
     setSelected("");
     setIsGK(false);
+    setRating(5);
     (async () => {
       const { data: m } = await supabase
         .from("matches")
