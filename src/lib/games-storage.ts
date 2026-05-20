@@ -53,7 +53,9 @@ function topVote(tally: Map<string, number>, lowest = false): string | null {
   return winner;
 }
 
-function closedVoteWinners(rows: VoteWinnerRow[]): Map<string, { mvp_id: string | null; pereba_id: string | null }> {
+function closedVoteWinners(
+  rows: VoteWinnerRow[],
+): Map<string, { mvp_id: string | null; pereba_id: string | null }> {
   const grouped = new Map<string, VoteWinnerRow[]>();
   for (const row of rows) grouped.set(row.game_id, [...(grouped.get(row.game_id) ?? []), row]);
   const resolved = new Map<string, { mvp_id: string | null; pereba_id: string | null }>();
@@ -62,8 +64,10 @@ function closedVoteWinners(rows: VoteWinnerRow[]): Map<string, { mvp_id: string 
     const perebaTally = new Map<string, number>();
     const apitto = new Map<string, { sum: number; n: number }>();
     for (const vote of votes) {
-      if (vote.mvp_id && isUuid(vote.mvp_id)) mvpTally.set(vote.mvp_id, (mvpTally.get(vote.mvp_id) ?? 0) + 1);
-      if (vote.pereba_id && isUuid(vote.pereba_id)) perebaTally.set(vote.pereba_id, (perebaTally.get(vote.pereba_id) ?? 0) + 1);
+      if (vote.mvp_id && isUuid(vote.mvp_id))
+        mvpTally.set(vote.mvp_id, (mvpTally.get(vote.mvp_id) ?? 0) + 1);
+      if (vote.pereba_id && isUuid(vote.pereba_id))
+        perebaTally.set(vote.pereba_id, (perebaTally.get(vote.pereba_id) ?? 0) + 1);
       for (const [playerId, rating] of Object.entries(vote.apitto_ratings ?? {})) {
         if (!isUuid(playerId) || typeof rating !== "number") continue;
         const cur = apitto.get(playerId) ?? { sum: 0, n: 0 };
@@ -154,12 +158,13 @@ export async function fetchHistory(peladaId: string, peladaName = "Pelada"): Pro
   const closedWithoutWinners = games
     .filter((g) => g.voting_open === false && (!g.mvp_id || !g.pereba_id))
     .map((g) => g.id);
-  const { data: voteRows } = closedWithoutWinners.length > 0
-    ? await supabase
-        .from("game_votes")
-        .select("game_id, mvp_id, pereba_id, apitto_ratings")
-        .in("game_id", closedWithoutWinners)
-    : { data: [] };
+  const { data: voteRows } =
+    closedWithoutWinners.length > 0
+      ? await supabase
+          .from("game_votes")
+          .select("game_id, mvp_id, pereba_id, apitto_ratings")
+          .in("game_id", closedWithoutWinners)
+      : { data: [] };
   const fallbackWinners = closedVoteWinners((voteRows ?? []) as VoteWinnerRow[]);
   return games.map((g) => {
     const fallback = fallbackWinners.get(g.id);
@@ -175,7 +180,10 @@ export async function fetchHistory(peladaId: string, peladaName = "Pelada"): Pro
   });
 }
 
-export async function fetchLatest(peladaId: string, peladaName = "Pelada"): Promise<HistMatch | null> {
+export async function fetchLatest(
+  peladaId: string,
+  peladaName = "Pelada",
+): Promise<HistMatch | null> {
   const list = await fetchHistory(peladaId, peladaName);
   return list[0] ?? null;
 }
@@ -214,9 +222,7 @@ export async function saveMatch(
     baseRow.voting_open = opts.votingOpen;
   }
 
-  const { error: gErr } = await supabase
-    .from("games")
-    .upsert(baseRow, { onConflict: "id" });
+  const { error: gErr } = await supabase.from("games").upsert(baseRow, { onConflict: "id" });
   if (gErr) throw new Error(`Falha ao salvar partida: ${gErr.message}`);
 
   // Replace stats rows
@@ -266,8 +272,10 @@ export async function updateMatchWinners(
   patch: { mvp_id?: string | null; pereba_id?: string | null },
 ): Promise<void> {
   const clean: { mvp_id?: string | null; pereba_id?: string | null } = {};
-  if (patch.mvp_id !== undefined) clean.mvp_id = patch.mvp_id && isUuid(patch.mvp_id) ? patch.mvp_id : null;
-  if (patch.pereba_id !== undefined) clean.pereba_id = patch.pereba_id && isUuid(patch.pereba_id) ? patch.pereba_id : null;
+  if (patch.mvp_id !== undefined)
+    clean.mvp_id = patch.mvp_id && isUuid(patch.mvp_id) ? patch.mvp_id : null;
+  if (patch.pereba_id !== undefined)
+    clean.pereba_id = patch.pereba_id && isUuid(patch.pereba_id) ? patch.pereba_id : null;
   if (Object.keys(clean).length === 0) return;
   await supabase.from("games").update(clean).eq("id", gameId);
 }
@@ -303,12 +311,13 @@ export async function fetchAggregatedStats(peladaId: string): Promise<Aggregated
   const closedWithoutWinners = games
     .filter((g) => g.voting_open === false && (!g.mvp_id || !g.pereba_id))
     .map((g) => g.id);
-  const { data: voteRows } = closedWithoutWinners.length > 0
-    ? await supabase
-        .from("game_votes")
-        .select("game_id, mvp_id, pereba_id, apitto_ratings")
-        .in("game_id", closedWithoutWinners)
-    : { data: [] };
+  const { data: voteRows } =
+    closedWithoutWinners.length > 0
+      ? await supabase
+          .from("game_votes")
+          .select("game_id, mvp_id, pereba_id, apitto_ratings")
+          .in("game_id", closedWithoutWinners)
+      : { data: [] };
   const fallbackWinners = closedVoteWinners((voteRows ?? []) as VoteWinnerRow[]);
   const gamesWithWinners = games.map((g) => {
     const fallback = fallbackWinners.get(g.id);
@@ -361,9 +370,7 @@ export async function fetchPlayerMvpSummary(
   limit = 5,
 ): Promise<PlayerMvpSummary> {
   const history = await fetchHistory(peladaId, "Pelada");
-  const wins = history
-    .filter((m) => m.mvp === userId)
-    .sort((a, b) => (a.date < b.date ? 1 : -1));
+  const wins = history.filter((m) => m.mvp === userId).sort((a, b) => (a.date < b.date ? 1 : -1));
   return {
     total: wins.length,
     recent: wins.slice(0, limit).map((m) => ({ id: m.id, date: m.date, name: m.name })),

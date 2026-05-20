@@ -60,13 +60,24 @@ export function PeladaProfile({
 
   useEffect(() => {
     let cancelled = false;
-    loadHistoryAsync(matchId).then((h) => { if (!cancelled) setHistory(h); });
-    fetchPlayerMvpSummary(matchId, targetUserId).then((s) => { if (!cancelled) setMvpSummary(s); });
-    const offStats = onStatsUpdated(() => {
-      loadHistoryAsync(matchId).then((h) => { if (!cancelled) setHistory(h); });
-      fetchPlayerMvpSummary(matchId, targetUserId).then((s) => { if (!cancelled) setMvpSummary(s); });
+    loadHistoryAsync(matchId).then((h) => {
+      if (!cancelled) setHistory(h);
     });
-    return () => { cancelled = true; offStats(); };
+    fetchPlayerMvpSummary(matchId, targetUserId).then((s) => {
+      if (!cancelled) setMvpSummary(s);
+    });
+    const offStats = onStatsUpdated(() => {
+      loadHistoryAsync(matchId).then((h) => {
+        if (!cancelled) setHistory(h);
+      });
+      fetchPlayerMvpSummary(matchId, targetUserId).then((s) => {
+        if (!cancelled) setMvpSummary(s);
+      });
+    });
+    return () => {
+      cancelled = true;
+      offStats();
+    };
   }, [matchId, targetUserId]);
 
   // Load match + viewer (for admin sidebar) + target profile.
@@ -94,9 +105,7 @@ export function PeladaProfile({
       ]);
       const mm = m as Match | null;
       setMatch(mm);
-      setIsAdmin(
-        (mm?.admin_id ?? null) === uid || isSuperAdminUsername(viewerProf?.username),
-      );
+      setIsAdmin((mm?.admin_id ?? null) === uid || isSuperAdminUsername(viewerProf?.username));
       // Try to use a real registered profile; otherwise fall back to a player
       // name found in the local match history (useful when the id refers to a
       // friend that isn't a registered user).
@@ -110,7 +119,10 @@ export function PeladaProfile({
         for (const h of hist) {
           const all = [...h.teamA.players, ...h.teamB.players];
           const p = all.find((x) => x.id === targetUserId);
-          if (p) { foundName = p.name; break; }
+          if (p) {
+            foundName = p.name;
+            break;
+          }
         }
         setFullName(foundName);
         setUsername("");
@@ -283,10 +295,30 @@ export function PeladaProfile({
             </div>
 
             <div className="mt-6 grid grid-cols-2 gap-4">
-              <StatCard icon={<Target className="h-5 w-5" />} value={stats.goals} label="Gols" color="#fb923c" />
-              <StatCard icon={<Handshake className="h-5 w-5" />} value={stats.assists} label="Assists" color="#60a5fa" />
-              <StatCard icon={<Trophy className="h-5 w-5" />} value={stats.mvp} label="MVP" color="#facc15" />
-              <StatCard icon={<Gamepad2 className="h-5 w-5" />} value={stats.games} label="Jogos" color="var(--pelada-accent)" />
+              <StatCard
+                icon={<Target className="h-5 w-5" />}
+                value={stats.goals}
+                label="Gols"
+                color="#fb923c"
+              />
+              <StatCard
+                icon={<Handshake className="h-5 w-5" />}
+                value={stats.assists}
+                label="Assists"
+                color="#60a5fa"
+              />
+              <StatCard
+                icon={<Trophy className="h-5 w-5" />}
+                value={stats.mvp}
+                label="MVP"
+                color="#facc15"
+              />
+              <StatCard
+                icon={<Gamepad2 className="h-5 w-5" />}
+                value={stats.games}
+                label="Jogos"
+                color="var(--pelada-accent)"
+              />
             </div>
 
             <div className="mt-4 grid grid-cols-4 gap-2 rounded-2xl border border-white/10 bg-zinc-900/40 px-4 py-4 backdrop-blur-xl">
@@ -300,9 +332,7 @@ export function PeladaProfile({
               <div className="mt-4 rounded-2xl border border-amber-400/30 bg-amber-400/5 px-4 py-4">
                 <div className="flex items-center gap-2 text-amber-400">
                   <Trophy className="h-4 w-4" />
-                  <h3 className="text-xs font-bold uppercase tracking-[0.22em]">
-                    Últimos MVPs
-                  </h3>
+                  <h3 className="text-xs font-bold uppercase tracking-[0.22em]">Últimos MVPs</h3>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {mvpSummary.recent.map((m) => (
@@ -391,8 +421,8 @@ function NavItem({
         active
           ? "bg-[var(--pelada-accent)]/10 text-[var(--pelada-accent)] shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--pelada-accent)_25%,transparent)]"
           : gold
-          ? "text-yellow-500 hover:bg-yellow-500/10"
-          : "text-zinc-300 hover:bg-white/5 hover:text-zinc-100"
+            ? "text-yellow-500 hover:bg-yellow-500/10"
+            : "text-zinc-300 hover:bg-white/5 hover:text-zinc-100"
       }`}
     >
       {icon}
@@ -473,11 +503,7 @@ function MyMatchAccordion({
   return (
     <div
       className={`overflow-hidden rounded-2xl border bg-zinc-900/40 backdrop-blur-xl transition ${
-        win
-          ? "border-[var(--pelada-accent)]/30"
-          : draw
-          ? "border-zinc-600/30"
-          : "border-red-500/30"
+        win ? "border-[var(--pelada-accent)]/30" : draw ? "border-zinc-600/30" : "border-red-500/30"
       }`}
     >
       <button
@@ -490,8 +516,8 @@ function MyMatchAccordion({
             win
               ? "bg-[var(--pelada-accent)]/20 text-[var(--pelada-accent)]"
               : draw
-              ? "bg-zinc-700/40 text-zinc-300"
-              : "bg-red-500/20 text-red-500"
+                ? "bg-zinc-700/40 text-zinc-300"
+                : "bg-red-500/20 text-red-500"
           }`}
         >
           {win ? "V" : draw ? "E" : "D"}
@@ -521,8 +547,18 @@ function MyMatchAccordion({
 
       {open && (
         <div className="grid grid-cols-1 gap-5 border-t border-white/5 bg-zinc-950/40 px-4 py-4 md:grid-cols-2">
-          <TeamColumn team={m.teamA} myUserId={myUserId} viewerId={viewerId} colorClass="text-[var(--pelada-accent)]" />
-          <TeamColumn team={m.teamB} myUserId={myUserId} viewerId={viewerId} colorClass="text-red-500" />
+          <TeamColumn
+            team={m.teamA}
+            myUserId={myUserId}
+            viewerId={viewerId}
+            colorClass="text-[var(--pelada-accent)]"
+          />
+          <TeamColumn
+            team={m.teamB}
+            myUserId={myUserId}
+            viewerId={viewerId}
+            colorClass="text-red-500"
+          />
         </div>
       )}
     </div>
@@ -559,7 +595,9 @@ function TeamColumn({
                   : "border-white/5 bg-zinc-900/60"
               }`}
             >
-              <span className={isTarget ? "font-bold text-[var(--pelada-accent)]" : "text-zinc-200"}>
+              <span
+                className={isTarget ? "font-bold text-[var(--pelada-accent)]" : "text-zinc-200"}
+              >
                 {p.name}
                 {isViewer && <span className="ml-1 text-[10px] uppercase opacity-70">(Você)</span>}
               </span>

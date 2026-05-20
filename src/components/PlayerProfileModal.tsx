@@ -29,8 +29,12 @@ export function PlayerProfileModal({
   useEffect(() => {
     if (!open || !userId) return;
     let cancelled = false;
-    loadHistoryAsync(matchId).then((h) => { if (!cancelled) setHistory(h); });
-    fetchPlayerMvpSummary(matchId, userId, 3).then((s) => { if (!cancelled) setMvpSummary(s); });
+    loadHistoryAsync(matchId).then((h) => {
+      if (!cancelled) setHistory(h);
+    });
+    fetchPlayerMvpSummary(matchId, userId, 3).then((s) => {
+      if (!cancelled) setMvpSummary(s);
+    });
     (async () => {
       const { data } = await supabase
         .from("profiles")
@@ -47,7 +51,9 @@ export function PlayerProfileModal({
         setAvatar(null);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [open, userId, matchId, fallbackName]);
 
   useEffect(() => {
@@ -67,7 +73,12 @@ export function PlayerProfileModal({
   }, [userId]);
 
   const stats = useMemo(() => {
-    let goals = 0, assists = 0, mvp = 0, wins = 0, draws = 0, losses = 0;
+    let goals = 0,
+      assists = 0,
+      mvp = 0,
+      wins = 0,
+      draws = 0,
+      losses = 0;
     const my = history.filter((h) =>
       [...h.teamA.players, ...h.teamB.players].some((p) => p.id === userId),
     );
@@ -82,11 +93,19 @@ export function PlayerProfileModal({
       const inA = m.teamA.players.some((p) => p.id === me.id);
       const myS = inA ? sa : sb;
       const opp = inA ? sb : sa;
-      if (myS > opp) wins++; else if (myS === opp) draws++; else losses++;
+      if (myS > opp) wins++;
+      else if (myS === opp) draws++;
+      else losses++;
     }
     const games = my.length;
     return {
-      goals, assists, mvp: mvpSummary.total || mvp, games, wins, draws, losses,
+      goals,
+      assists,
+      mvp: mvpSummary.total || mvp,
+      games,
+      wins,
+      draws,
+      losses,
       winRate: games ? Math.round((wins / games) * 100) : 0,
     };
   }, [history, userId, mvpSummary.total]);
@@ -106,20 +125,44 @@ export function PlayerProfileModal({
               )}
             </div>
             <h3 className="text-2xl font-black uppercase tracking-wider text-amber-400">{name}</h3>
-            {username && <p className="text-xs font-medium text-[var(--pelada-accent)]">@{username}</p>}
+            {username && (
+              <p className="text-xs font-medium text-[var(--pelada-accent)]">@{username}</p>
+            )}
             <div className="mt-2 inline-flex items-center gap-2 rounded-xl border-2 border-amber-400/60 bg-amber-400/5 px-4 py-2">
               <span className="font-mono text-2xl font-black tabular-nums text-amber-400">
                 {stats.goals + stats.assists}
               </span>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400/80">G+A</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400/80">
+                G+A
+              </span>
             </div>
           </div>
 
           <div className="mt-5 grid grid-cols-4 gap-2">
-            <Mini icon={<Target className="h-4 w-4" />} value={stats.goals} label="Gols" color="#fb923c" />
-            <Mini icon={<Handshake className="h-4 w-4" />} value={stats.assists} label="Assists" color="#60a5fa" />
-            <Mini icon={<Trophy className="h-4 w-4" />} value={stats.mvp} label="MVP" color="#facc15" />
-            <Mini icon={<Gamepad2 className="h-4 w-4" />} value={stats.games} label="Jogos" color="var(--pelada-accent)" />
+            <Mini
+              icon={<Target className="h-4 w-4" />}
+              value={stats.goals}
+              label="Gols"
+              color="#fb923c"
+            />
+            <Mini
+              icon={<Handshake className="h-4 w-4" />}
+              value={stats.assists}
+              label="Assists"
+              color="#60a5fa"
+            />
+            <Mini
+              icon={<Trophy className="h-4 w-4" />}
+              value={stats.mvp}
+              label="MVP"
+              color="#facc15"
+            />
+            <Mini
+              icon={<Gamepad2 className="h-4 w-4" />}
+              value={stats.games}
+              label="Jogos"
+              color="var(--pelada-accent)"
+            />
           </div>
 
           <div className="mt-3 grid grid-cols-4 gap-2 rounded-xl border border-white/10 bg-zinc-900/40 px-3 py-3">
@@ -136,7 +179,10 @@ export function PlayerProfileModal({
               </p>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {mvpSummary.recent.map((m) => (
-                  <span key={m.id} className="rounded-md bg-zinc-900/70 px-2 py-1 text-[10px] font-semibold text-zinc-300">
+                  <span
+                    key={m.id}
+                    className="rounded-md bg-zinc-900/70 px-2 py-1 text-[10px] font-semibold text-zinc-300"
+                  >
                     {formatDate(m.date)}
                   </span>
                 ))}
@@ -166,11 +212,23 @@ function formatDate(iso: string) {
   return `${d}/${m}/${y}`;
 }
 
-function Mini({ icon, value, label, color }: { icon: React.ReactNode; value: number; label: string; color: string }) {
+function Mini({
+  icon,
+  value,
+  label,
+  color,
+}: {
+  icon: React.ReactNode;
+  value: number;
+  label: string;
+  color: string;
+}) {
   return (
     <div className="flex flex-col items-center gap-0.5 rounded-lg border border-white/10 bg-zinc-900/40 py-2">
       <span style={{ color }}>{icon}</span>
-      <p className="font-mono text-lg font-black tabular-nums" style={{ color }}>{value}</p>
+      <p className="font-mono text-lg font-black tabular-nums" style={{ color }}>
+        {value}
+      </p>
       <p className="text-[9px] font-bold uppercase tracking-wider text-zinc-500">{label}</p>
     </div>
   );
