@@ -129,6 +129,21 @@ export function PlayerProfileModal({
             <Cell value={`${stats.winRate}%`} label="Win" color="text-white" />
           </div>
 
+          {mvpSummary.recent.length > 0 && (
+            <div className="mt-3 rounded-xl border border-amber-400/25 bg-amber-400/5 px-3 py-2">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-amber-400">
+                Últimos MVPs
+              </p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {mvpSummary.recent.map((m) => (
+                  <span key={m.id} className="rounded-md bg-zinc-900/70 px-2 py-1 text-[10px] font-semibold text-zinc-300">
+                    {formatDate(m.date)}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
           {userId && (
             <Link
               to="/pelada/$id/jogador/$userId"
@@ -143,6 +158,12 @@ export function PlayerProfileModal({
       </DialogContent>
     </Dialog>
   );
+}
+
+function formatDate(iso: string) {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-");
+  return `${d}/${m}/${y}`;
 }
 
 function Mini({ icon, value, label, color }: { icon: React.ReactNode; value: number; label: string; color: string }) {
