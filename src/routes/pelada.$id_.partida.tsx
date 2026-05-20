@@ -26,7 +26,7 @@ export const Route = createFileRoute("/pelada/$id_/partida")({
 });
 
 type Match = { id: string; name: string; logo_url: string | null; admin_id?: string | null };
-type Player = { id: string; name: string; isGoalkeeper: boolean; rating?: number };
+type Player = { id: string; name: string; isGoalkeeper: boolean; rating?: number; userId?: string | null };
 type SavedTeams = { teamA: Player[]; teamB: Player[] };
 
 function PartidaPage() {
@@ -66,6 +66,7 @@ function PartidaPage() {
         id: userId ?? rowId,
         name: (r.player_name as string) ?? "Jogador",
         isGoalkeeper: !!r.is_goalkeeper,
+        userId,
       };
     });
   }, [attendanceQuery.data]);
@@ -84,7 +85,16 @@ function PartidaPage() {
   }, [id]);
 
   const enriched = useMemo(
-    () => confirmed.map((p) => ({ ...p, rating: ratings[p.id] ?? p.rating ?? 5 })),
+    () =>
+      confirmed.map((p) => {
+        const r =
+          (p.userId ? ratings[p.userId] : undefined) ??
+          ratings[p.id] ??
+          ratings[`friend:${p.name.trim()}`] ??
+          p.rating ??
+          5;
+        return { ...p, rating: r };
+      }),
     [confirmed, ratings],
   );
 
@@ -265,24 +275,15 @@ function PartidaPage() {
             </button>
             {!isAdmin && <p className="text-center text-xs text-zinc-500">Somente o admin pode sortear.</p>}
 
-            {saved && (
-              <>
-                <div className="flex items-center justify-between gap-3 pt-4">
-                  <h2 className="text-xl font-black uppercase tracking-wider text-[var(--pelada-accent)]">Times Escalados</h2>
-                  <button type="button" onClick={copyTeams} className="inline-flex items-center gap-2 rounded-xl border border-[var(--pelada-accent)]/50 bg-[var(--pelada-accent)]/10 px-4 py-2 text-sm font-bold uppercase tracking-wider text-[var(--pelada-accent)] transition hover:bg-[var(--pelada-accent)]/20">
-                    <ClipboardCopy className="h-4 w-4" /> Copiar Times
-                  </button>
-                </div>
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <TeamView title="👕 Time A" players={saved.teamA} accent="var(--pelada-accent)" />
-                  <TeamView title="🎽 Time B" players={saved.teamB} accent="#fb923c" />
-                </div>
-                {isAdmin && (
-                  <button type="button" onClick={startRegister} className="w-full rounded-2xl border-2 border-yellow-400 bg-yellow-400/10 px-6 py-5 text-lg font-black uppercase tracking-wider text-yellow-400 transition hover:bg-yellow-400/20 hover:shadow-[0_0_30px_-8px_rgba(250,204,21,0.7)]">
-                    📋 Registrar Partida
-                  </button>
-                )}
-              </>
+            {saved && isAdmin && (
+              <div className="flex flex-col gap-3 pt-2">
+                <button type="button" onClick={copyTeams} className="inline-flex items-center justify-center gap-2 rounded-xl border border-[var(--pelada-accent)]/50 bg-[var(--pelada-accent)]/10 px-4 py-2 text-sm font-bold uppercase tracking-wider text-[var(--pelada-accent)] transition hover:bg-[var(--pelada-accent)]/20">
+                  <ClipboardCopy className="h-4 w-4" /> Copiar Times
+                </button>
+                <button type="button" onClick={startRegister} className="w-full rounded-2xl border-2 border-yellow-400 bg-yellow-400/10 px-6 py-5 text-lg font-black uppercase tracking-wider text-yellow-400 transition hover:bg-yellow-400/20 hover:shadow-[0_0_30px_-8px_rgba(250,204,21,0.7)]">
+                  📋 Registrar Partida
+                </button>
+              </div>
             )}
           </div>
         </section>
@@ -302,9 +303,9 @@ function PartidaPage() {
       <Dialog open={sepOpen} onOpenChange={setSepOpen}>
         <DialogContent className="max-w-6xl border-[var(--pelada-accent)]/40 bg-zinc-950 text-zinc-100">
           <DialogHeader><DialogTitle className="text-2xl font-black uppercase tracking-wider text-[var(--pelada-accent)]">Interface de Separação</DialogTitle></DialogHeader>
-          <div className="grid grid-cols-1 gap-4 py-2 md:grid-cols-3">
+          <div className={`grid grid-cols-1 gap-4 py-2 ${pool.length > 0 ? "md:grid-cols-3" : "md:grid-cols-2"}`}>
             <TeamColumn title="Time A" players={teamA} max={Math.ceil(enriched.length / 2)} accent="var(--pelada-accent)" onClick={(pid) => backToPool(pid)} />
-            <PoolColumn players={pool} onMove={moveTo} />
+            {pool.length > 0 && <PoolColumn players={pool} onMove={moveTo} />}
             <TeamColumn title="Time B" players={teamB} max={Math.ceil(enriched.length / 2)} accent="var(--pelada-accent)" onClick={(pid) => backToPool(pid)} />
           </div>
           <DialogFooter className="flex-row justify-center gap-3 sm:justify-center">
