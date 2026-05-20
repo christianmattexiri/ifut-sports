@@ -277,7 +277,8 @@ export async function updateMatchWinners(
   if (patch.pereba_id !== undefined)
     clean.pereba_id = patch.pereba_id && isUuid(patch.pereba_id) ? patch.pereba_id : null;
   if (Object.keys(clean).length === 0) return;
-  await supabase.from("games").update(clean).eq("id", gameId);
+  const { error } = await supabase.from("games").update(clean).eq("id", gameId);
+  if (error) throw new Error(`Falha ao gravar vencedores: ${error.message}`);
 }
 
 /** Aggregated player stats across all games of one pelada (for Rankings). */
