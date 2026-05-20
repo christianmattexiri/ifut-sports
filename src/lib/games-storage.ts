@@ -284,10 +284,15 @@ export type AggregatedStat = {
   jogos: number;
 };
 
+export type PlayerMvpSummary = {
+  total: number;
+  recent: Array<{ id: string; date: string; name: string }>;
+};
+
 export async function fetchAggregatedStats(peladaId: string): Promise<AggregatedStat[]> {
   const { data: games } = await supabase
     .from("games")
-    .select("id, score_a, score_b, mvp_id")
+    .select("id, score_a, score_b, mvp_id, pereba_id, voting_open")
     .eq("match_id", peladaId);
   if (!games || games.length === 0) return [];
   const gameIds = games.map((g) => g.id);
@@ -295,7 +300,25 @@ export async function fetchAggregatedStats(peladaId: string): Promise<Aggregated
     .from("game_player_stats")
     .select("game_id, user_id, player_name, team, goals, assists")
     .in("game_id", gameIds);
-  const gameById = new Map(games.map((g) => [g.id, g]));
+  const closedWithoutWinners = games
+    .filter((g) => g.voting_open === false && (!g.mvp_id || !g.pereba_id))
+    .map((g) => g.id);
+  const { data: voteRows } = closedWithoutWinners.length > 0
+    ? await supabase
+        .from("game_votes")
+        .select("game_id, mvp_id, pereba_id, apitto_ratings")
+        .in("game_id", closedWithoutWinners)
+    : { data: [] };
+  const fallbackWinners = closedVoteWinners((voteRows ?? []) as VoteWinnerRow[]);
+  const gamesWithWinners = games.map((g) => {
+    const fallback = fallbackWinners.get(g.id);
+    return {
+      ...g,
+      mvp_id: g.mvp_id ?? fallback?.mvp_id ?? null,
+      pereba_id: g.pereba_id ?? fallback?.pereba_id ?? null,
+    };
+  });
+  const gameById = new Map(gamesWithWinners.map((g) => [g.id, g]));
   const map = new Map<string, AggregatedStat>();
   const ensure = (id: string, name: string) => {
     let p = map.get(id);
@@ -323,11 +346,26 @@ export async function fetchAggregatedStats(peladaId: string): Promise<Aggregated
     else if (my < opp) row.derrotas += 1;
   }
   // MVP counts
-  for (const g of games) {
+  for (const g of gamesWithWinners) {
     if (g.mvp_id) {
       const entry = map.get(g.mvp_id);
       if (entry) entry.mvps += 1;
     }
   }
   return Array.from(map.values());
+}
+
+export async function fetchPlayerMvpSummary(
+  peladaId: string,
+  userId: string,
+  limit = 5,
+): Promise<PlayerMvpSummary> {
+  const history = await fetchHistory(peladaId, "Pelada");
+  const wins = history
+    .filter((m) => m.mvp === userId)
+    .sort((a, b) => (a.date < b.date ? 1 : -1));
+  return {
+    total: wins.length,
+    recent: wins.slice(0, limit).map((m) => ({ id: m.id, date: m.date, name: m.name })),
+  };
 }
