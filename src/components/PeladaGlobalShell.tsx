@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { AudioFooterPlayer } from "@/components/AudioFooterPlayer";
 import { peladaMatchQuery, viewerQuery } from "@/lib/pelada-queries";
 import { peladaSettingsQuery, DEFAULT_SETTINGS } from "@/lib/pelada-settings";
+import { isSuperAdminUsername } from "@/lib/admin";
 
 /**
  * Mounted once at the root. Detects when the user is inside any
