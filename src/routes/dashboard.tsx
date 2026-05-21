@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import ifutCrest from "@/assets/ifut-crest.png";
 import { MatchCard, type Pelada } from "@/components/MatchCard";
+import { isSuperAdminUsername } from "@/lib/admin";
 import { ProfileDialog } from "@/components/ProfileDialog";
 import { InstallPwaModal } from "@/components/InstallPwaModal";
 import { Smartphone } from "lucide-react";
@@ -39,8 +40,6 @@ export const Route = createFileRoute("/dashboard")({
     meta: [{ title: "iFut — Minhas Peladas" }],
   }),
 });
-
-const SUPER_ADMIN_USERNAME = "christianmatte";
 
 type Profile = {
   id: string;
@@ -180,7 +179,7 @@ function Dashboard() {
   const username = profile.username;
   const fallbackAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}&backgroundColor=00ff00`;
   const avatarUrl = profile.avatar_url || fallbackAvatar;
-  const isSuperAdmin = username === SUPER_ADMIN_USERNAME;
+  const isSuperAdmin = isSuperAdminUsername(username);
 
   return (
     <main className="relative min-h-screen w-full bg-zinc-950 pt-14 text-zinc-100 font-sans antialiased">
