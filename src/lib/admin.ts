@@ -1,6 +1,6 @@
 // Usernames of global super admins who can manage any pelada
 // regardless of being its match.admin_id.
-export const SUPER_ADMIN_USERNAMES = ["christianmatte", "cardosogenuino"] as const;
+export const SUPER_ADMIN_USERNAMES = ["christianmatte", "leofreitas"] as const;
 
 // Backwards-compat export (first entry).
 export const SUPER_ADMIN_USERNAME = SUPER_ADMIN_USERNAMES[0];
