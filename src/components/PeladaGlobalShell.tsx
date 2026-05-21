@@ -102,7 +102,7 @@ function AdminAwareMusicPlayer({ peladaId, viewerId }: { peladaId: string; viewe
   const { data: match } = useQuery(peladaMatchQuery(peladaId));
   const { data: viewer } = useQuery(viewerQuery());
   const isOwner = !!match && match.admin_id === viewerId;
-  const isSuper = (viewer?.username ?? "").toLowerCase() === "christianmatte";
+  const isSuper = isSuperAdminUsername(viewer?.username);
   const canEdit = isOwner || isSuper;
   return (
     <AudioFooterPlayer
