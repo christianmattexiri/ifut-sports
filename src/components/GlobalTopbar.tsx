@@ -14,8 +14,7 @@ import { peladaMatchQuery, viewerQuery } from "@/lib/pelada-queries";
 import { peladaSettingsQuery } from "@/lib/pelada-settings";
 import ifutCrest from "@/assets/ifut-crest.png";
 import { toast } from "sonner";
-
-const SUPER_ADMIN_USERNAME = "christianmatte";
+import { isSuperAdminUsername } from "@/lib/admin";
 
 /**
  * Global fixed topbar visible on every authenticated screen.
@@ -41,7 +40,7 @@ export function GlobalTopbar() {
 
   const username = viewer.username ?? "jogador";
   const fullName = viewer.full_name?.trim() || username;
-  const isSuperAdmin = (username || "").toLowerCase() === SUPER_ADMIN_USERNAME;
+  const isSuperAdmin = isSuperAdminUsername(username);
 
   async function handleSignOut() {
     await supabase.auth.signOut();
