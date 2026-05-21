@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { AudioFooterPlayer } from "@/components/AudioFooterPlayer";
 import { peladaMatchQuery, viewerQuery } from "@/lib/pelada-queries";
 import { peladaSettingsQuery, DEFAULT_SETTINGS } from "@/lib/pelada-settings";
+import { isSuperAdminUsername } from "@/lib/admin";
 
 /**
  * Mounted once at the root. Detects when the user is inside any
@@ -102,7 +103,7 @@ function AdminAwareMusicPlayer({ peladaId, viewerId }: { peladaId: string; viewe
   const { data: match } = useQuery(peladaMatchQuery(peladaId));
   const { data: viewer } = useQuery(viewerQuery());
   const isOwner = !!match && match.admin_id === viewerId;
-  const isSuper = (viewer?.username ?? "").toLowerCase() === "christianmatte";
+  const isSuper = isSuperAdminUsername(viewer?.username);
   const canEdit = isOwner || isSuper;
   return (
     <AudioFooterPlayer
