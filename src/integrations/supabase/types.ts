@@ -253,6 +253,7 @@ export type Database = {
         Row: {
           admin_id: string
           created_at: string
+          current_draw: Json | null
           day_of_week: string | null
           id: string
           is_pro: boolean
@@ -270,6 +271,7 @@ export type Database = {
         Insert: {
           admin_id: string
           created_at?: string
+          current_draw?: Json | null
           day_of_week?: string | null
           id?: string
           is_pro?: boolean
@@ -287,6 +289,7 @@ export type Database = {
         Update: {
           admin_id?: string
           created_at?: string
+          current_draw?: Json | null
           day_of_week?: string | null
           id?: string
           is_pro?: boolean
