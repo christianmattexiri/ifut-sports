@@ -252,9 +252,14 @@ function ListaPresencaPage() {
   };
 
   const { lineLimit, gkLimit, subLimit } = settings;
+  const meIsReferee = !!me && refereeUserIds.has(me.id);
   const meInList = useMemo(
-    () => (me ? players.some((p) => p.userId === me.id) : false),
-    [players, me],
+    () =>
+      me
+        ? players.some((p) => p.userId === me.id) ||
+          attendingReferees.some((r) => r.userId === me.id)
+        : false,
+    [players, attendingReferees, me],
   );
 
   // Categorize players based on entry order: line / goalkeepers / suplentes
@@ -407,10 +412,15 @@ function ListaPresencaPage() {
   const toggleMyName = async () => {
     if (!me) return;
     if (meInList) {
-      const mine = players.find((p) => p.userId === me.id);
-      if (mine) await removePlayer(mine.rowId);
+      const mineRef = attendingReferees.find((r) => r.userId === me.id);
+      if (mineRef) {
+        await removePlayer(mineRef.rowId);
+      } else {
+        const mine = players.find((p) => p.userId === me.id);
+        if (mine) await removePlayer(mine.rowId);
+      }
     } else {
-      await addPlayer(me.fullName, myIsGK, me.id);
+      await addPlayer(me.fullName, myIsGK, me.id, undefined, meIsReferee);
     }
   };
 
