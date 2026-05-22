@@ -114,7 +114,7 @@ function RankingsPage() {
       />
       <div className="relative z-10 flex min-h-screen">
         {/* Sidebar */}
-        <aside className="sticky top-0 hidden h-screen w-[280px] shrink-0 flex-col border-r border-white/5 bg-zinc-900/40 px-5 pt-5 pb-24 backdrop-blur-xl md:flex">
+        <aside className="sticky top-0 hidden h-screen w-[280px] shrink-0 flex-col overflow-y-auto border-r border-white/5 bg-zinc-900/40 px-5 pt-5 pb-32 backdrop-blur-xl md:flex">
           <button
             onClick={() => navigate({ to: "/pelada/$id", params: { id } })}
             className="mb-7 inline-flex items-center gap-2 self-start rounded-full border border-white/10 bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-200 transition hover:border-[var(--pelada-accent)]/40 hover:text-[var(--pelada-accent)]"
