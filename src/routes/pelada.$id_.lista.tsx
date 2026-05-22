@@ -75,24 +75,12 @@ type Player = {
 };
 
 type Settings = {
-  dayOfWeek: string;
-  matchTime: string;
-  location: string;
-  valorLinha: string;
-  valorGoleiro: string;
-  pix: string;
   lineLimit: number;
   gkLimit: number;
   subLimit: number;
 };
 
 const DEFAULT_SETTINGS: Settings = {
-  dayOfWeek: "",
-  matchTime: "",
-  location: "",
-  valorLinha: "10,00",
-  valorGoleiro: "5,00",
-  pix: "",
   lineLimit: 16,
   gkLimit: 2,
   subLimit: 2,
