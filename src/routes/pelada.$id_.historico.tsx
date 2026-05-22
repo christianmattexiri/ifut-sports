@@ -288,7 +288,7 @@ function HistoricoPage() {
             <h1 className="text-center text-2xl font-bold uppercase tracking-[0.3em] text-[var(--pelada-accent)] drop-shadow-[0_0_15px_color-mix(in_oklab,var(--pelada-accent)_60%,transparent)] md:text-3xl flex-1">
               Histórico de Jogos
             </h1>
-            {isAdmin && (
+            {canEdit && (
               <button
                 type="button"
                 onClick={handleNewMatch}
@@ -316,6 +316,7 @@ function HistoricoPage() {
                   open={openId === h.id}
                   onToggle={() => setOpenId(openId === h.id ? null : h.id)}
                   isAdmin={isAdmin}
+                  canEdit={canEdit}
                   onEdit={() => setEditing(h)}
                   onDelete={() => setConfirmDelete(h.id)}
                 />
