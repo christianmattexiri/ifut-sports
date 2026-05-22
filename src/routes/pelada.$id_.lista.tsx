@@ -192,6 +192,29 @@ function ListaPresencaPage() {
       };
     });
   }, [attendanceQuery.data, refereeUserIds]);
+
+  // Juízes que estão de fato na lista de presença (entraram via "Colocar meu
+  // nome" ou foram adicionados pelo admin). NÃO listamos todos os juízes da
+  // pelada automaticamente.
+  const attendingReferees = useMemo(() => {
+    const rows = attendanceQuery.data ?? [];
+    return rows
+      .filter((r) => r.is_referee || (r.player_id && refereeUserIds.has(r.player_id)))
+      .map((r) => {
+        const userId = (r.player_id as string | null) ?? null;
+        const prof = userId ? referees.find((rf) => rf.user_id === userId) : null;
+        return {
+          rowId: r.id as string,
+          userId,
+          name:
+            prof?.full_name?.trim() ||
+            prof?.username ||
+            (r.player_name as string) ||
+            "Juiz",
+          avatarUrl: prof?.avatar_url ?? null,
+        };
+      });
+  }, [attendanceQuery.data, refereeUserIds, referees]);
   const isListLoading = attendanceQuery.isLoading;
 
   // Dados dinâmicos (Data/Hora/Local/Valores/Pix) vêm direto do Supabase.
