@@ -242,15 +242,21 @@ export const listMatchMembers = createServerFn({ method: "POST" })
 
     const { data: memberRows } = await supabaseAdmin
       .from("match_members")
-      .select("user_id, rating")
+      .select("user_id, rating, role")
       .eq("match_id", data.matchId);
-    const memberRowsTyped = (memberRows ?? []) as { user_id: string; rating: number | null }[];
+    const memberRowsTyped = (memberRows ?? []) as {
+      user_id: string;
+      rating: number | null;
+      role: string | null;
+    }[];
     const memberIds = Array.from(
       new Set(memberRowsTyped.map((r) => r.user_id).filter(Boolean)),
     );
     const ratingMap: Record<string, number> = {};
+    const roleMap: Record<string, "player" | "juiz"> = {};
     for (const r of memberRowsTyped) {
       ratingMap[r.user_id] = Number(r.rating ?? 5);
+      roleMap[r.user_id] = (r.role === "juiz" ? "juiz" : "player");
     }
 
     const ids = Array.from(new Set([match.admin_id, ...memberIds].filter(Boolean)));
@@ -274,6 +280,7 @@ export const listMatchMembers = createServerFn({ method: "POST" })
       memberIds,
       profiles,
       ratings: ratingMap,
+      roles: roleMap,
       pendingInviteIds: (invs ?? []).map((i: any) => i.invitee_id),
     };
   });
