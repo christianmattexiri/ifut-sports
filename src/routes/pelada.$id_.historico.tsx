@@ -276,6 +276,7 @@ function HistoricoPage() {
               Administrador
             </button>
           </div>
+          <div className="h-32 w-full shrink-0" aria-hidden />
         </aside>
 
         <section className="flex-1 px-5 py-8 md:px-10 md:py-10">
