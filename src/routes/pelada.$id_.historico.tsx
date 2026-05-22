@@ -21,6 +21,7 @@ import {
   Target,
   Sparkles,
   Minus,
+  Video,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -74,6 +75,7 @@ export type HistMatch = {
   pereba?: string | null; // player id (winner of Pereba vote)
   topScorers: string[]; // ids
   topAssists: string[]; // ids
+  videoUrl?: string | null;
 };
 
 type Match = {
