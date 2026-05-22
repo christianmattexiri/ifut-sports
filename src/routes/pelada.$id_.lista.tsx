@@ -182,16 +182,39 @@ function ListaPresencaPage() {
   }, [attendanceQuery.data]);
   const isListLoading = attendanceQuery.isLoading;
 
-  // Hydrate match-derived defaults into settings once match arrives.
-  useEffect(() => {
-    if (!match) return;
-    setSettings((s) => ({
-      ...s,
-      dayOfWeek: s.dayOfWeek || match.day_of_week || "",
-      matchTime: s.matchTime || match.match_time || "",
-      location: s.location || match.location || "",
-    }));
-  }, [match]);
+  // Dados dinâmicos (Data/Hora/Local/Valores/Pix) vêm direto do Supabase.
+  // Sem localStorage: garantem sincronização entre dispositivos.
+  const dayOfWeek = match?.day_of_week ?? "";
+  const matchTime = match?.match_time ?? "";
+  const location = match?.location ?? "";
+  const formatMoney = (v: number | null | undefined) =>
+    v == null ? "" : v.toFixed(2).replace(".", ",");
+  const valorLinha = formatMoney(match?.price_player);
+  const valorGoleiro = formatMoney(match?.price_goalkeeper);
+  const pix = match?.pix_key ?? "";
+
+  const updateMatchMutation = useMutation({
+    mutationFn: async (patch: Record<string, unknown>) => {
+      const { error } = await supabase
+        .from("matches")
+        .update(patch as never)
+        .eq("id", id!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pelada-match", id] });
+    },
+    onError: () => {
+      toast.error("Não foi possível salvar as alterações");
+    },
+  });
+  const parseMoney = (raw: string | undefined): number | null => {
+    if (raw == null) return null;
+    const cleaned = raw.replace(/[^\d,.-]/g, "").replace(",", ".");
+    if (!cleaned) return null;
+    const n = Number(cleaned);
+    return Number.isFinite(n) ? n : null;
+  };
 
   const { lineLimit, gkLimit, subLimit } = settings;
   const meInList = useMemo(
