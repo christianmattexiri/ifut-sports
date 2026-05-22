@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft, Home, ClipboardList, History, BarChart3, UserCircle2,
   ShieldCheck, Trophy, UserCog, Save, RefreshCw, ClipboardCopy,
-  MousePointerClick, Scale, Dices,
+  MousePointerClick, Scale, Dices, Radio, OctagonAlert,
 } from "lucide-react";
 import { isSuperAdminUsername } from "@/lib/admin";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -13,6 +13,7 @@ import { peladaSettingsQuery, DEFAULT_SETTINGS } from "@/lib/pelada-settings";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { EditMatchDialog, saveMatchToDb, type HistMatch } from "./pelada.$id_.historico";
+import { saveCurrentDraw, incrementPlayerStat } from "@/lib/games-storage";
 
 export const Route = createFileRoute("/pelada/$id_/partida")({
   component: PartidaPage,
