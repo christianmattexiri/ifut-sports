@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft, Home, ClipboardList, History, BarChart3, UserCircle2,
   ShieldCheck, Trophy, UserCog, Save, RefreshCw, ClipboardCopy,
-  MousePointerClick, Scale, Dices,
+  MousePointerClick, Scale, Dices, Radio, OctagonAlert,
 } from "lucide-react";
 import { isSuperAdminUsername } from "@/lib/admin";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -13,6 +13,7 @@ import { peladaSettingsQuery, DEFAULT_SETTINGS } from "@/lib/pelada-settings";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { EditMatchDialog, saveMatchToDb, type HistMatch } from "./pelada.$id_.historico";
+import { saveCurrentDraw, incrementPlayerStat } from "@/lib/games-storage";
 
 export const Route = createFileRoute("/pelada/$id_/partida")({
   component: PartidaPage,
@@ -26,7 +27,7 @@ export const Route = createFileRoute("/pelada/$id_/partida")({
   },
 });
 
-type Match = { id: string; name: string; logo_url: string | null; admin_id?: string | null };
+type Match = { id: string; name: string; logo_url: string | null; admin_id?: string | null; current_draw?: unknown | null };
 type Player = { id: string; name: string; isGoalkeeper: boolean; rating?: number; userId?: string | null };
 type SavedTeams = { teamA: Player[]; teamB: Player[] };
 
@@ -61,6 +62,17 @@ function PartidaPage() {
   const [teamB, setTeamB] = useState<Player[]>([]);
   const [pool, setPool] = useState<Player[]>([]);
   const [editing, setEditing] = useState<HistMatch | null>(null);
+  const [liveMatch, setLiveMatch] = useState<HistMatch | null>(null);
+  const [liveTarget, setLiveTarget] = useState<{ playerId: string; team: "A" | "B"; name: string } | null>(null);
+  const liveMode = !!liveMatch;
+
+  // Hydrate saved teams from matches.current_draw (DB persistence).
+  useEffect(() => {
+    const draw = (match?.current_draw ?? null) as SavedTeams | null;
+    if (draw && Array.isArray(draw.teamA) && Array.isArray(draw.teamB) && draw.teamA.length > 0) {
+      setSaved(draw);
+    }
+  }, [match?.current_draw]);
 
   // Lista de presença: query compartilhada (cacheada pelo loader pai).
   const attendanceQuery = useQuery(matchAttendanceQuery(id));
@@ -143,14 +155,17 @@ function PartidaPage() {
     setPool((s) => [...s, p]);
   }
 
-  function saveTeams() {
+  async function saveTeams() {
     const data: SavedTeams = { teamA, teamB };
     setSaved(data);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(`pelada:${id}:teams`, JSON.stringify({ ...data, savedAt: Date.now() }));
-    }
-    toast.success("Times salvos!");
     setSepOpen(false);
+    try {
+      await saveCurrentDraw(id, data);
+      queryClient.invalidateQueries({ queryKey: ["pelada-match", id] });
+      toast.success("Times salvos!");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao persistir");
+    }
   }
 
   async function copyTeams() {
@@ -184,6 +199,57 @@ function PartidaPage() {
       mvp: null, topScorers: [], topAssists: [],
     };
     setEditing(m);
+  }
+
+  async function startLive() {
+    if (!saved) { toast.error("Sorteie e salve os times primeiro"); return; }
+    const today = new Date().toISOString().slice(0, 10);
+    const draft: HistMatch = {
+      id: crypto.randomUUID(),
+      date: today,
+      name: `${match?.name ?? "iFut"} ${today.split("-").reverse().join("/")}`,
+      teamA: { label: "Time A", players: saved.teamA.map((p) => ({ id: p.id, name: p.name, goals: 0, assists: 0 })) },
+      teamB: { label: "Time B", players: saved.teamB.map((p) => ({ id: p.id, name: p.name, goals: 0, assists: 0 })) },
+      mvp: null, topScorers: [], topAssists: [],
+    };
+    try {
+      await saveMatchToDb(id, draft);
+      setLiveMatch(draft);
+      toast.success("Modo Ao Vivo iniciado");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao iniciar");
+    }
+  }
+
+  async function registerLiveStat(field: "goals" | "assists") {
+    if (!liveMatch || !liveTarget) return;
+    const { playerId, team, name } = liveTarget;
+    setLiveTarget(null);
+    // Optimistic local update.
+    setLiveMatch((prev) => {
+      if (!prev) return prev;
+      const updateTeam = (t: HistMatch["teamA"]) => ({
+        ...t,
+        players: t.players.map((p) =>
+          p.id === playerId ? { ...p, [field]: (p[field] || 0) + 1 } : p,
+        ),
+      });
+      return team === "A"
+        ? { ...prev, teamA: updateTeam(prev.teamA) }
+        : { ...prev, teamB: updateTeam(prev.teamB) };
+    });
+    try {
+      await incrementPlayerStat(liveMatch.id, playerId, field, 1);
+      toast.success(`${field === "goals" ? "Gol" : "Assistência"} de ${name} salvo!`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao salvar");
+    }
+  }
+
+  function finishLive() {
+    if (!liveMatch) return;
+    setEditing(liveMatch);
+    setLiveMatch(null);
   }
 
   async function handleSaveMatch(updated: HistMatch) {
@@ -253,17 +319,19 @@ function PartidaPage() {
                 : `${confirmed.length} jogador${confirmed.length === 1 ? "" : "es"} confirmado${confirmed.length === 1 ? "" : "s"} na lista de presença.`}
             </p>
 
-            <button
-              type="button"
-              onClick={() => setSorteioOpen(true)}
-              disabled={!isAdmin}
-              className="w-full rounded-2xl border-2 border-[var(--pelada-accent)] bg-[var(--pelada-accent)]/10 px-6 py-8 text-2xl font-black uppercase tracking-wider text-[var(--pelada-accent)] transition hover:bg-[var(--pelada-accent)]/20 hover:shadow-[0_0_50px_-8px_color-mix(in_oklab,var(--pelada-accent)_90%,transparent)] disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              ⚽ Sortear Times
-            </button>
-            {!isAdmin && <p className="text-center text-xs text-zinc-500">Somente o admin pode sortear.</p>}
+            {!liveMode && (
+              <button
+                type="button"
+                onClick={() => setSorteioOpen(true)}
+                disabled={!isAdmin}
+                className="w-full rounded-2xl border-2 border-[var(--pelada-accent)] bg-[var(--pelada-accent)]/10 px-6 py-8 text-2xl font-black uppercase tracking-wider text-[var(--pelada-accent)] transition hover:bg-[var(--pelada-accent)]/20 hover:shadow-[0_0_50px_-8px_color-mix(in_oklab,var(--pelada-accent)_90%,transparent)] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                ⚽ Sortear Times
+              </button>
+            )}
+            {!liveMode && !isAdmin && <p className="text-center text-xs text-zinc-500">Somente o admin pode sortear.</p>}
 
-            {referees.length > 0 && (
+            {!liveMode && referees.length > 0 && (
               <div className="rounded-2xl border-2 border-yellow-400/60 bg-yellow-400/5 px-4 py-3 shadow-[0_0_25px_-12px_rgba(250,204,21,0.7)]">
                 <p className="mb-1 text-[10px] font-black uppercase tracking-wider text-yellow-300/80">
                   🏁 Juiz da partida
@@ -274,10 +342,21 @@ function PartidaPage() {
               </div>
             )}
 
-            {canRegister && isSorteioSalvo && (
+            {!liveMode && canRegister && isSorteioSalvo && (
               <div className="flex flex-col gap-3 pt-2">
                 <button type="button" onClick={copyTeams} className="inline-flex items-center justify-center gap-2 rounded-xl border border-[var(--pelada-accent)]/50 bg-[var(--pelada-accent)]/10 px-4 py-2 text-sm font-bold uppercase tracking-wider text-[var(--pelada-accent)] transition hover:bg-[var(--pelada-accent)]/20">
                   <ClipboardCopy className="h-4 w-4" /> Copiar Times
+                </button>
+                <button
+                  type="button"
+                  onClick={startLive}
+                  className="inline-flex w-full items-center justify-center gap-3 rounded-2xl border-2 border-red-500 bg-red-500/10 px-6 py-5 text-lg font-black uppercase tracking-wider text-red-400 transition hover:bg-red-500/20 hover:shadow-[0_0_30px_-8px_rgba(239,68,68,0.7)]"
+                >
+                  <span className="relative flex h-3 w-3">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+                    <span className="relative inline-flex h-3 w-3 rounded-full bg-red-500" />
+                  </span>
+                  <Radio className="h-5 w-5 animate-pulse" /> Registrar Ao Vivo
                 </button>
                 <button type="button" onClick={startRegister} className="w-full rounded-2xl border-2 border-yellow-400 bg-yellow-400/10 px-6 py-5 text-lg font-black uppercase tracking-wider text-yellow-400 transition hover:bg-yellow-400/20 hover:shadow-[0_0_30px_-8px_rgba(250,204,21,0.7)]">
                   📋 Registrar Partida
@@ -285,8 +364,34 @@ function PartidaPage() {
               </div>
             )}
 
-            {isSorteioSalvo && saved && (
+            {!liveMode && isSorteioSalvo && saved && (
               <TeamsVersusView teamA={saved.teamA} teamB={saved.teamB} />
+            )}
+
+            {liveMode && liveMatch && (
+              <>
+                <div className="rounded-2xl border-2 border-red-500/60 bg-red-500/5 px-4 py-3 text-center">
+                  <p className="inline-flex items-center justify-center gap-2 text-xs font-black uppercase tracking-wider text-red-400">
+                    <span className="relative flex h-2.5 w-2.5">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+                      <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+                    </span>
+                    Modo Ao Vivo · Toque em um jogador para registrar
+                  </p>
+                </div>
+                <LiveVersusView
+                  teamA={liveMatch.teamA.players}
+                  teamB={liveMatch.teamB.players}
+                  onTap={(p, team) => setLiveTarget({ playerId: p.id, name: p.name, team })}
+                />
+                <button
+                  type="button"
+                  onClick={finishLive}
+                  className="inline-flex w-full items-center justify-center gap-3 rounded-2xl border-2 border-red-500 bg-red-500 px-6 py-5 text-lg font-black uppercase tracking-wider text-white transition hover:bg-red-600"
+                >
+                  <OctagonAlert className="h-5 w-5" /> Finalizar Partida
+                </button>
+              </>
             )}
           </div>
         </section>
@@ -323,6 +428,34 @@ function PartidaPage() {
       </Dialog>
 
       {editing && <EditMatchDialog match={editing} onClose={() => setEditing(null)} onSave={handleSaveMatch} />}
+
+      <Dialog open={!!liveTarget} onOpenChange={(o) => { if (!o) setLiveTarget(null); }}>
+        <DialogContent className="max-w-sm border-red-500/40 bg-zinc-950 text-zinc-100">
+          <DialogHeader>
+            <DialogTitle className="text-center text-xl font-black uppercase tracking-wider text-red-400">
+              {liveTarget?.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-1 gap-3 py-2 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => registerLiveStat("goals")}
+              className="flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-emerald-500 bg-emerald-500/10 px-6 py-8 text-2xl font-black uppercase tracking-wider text-emerald-400 transition hover:bg-emerald-500/20"
+            >
+              <span className="text-4xl">⚽</span>
+              GOL
+            </button>
+            <button
+              type="button"
+              onClick={() => registerLiveStat("assists")}
+              className="flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-sky-500 bg-sky-500/10 px-6 py-8 text-2xl font-black uppercase tracking-wider text-sky-400 transition hover:bg-sky-500/20"
+            >
+              <span className="text-4xl">👟</span>
+              Assistência
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }
@@ -334,6 +467,77 @@ function NavItem({ icon, label, active, gold }: { icon: React.ReactNode; label: 
         : gold ? "text-yellow-500 hover:bg-yellow-500/10"
         : "text-zinc-300 hover:bg-white/5 hover:text-zinc-100"
     }`}>{icon}{label}</div>
+  );
+}
+
+type LivePlayer = { id: string; name: string; goals: number; assists: number };
+function LiveVersusView({
+  teamA,
+  teamB,
+  onTap,
+}: {
+  teamA: LivePlayer[];
+  teamB: LivePlayer[];
+  onTap: (p: LivePlayer, team: "A" | "B") => void;
+}) {
+  const scoreA = teamA.reduce((s, p) => s + (p.goals || 0), 0);
+  const scoreB = teamB.reduce((s, p) => s + (p.goals || 0), 0);
+  return (
+    <div className="relative flex w-full items-start justify-between gap-2 rounded-2xl border border-red-500/30 bg-zinc-900/50 p-3 backdrop-blur-xl sm:gap-4 sm:p-5">
+      <LiveTeamColumn title="Time A" players={teamA} accent="var(--pelada-accent)" align="left" onTap={(p) => onTap(p, "A")} />
+      <div className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 text-center text-xs font-black text-zinc-200 sm:top-4">
+        <div className="text-lg tabular-nums sm:text-2xl">
+          <span className="text-[var(--pelada-accent)]">{scoreA}</span>
+          <span className="px-1 text-zinc-500">×</span>
+          <span className="text-red-400">{scoreB}</span>
+        </div>
+      </div>
+      <LiveTeamColumn title="Time B" players={teamB} accent="#ef4444" align="right" onTap={(p) => onTap(p, "B")} />
+    </div>
+  );
+}
+
+function LiveTeamColumn({
+  title,
+  players,
+  accent,
+  align,
+  onTap,
+}: {
+  title: string;
+  players: LivePlayer[];
+  accent: string;
+  align: "left" | "right";
+  onTap: (p: LivePlayer) => void;
+}) {
+  return (
+    <div className={`flex w-1/2 min-w-0 flex-col gap-1.5 pt-8 ${align === "right" ? "items-end text-right" : "items-start text-left"}`}>
+      <p className="mb-1 text-xs font-black uppercase tracking-wider sm:text-sm" style={{ color: accent }}>
+        {title}
+      </p>
+      {players.length === 0 ? (
+        <p className="text-xs text-zinc-500">Sem jogadores</p>
+      ) : (
+        players.map((p) => (
+          <button
+            key={p.id}
+            type="button"
+            onClick={() => onTap(p)}
+            className={`flex w-full min-w-0 items-center gap-1.5 rounded-lg border border-white/10 bg-zinc-950/60 px-2 py-2 text-xs transition hover:border-[color:var(--pelada-accent)]/60 hover:bg-zinc-900 active:scale-[0.98] sm:text-sm ${
+              align === "right" ? "flex-row-reverse" : ""
+            }`}
+          >
+            <span className="min-w-0 flex-1 truncate text-zinc-100">{p.name}</span>
+            <span className="shrink-0 rounded-md bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-black tabular-nums text-emerald-400">
+              ⚽{p.goals}
+            </span>
+            <span className="shrink-0 rounded-md bg-sky-500/15 px-1.5 py-0.5 text-[10px] font-black tabular-nums text-sky-400">
+              👟{p.assists}
+            </span>
+          </button>
+        ))
+      )}
+    </div>
   );
 }
 
