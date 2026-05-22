@@ -32,6 +32,17 @@ type Match = { id: string; name: string; logo_url: string | null; admin_id?: str
 type Player = { id: string; name: string; isGoalkeeper: boolean; rating?: number; userId?: string | null };
 type SavedTeams = { teamA: Player[]; teamB: Player[] };
 
+function deriveLeaders(
+  match: HistMatch,
+  field: "goals" | "assists",
+  selected: string[],
+): string[] {
+  if (selected.length > 0) return selected;
+  const players = [...match.teamA.players, ...match.teamB.players];
+  const max = players.reduce((best, p) => Math.max(best, Number(p[field]) || 0), 0);
+  return max > 0 ? players.filter((p) => (Number(p[field]) || 0) === max).map((p) => p.id) : [];
+}
+
 function PartidaPage() {
   const navigate = useNavigate();
   const { id } = useParams({ from: "/pelada/$id_/partida" });
