@@ -19,6 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
 import { useServerFn } from "@tanstack/react-start";
 import { listMatchMembers, setMemberRating } from "@/lib/admin-users.functions";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -61,6 +62,7 @@ function UsuariosPage() {
   const { id } = useParams({ from: "/pelada/$id_/usuarios" });
   const fetchMembers = useServerFn(listMatchMembers);
   const saveRating = useServerFn(setMemberRating);
+  const queryClient = useQueryClient();
   const [match, setMatch] = useState<Match | null>(null);
   const [members, setMembers] = useState<Profile[]>([]);
   const [ratings, setRatings] = useState<Record<string, number>>({});
@@ -267,6 +269,8 @@ function UsuariosPage() {
                         await saveRating({
                           data: { matchId: id, userId: m.id, rating: val },
                         });
+                        queryClient.invalidateQueries({ queryKey: ["match_attendance", id] });
+                        toast.success("Nota atualizada");
                       } catch (e: any) {
                         toast.error(e?.message ?? "Erro ao salvar nota");
                       }

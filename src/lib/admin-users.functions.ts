@@ -307,5 +307,13 @@ export const setMemberRating = createServerFn({ method: "POST" })
         { onConflict: "match_id,user_id" },
       );
     if (error) throw new Error(error.message);
+
+    // Propaga a nota para a lista de presença atual (sorteio usa essa coluna).
+    await supabaseAdmin
+      .from("match_attendance")
+      .update({ rating: data.rating })
+      .eq("match_id", data.matchId)
+      .eq("player_id", data.userId);
+
     return { ok: true };
   });
