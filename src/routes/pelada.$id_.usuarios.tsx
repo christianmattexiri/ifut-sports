@@ -177,7 +177,7 @@ function UsuariosPage() {
       />
 
       <div className="relative z-10 flex min-h-screen">
-        <aside className="hidden w-[280px] shrink-0 flex-col border-r border-white/5 bg-zinc-900/40 px-5 py-5 backdrop-blur-xl md:flex">
+        <aside className="sticky top-0 hidden h-screen w-[280px] shrink-0 flex-col overflow-y-auto border-r border-white/5 bg-zinc-900/40 px-5 py-5 backdrop-blur-xl md:flex">
           <button
             type="button"
             onClick={() => navigate({ to: "/dashboard" })}
