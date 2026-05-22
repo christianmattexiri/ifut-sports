@@ -56,12 +56,12 @@ function PartidaPage() {
     !!viewer && !!match &&
     (match.admin_id === viewer.id || isSuperAdminUsername(viewer.username));
   const refereesQuery = useQuery(matchRefereesQuery(id));
-  const referees = refereesQuery.data ?? [];
-  const isReferee = !!viewer && referees.some((r) => r.user_id === viewer.id);
+  const allReferees = refereesQuery.data ?? [];
+  const isReferee = !!viewer && allReferees.some((r) => r.user_id === viewer.id);
   const canRegister = isAdmin || isReferee;
   const refereeUserIds = useMemo(
-    () => new Set(referees.map((r) => r.user_id)),
-    [referees],
+    () => new Set(allReferees.map((r) => r.user_id)),
+    [allReferees],
   );
   useEffect(() => {
     if (!viewerLoading && viewer === null) navigate({ to: "/" });
@@ -88,6 +88,19 @@ function PartidaPage() {
 
   // Lista de presença: query compartilhada (cacheada pelo loader pai).
   const attendanceQuery = useQuery(matchAttendanceQuery(id));
+
+  // Apenas juízes que realmente foram colocados na lista de presença
+  // aparecem como "Juiz da partida".
+  const referees = useMemo(() => {
+    const rows = attendanceQuery.data ?? [];
+    const presentRefereeIds = new Set(
+      rows
+        .filter((r) => r.is_referee || (r.player_id && refereeUserIds.has(r.player_id)))
+        .map((r) => r.player_id)
+        .filter((x): x is string => !!x),
+    );
+    return allReferees.filter((r) => presentRefereeIds.has(r.user_id));
+  }, [allReferees, attendanceQuery.data, refereeUserIds]);
 
   const confirmed = useMemo<Player[]>(() => {
     const rows = attendanceQuery.data ?? [];
@@ -286,6 +299,16 @@ function PartidaPage() {
       queryClient.invalidateQueries({ queryKey: ["match-votes", normalized.id] });
       queryClient.invalidateQueries();
       emitStatsUpdated(normalized.id);
+      // Desfaz o sorteio salvo: a próxima partida começa do zero.
+      try {
+        await saveCurrentDraw(id, null);
+      } catch {
+        /* não bloquear o salvamento por causa do reset do sorteio */
+      }
+      setSaved(null);
+      setTeamA([]);
+      setTeamB([]);
+      setPool([]);
       setEditing(null);
       toast.success("Partida registrada! Pódio atualizado.");
     } catch (e) {
