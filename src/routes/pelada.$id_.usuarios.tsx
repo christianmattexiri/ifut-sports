@@ -458,12 +458,18 @@ function AddPlayerDialog({
   existingIds,
   pendingIds,
   onPick,
+  title,
+  actionLabel,
+  accentClass,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   existingIds: string[];
   pendingIds?: string[];
   onPick: (p: Profile) => void;
+  title?: string;
+  actionLabel?: string;
+  accentClass?: "green" | "amber";
 }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Profile[]>([]);
