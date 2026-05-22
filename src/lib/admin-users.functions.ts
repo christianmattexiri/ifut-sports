@@ -242,11 +242,16 @@ export const listMatchMembers = createServerFn({ method: "POST" })
 
     const { data: memberRows } = await supabaseAdmin
       .from("match_members")
-      .select("user_id")
+      .select("user_id, rating")
       .eq("match_id", data.matchId);
+    const memberRowsTyped = (memberRows ?? []) as { user_id: string; rating: number | null }[];
     const memberIds = Array.from(
-      new Set(((memberRows ?? []) as any[]).map((r) => r.user_id).filter(Boolean)),
+      new Set(memberRowsTyped.map((r) => r.user_id).filter(Boolean)),
     );
+    const ratingMap: Record<string, number> = {};
+    for (const r of memberRowsTyped) {
+      ratingMap[r.user_id] = Number(r.rating ?? 5);
+    }
 
     const ids = Array.from(new Set([match.admin_id, ...memberIds].filter(Boolean)));
     let profiles: any[] = [];
@@ -268,6 +273,39 @@ export const listMatchMembers = createServerFn({ method: "POST" })
       adminId: match.admin_id,
       memberIds,
       profiles,
+      ratings: ratingMap,
       pendingInviteIds: (invs ?? []).map((i: any) => i.invitee_id),
     };
+  });
+
+export const setMemberRating = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        matchId: z.string().uuid(),
+        userId: z.string().uuid(),
+        rating: z.number().min(1).max(10),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const [{ data: prof }, { data: match }] = await Promise.all([
+      supabaseAdmin.from("profiles").select("username").eq("id", context.userId).maybeSingle(),
+      supabaseAdmin.from("matches").select("id, admin_id").eq("id", data.matchId).maybeSingle(),
+    ]);
+    if (!match) throw new Error("Pelada não encontrada");
+    const isSuper = isSuperAdminUsername(prof?.username);
+    const isOwner = match.admin_id === context.userId;
+    if (!isSuper && !isOwner) throw new Error("Acesso restrito");
+
+    // Admin é dono da pelada e pode ter rating também — garante linha em match_members
+    const { error } = await supabaseAdmin
+      .from("match_members")
+      .upsert(
+        { match_id: data.matchId, user_id: data.userId, rating: data.rating },
+        { onConflict: "match_id,user_id" },
+      );
+    if (error) throw new Error(error.message);
+    return { ok: true };
   });
