@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { toast } from "sonner";
 import { EditMatchDialog, saveMatchToDb, type HistMatch } from "./pelada.$id_.historico";
 import { saveCurrentDraw, incrementPlayerStat } from "@/lib/games-storage";
+import { emitStatsUpdated } from "@/lib/profile-sync";
 
 export const Route = createFileRoute("/pelada/$id_/partida")({
   component: PartidaPage,
@@ -254,6 +255,11 @@ function PartidaPage() {
 
   async function handleSaveMatch(updated: HistMatch) {
     try {
+      const normalized: HistMatch = {
+        ...updated,
+        topScorers: deriveLeaders(updated, "goals", updated.topScorers),
+        topAssists: deriveLeaders(updated, "assists", updated.topAssists),
+      };
       // Abre a votação automaticamente se algum modo estiver ativo e o admin
       // não tiver escolhido vencedores manualmente. Evita o falso positivo
       // de auto-encerramento e destrava o Pódio.
@@ -262,12 +268,13 @@ function PartidaPage() {
         (settings.voteModes.mvp ||
           settings.voteModes.pereba ||
           settings.voteModes.apitto);
-      const manualWinners = !!updated.mvp || !!updated.pereba;
+      const manualWinners = !!normalized.mvp || !!normalized.pereba;
       const votingOpen = !!voteOn && !manualWinners;
-      await saveMatchToDb(id, updated, { votingOpen });
+      await saveMatchToDb(id, normalized, { votingOpen });
       // Força Pódio e telas iniciais a relerem o estado fresco do banco.
-      queryClient.invalidateQueries({ queryKey: ["match-votes", updated.id] });
+      queryClient.invalidateQueries({ queryKey: ["match-votes", normalized.id] });
       queryClient.invalidateQueries();
+      emitStatsUpdated(normalized.id);
       setEditing(null);
       toast.success("Partida registrada! Pódio atualizado.");
     } catch (e) {
