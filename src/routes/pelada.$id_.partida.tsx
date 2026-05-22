@@ -470,6 +470,77 @@ function NavItem({ icon, label, active, gold }: { icon: React.ReactNode; label: 
   );
 }
 
+type LivePlayer = { id: string; name: string; goals: number; assists: number };
+function LiveVersusView({
+  teamA,
+  teamB,
+  onTap,
+}: {
+  teamA: LivePlayer[];
+  teamB: LivePlayer[];
+  onTap: (p: LivePlayer, team: "A" | "B") => void;
+}) {
+  const scoreA = teamA.reduce((s, p) => s + (p.goals || 0), 0);
+  const scoreB = teamB.reduce((s, p) => s + (p.goals || 0), 0);
+  return (
+    <div className="relative flex w-full items-start justify-between gap-2 rounded-2xl border border-red-500/30 bg-zinc-900/50 p-3 backdrop-blur-xl sm:gap-4 sm:p-5">
+      <LiveTeamColumn title="Time A" players={teamA} accent="var(--pelada-accent)" align="left" onTap={(p) => onTap(p, "A")} />
+      <div className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 text-center text-xs font-black text-zinc-200 sm:top-4">
+        <div className="text-lg tabular-nums sm:text-2xl">
+          <span className="text-[var(--pelada-accent)]">{scoreA}</span>
+          <span className="px-1 text-zinc-500">×</span>
+          <span className="text-red-400">{scoreB}</span>
+        </div>
+      </div>
+      <LiveTeamColumn title="Time B" players={teamB} accent="#ef4444" align="right" onTap={(p) => onTap(p, "B")} />
+    </div>
+  );
+}
+
+function LiveTeamColumn({
+  title,
+  players,
+  accent,
+  align,
+  onTap,
+}: {
+  title: string;
+  players: LivePlayer[];
+  accent: string;
+  align: "left" | "right";
+  onTap: (p: LivePlayer) => void;
+}) {
+  return (
+    <div className={`flex w-1/2 min-w-0 flex-col gap-1.5 pt-8 ${align === "right" ? "items-end text-right" : "items-start text-left"}`}>
+      <p className="mb-1 text-xs font-black uppercase tracking-wider sm:text-sm" style={{ color: accent }}>
+        {title}
+      </p>
+      {players.length === 0 ? (
+        <p className="text-xs text-zinc-500">Sem jogadores</p>
+      ) : (
+        players.map((p) => (
+          <button
+            key={p.id}
+            type="button"
+            onClick={() => onTap(p)}
+            className={`flex w-full min-w-0 items-center gap-1.5 rounded-lg border border-white/10 bg-zinc-950/60 px-2 py-2 text-xs transition hover:border-[color:var(--pelada-accent)]/60 hover:bg-zinc-900 active:scale-[0.98] sm:text-sm ${
+              align === "right" ? "flex-row-reverse" : ""
+            }`}
+          >
+            <span className="min-w-0 flex-1 truncate text-zinc-100">{p.name}</span>
+            <span className="shrink-0 rounded-md bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-black tabular-nums text-emerald-400">
+              ⚽{p.goals}
+            </span>
+            <span className="shrink-0 rounded-md bg-sky-500/15 px-1.5 py-0.5 text-[10px] font-black tabular-nums text-sky-400">
+              👟{p.assists}
+            </span>
+          </button>
+        ))
+      )}
+    </div>
+  );
+}
+
 function TeamsVersusView({ teamA, teamB }: { teamA: Player[]; teamB: Player[] }) {
   const sortGK = (a: Player, b: Player) =>
     Number(b.isGoalkeeper) - Number(a.isGoalkeeper);
