@@ -75,6 +75,52 @@ export const resetUserPassword = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const deleteUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({ userId: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: prof } = await supabaseAdmin
+      .from("profiles").select("username").eq("id", context.userId).maybeSingle();
+    if (!isSuperAdminUsername(prof?.username)) throw new Error("Acesso restrito");
+    if (data.userId === context.userId) throw new Error("Você não pode deletar a si mesmo");
+
+    // 1. Delete every match owned by this user (cascades to its child rows).
+    const { data: ownedMatches } = await supabaseAdmin
+      .from("matches").select("id").eq("admin_id", data.userId);
+    for (const m of (ownedMatches ?? []) as { id: string }[]) {
+      const { data: games } = await supabaseAdmin
+        .from("games").select("id").eq("match_id", m.id);
+      const gameIds = (games ?? []).map((g: any) => g.id);
+      if (gameIds.length) {
+        await supabaseAdmin.from("game_votes").delete().in("game_id", gameIds);
+        await supabaseAdmin.from("game_player_stats").delete().in("game_id", gameIds);
+        await supabaseAdmin.from("games").delete().in("id", gameIds);
+      }
+      await supabaseAdmin.from("match_attendance").delete().eq("match_id", m.id);
+      await supabaseAdmin.from("match_invitations").delete().eq("match_id", m.id);
+      await supabaseAdmin.from("match_members").delete().eq("match_id", m.id);
+      await supabaseAdmin.from("matches").delete().eq("id", m.id);
+    }
+
+    // 2. Clean references in remaining peladas.
+    await supabaseAdmin.from("match_members").delete().eq("user_id", data.userId);
+    await supabaseAdmin.from("match_invitations").delete().eq("invitee_id", data.userId);
+    await supabaseAdmin.from("match_invitations").delete().eq("inviter_id", data.userId);
+    await supabaseAdmin.from("match_attendance").delete().eq("player_id", data.userId);
+    await supabaseAdmin.from("game_player_stats").delete().eq("user_id", data.userId);
+    await supabaseAdmin.from("game_votes").delete().eq("voter_id", data.userId);
+    await supabaseAdmin.from("game_votes").update({ mvp_id: null }).eq("mvp_id", data.userId);
+    await supabaseAdmin.from("game_votes").update({ pereba_id: null }).eq("pereba_id", data.userId);
+
+    // 3. Delete profile + auth user.
+    await supabaseAdmin.from("profiles").delete().eq("id", data.userId);
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 export const clearForcePasswordReset = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
