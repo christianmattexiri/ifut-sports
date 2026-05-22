@@ -74,6 +74,7 @@ export type AttendanceRow = {
   has_paid: boolean | null;
   rating: number | null;
   created_at: string | null;
+  is_referee: boolean | null;
 };
 
 export const matchAttendanceQuery = (id: string | undefined) =>
@@ -85,10 +86,44 @@ export const matchAttendanceQuery = (id: string | undefined) =>
     queryFn: async () => {
       const { data, error } = await supabase
         .from("match_attendance")
-        .select("id, match_id, player_id, player_name, is_goalkeeper, has_paid, rating, created_at")
+        .select("id, match_id, player_id, player_name, is_goalkeeper, has_paid, rating, created_at, is_referee")
         .eq("match_id", id!)
         .order("created_at", { ascending: true });
       if (error) throw error;
       return (data ?? []) as AttendanceRow[];
+    },
+  });
+
+export type MatchRefereeProfile = {
+  user_id: string;
+  full_name: string | null;
+  username: string | null;
+  avatar_url: string | null;
+};
+
+export const matchRefereesQuery = (id: string | undefined) =>
+  queryOptions({
+    queryKey: ["match_referees", id],
+    enabled: !!id,
+    staleTime: 30 * 1000,
+    gcTime: 30 * 60 * 1000,
+    queryFn: async (): Promise<MatchRefereeProfile[]> => {
+      const { data: rows } = await supabase
+        .from("match_members")
+        .select("user_id, role")
+        .eq("match_id", id!)
+        .eq("role", "juiz");
+      const ids = (rows ?? []).map((r: any) => r.user_id as string);
+      if (ids.length === 0) return [];
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("id, full_name, username, avatar_url")
+        .in("id", ids);
+      return ((profs ?? []) as any[]).map((p) => ({
+        user_id: p.id,
+        full_name: p.full_name ?? null,
+        username: p.username ?? null,
+        avatar_url: p.avatar_url ?? null,
+      }));
     },
   });
