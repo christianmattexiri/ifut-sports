@@ -348,7 +348,7 @@ export const inviteRefereeToMatch = createServerFn({ method: "POST" })
           match_id: data.matchId,
           user_id: data.userId,
           is_goalkeeper: false,
-          rating: 0,
+          rating: 5,
           role: "juiz",
         },
         { onConflict: "match_id,user_id" },
