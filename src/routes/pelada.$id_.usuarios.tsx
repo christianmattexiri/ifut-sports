@@ -526,7 +526,7 @@ function AddPlayerDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="border-white/10 bg-zinc-950 text-zinc-100">
         <DialogHeader>
-          <DialogTitle className="text-[#00FF00]">Incluir Jogador</DialogTitle>
+          <DialogTitle className={headerColor}>{title ?? "Incluir Jogador"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3 py-2">
           <div className="relative">
@@ -577,10 +577,10 @@ function AddPlayerDialog({
                       className={`rounded-lg border px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition ${
                         already || pending
                           ? "cursor-not-allowed border-white/10 bg-zinc-900 text-zinc-600"
-                          : "border-[#00FF00]/50 bg-[#00FF00]/10 text-[#00FF00] hover:bg-[#00FF00]/20"
+                          : ringClass
                       }`}
                     >
-                      {already ? "Já incluso" : pending ? "Convite enviado" : "Convidar"}
+                      {already ? "Já incluso" : pending ? "Convite enviado" : (actionLabel ?? "Convidar")}
                     </button>
                   </div>
                 );
