@@ -299,6 +299,16 @@ function PartidaPage() {
       queryClient.invalidateQueries({ queryKey: ["match-votes", normalized.id] });
       queryClient.invalidateQueries();
       emitStatsUpdated(normalized.id);
+      // Desfaz o sorteio salvo: a próxima partida começa do zero.
+      try {
+        await saveCurrentDraw(id, null);
+      } catch {
+        /* não bloquear o salvamento por causa do reset do sorteio */
+      }
+      setSaved(null);
+      setTeamA([]);
+      setTeamB([]);
+      setPool([]);
       setEditing(null);
       toast.success("Partida registrada! Pódio atualizado.");
     } catch (e) {
