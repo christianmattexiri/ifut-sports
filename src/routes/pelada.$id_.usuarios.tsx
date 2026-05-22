@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
+import { useServerFn } from "@tanstack/react-start";
+import { listMatchMembers } from "@/lib/admin-users.functions";
 import {
   Dialog,
   DialogContent,
@@ -57,6 +59,7 @@ function initials(name: string) {
 function UsuariosPage() {
   const navigate = useNavigate();
   const { id } = useParams({ from: "/pelada/$id_/usuarios" });
+  const fetchMembers = useServerFn(listMatchMembers);
   const [match, setMatch] = useState<Match | null>(null);
   const [members, setMembers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -92,42 +95,24 @@ function UsuariosPage() {
       }
       setMatch(match);
 
-      // Carrega admin da pelada + membros confirmados (match_members)
-      // Sem embed PostgREST: match_members.user_id não tem FK explícita para profiles.id
-      const [{ data: adminProf }, { data: memberRows }, { data: invs }] = await Promise.all([
-        supabase
-          .from("profiles")
-          .select("id, full_name, username, avatar_url")
-          .eq("id", match.admin_id)
-          .maybeSingle(),
-        supabase
-          .from("match_members")
-          .select("user_id")
-          .eq("match_id", id),
-        supabase
-          .from("match_invitations")
-          .select("invitee_id")
-          .eq("match_id", id)
-          .eq("status", "pending"),
-      ]);
-      const memberIds = Array.from(
-        new Set(((memberRows ?? []) as any[]).map((r) => r.user_id).filter(Boolean))
-      );
-      let memberProfiles: Profile[] = [];
-      if (memberIds.length > 0) {
-        const { data: profs } = await supabase
-          .from("profiles")
-          .select("id, full_name, username, avatar_url")
-          .in("id", memberIds);
-        memberProfiles = (profs ?? []) as Profile[];
+      // Server fn bypasses RLS for owner/super admin so todos os membros aparecem
+      try {
+        const res = await fetchMembers({ data: { matchId: id } });
+        const profMap = new Map<string, Profile>();
+        for (const p of (res.profiles ?? []) as Profile[]) profMap.set(p.id, p);
+        const list: Profile[] = [];
+        const adminProf = profMap.get(res.adminId);
+        if (adminProf) list.push(adminProf);
+        for (const uid2 of res.memberIds) {
+          if (list.some((p) => p.id === uid2)) continue;
+          const p = profMap.get(uid2);
+          if (p) list.push(p);
+        }
+        setMembers(list);
+        setPendingInviteIds(new Set(res.pendingInviteIds));
+      } catch (e: any) {
+        toast.error(e?.message ?? "Erro ao carregar membros");
       }
-      const list: Profile[] = [];
-      if (adminProf) list.push(adminProf as Profile);
-      for (const u of memberProfiles) {
-        if (!list.some((p) => p.id === u.id)) list.push(u);
-      }
-      setMembers(list);
-      setPendingInviteIds(new Set((invs ?? []).map((i: any) => i.invitee_id)));
       setLoading(false);
     })();
   }, [navigate, id]);
