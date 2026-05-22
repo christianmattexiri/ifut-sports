@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { peladaMatchQuery, viewerQuery } from "@/lib/pelada-queries";
+import { peladaMatchQuery, viewerQuery, matchRefereesQuery } from "@/lib/pelada-queries";
 import {
   fetchHistory,
   saveMatch as saveGameMatch,
@@ -125,6 +125,10 @@ function HistoricoPage() {
   const match = (matchData ?? null) as Match | null;
   const { data: viewer, isLoading: viewerLoading } = useQuery(viewerQuery());
   const isAdmin = !!viewer && !!match && match.admin_id === viewer.id;
+  const { data: refereesData } = useQuery(matchRefereesQuery(id));
+  const isReferee =
+    !!viewer && (refereesData ?? []).some((r) => r.user_id === viewer.id);
+  const canEdit = isAdmin || isReferee;
   useEffect(() => {
     if (!viewerLoading && viewer === null) navigate({ to: "/" });
   }, [viewer, viewerLoading, navigate]);
@@ -284,7 +288,7 @@ function HistoricoPage() {
             <h1 className="text-center text-2xl font-bold uppercase tracking-[0.3em] text-[var(--pelada-accent)] drop-shadow-[0_0_15px_color-mix(in_oklab,var(--pelada-accent)_60%,transparent)] md:text-3xl flex-1">
               Histórico de Jogos
             </h1>
-            {isAdmin && (
+            {canEdit && (
               <button
                 type="button"
                 onClick={handleNewMatch}
@@ -312,6 +316,7 @@ function HistoricoPage() {
                   open={openId === h.id}
                   onToggle={() => setOpenId(openId === h.id ? null : h.id)}
                   isAdmin={isAdmin}
+                  canEdit={canEdit}
                   onEdit={() => setEditing(h)}
                   onDelete={() => setConfirmDelete(h.id)}
                 />
@@ -360,6 +365,7 @@ function MatchAccordion({
   open,
   onToggle,
   isAdmin,
+  canEdit,
   onEdit,
   onDelete,
 }: {
@@ -367,6 +373,7 @@ function MatchAccordion({
   open: boolean;
   onToggle: () => void;
   isAdmin: boolean;
+  canEdit?: boolean;
   onEdit: () => void;
   onDelete: () => void;
 }) {
@@ -396,7 +403,7 @@ function MatchAccordion({
               {sb}
             </span>
           </span>
-          {isAdmin && (
+          {(canEdit ?? isAdmin) && (
             <>
               <button
                 type="button"
@@ -406,14 +413,14 @@ function MatchAccordion({
               >
                 <Pencil className="h-4 w-4" />
               </button>
-              <button
+              {isAdmin && <button
                 type="button"
                 onClick={onDelete}
                 className="rounded-lg p-1 text-red-500 transition hover:bg-red-500/10 sm:p-1.5"
                 aria-label="Excluir"
               >
                 <Trash2 className="h-4 w-4" />
-              </button>
+              </button>}
             </>
           )}
           <button

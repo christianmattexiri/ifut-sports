@@ -18,7 +18,11 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
 import { useServerFn } from "@tanstack/react-start";
-import { listMatchMembers, setMemberRating } from "@/lib/admin-users.functions";
+import {
+  listMatchMembers,
+  setMemberRating,
+  inviteRefereeToMatch,
+} from "@/lib/admin-users.functions";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
@@ -28,6 +32,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { Flag } from "lucide-react";
 
 export const Route = createFileRoute("/pelada/$id_/usuarios")({
   component: UsuariosPage,
@@ -62,12 +67,15 @@ function UsuariosPage() {
   const { id } = useParams({ from: "/pelada/$id_/usuarios" });
   const fetchMembers = useServerFn(listMatchMembers);
   const saveRating = useServerFn(setMemberRating);
+  const callReferee = useServerFn(inviteRefereeToMatch);
   const queryClient = useQueryClient();
   const [match, setMatch] = useState<Match | null>(null);
   const [members, setMembers] = useState<Profile[]>([]);
   const [ratings, setRatings] = useState<Record<string, number>>({});
+  const [roles, setRoles] = useState<Record<string, "player" | "juiz">>({});
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [refereeOpen, setRefereeOpen] = useState(false);
   const [pendingInviteIds, setPendingInviteIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -114,6 +122,7 @@ function UsuariosPage() {
         }
         setMembers(list);
         setRatings(res.ratings ?? {});
+        setRoles((res as any).roles ?? {});
         setPendingInviteIds(new Set(res.pendingInviteIds));
       } catch (e: any) {
         toast.error(e?.message ?? "Erro ao carregar membros");
@@ -166,8 +175,27 @@ function UsuariosPage() {
     toast.success(`Convite enviado para ${p.full_name || p.username}!`);
   };
 
+  const inviteReferee = async (p: Profile) => {
+    if (members.some((m) => m.id === p.id && roles[m.id] === "juiz")) {
+      toast.info("Esse usuário já é juiz dessa pelada");
+      return;
+    }
+    try {
+      await callReferee({ data: { matchId: id, userId: p.id } });
+      setMembers((prev) => (prev.some((m) => m.id === p.id) ? prev : [...prev, p]));
+      setRoles((prev) => ({ ...prev, [p.id]: "juiz" }));
+      setRatings((prev) => ({ ...prev, [p.id]: 0 }));
+      queryClient.invalidateQueries({ queryKey: ["match_referees", id] });
+      toast.success(`${p.full_name || p.username} chamado como Juiz!`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erro ao chamar juiz");
+    }
+  };
+
   const peladaName = match?.name ?? "Minha Pelada";
   const peladaLogo = match?.logo_url ?? null;
+  const referees = members.filter((m) => roles[m.id] === "juiz");
+  const players = members.filter((m) => roles[m.id] !== "juiz");
 
   return (
     <main className="relative min-h-screen w-full overflow-x-hidden bg-zinc-950 pt-14 text-zinc-100 font-sans antialiased">
@@ -231,7 +259,7 @@ function UsuariosPage() {
 
         <section className="flex-1 px-4 py-6 md:px-10 md:py-10">
           <div className="mx-auto max-w-3xl space-y-6">
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h1 className="text-2xl font-bold uppercase tracking-tight text-[#00FF00] md:text-3xl">
                   Gerenciamento de Usuários
@@ -240,14 +268,24 @@ function UsuariosPage() {
                   Adicione ou remova jogadores desta pelada.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setOpen(true)}
-                className="inline-flex shrink-0 items-center gap-2 rounded-xl border-2 border-[#00FF00] bg-[#00FF00]/10 px-4 py-2.5 text-sm font-bold uppercase tracking-wider text-[#00FF00] transition hover:bg-[#00FF00]/20 shadow-[0_0_25px_-8px_rgba(0,255,0,0.7)]"
-              >
-                <UserPlus className="h-4 w-4" />
-                Incluir Jogador
-              </button>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setOpen(true)}
+                  className="inline-flex shrink-0 items-center gap-2 rounded-xl border-2 border-[#00FF00] bg-[#00FF00]/10 px-4 py-2.5 text-sm font-bold uppercase tracking-wider text-[#00FF00] transition hover:bg-[#00FF00]/20 shadow-[0_0_25px_-8px_rgba(0,255,0,0.7)]"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  Incluir Jogador
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRefereeOpen(true)}
+                  className="inline-flex shrink-0 items-center gap-2 rounded-xl border-2 border-yellow-400 bg-yellow-400/10 px-4 py-2.5 text-sm font-bold uppercase tracking-wider text-yellow-300 transition hover:bg-yellow-400/20"
+                >
+                  <Flag className="h-4 w-4" />
+                  Chamar Juiz
+                </button>
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -258,27 +296,43 @@ function UsuariosPage() {
                   Ninguém na pelada ainda. Clique em "Incluir Jogador".
                 </p>
               ) : (
-                members.map((m) => (
-                  <MemberRow
-                    key={m.id}
-                    profile={m}
-                    isAdmin={m.id === match?.admin_id}
-                    rating={ratings[m.id] ?? 5}
-                    onRatingChange={async (val) => {
-                      setRatings((prev) => ({ ...prev, [m.id]: val }));
-                      try {
-                        await saveRating({
-                          data: { matchId: id, userId: m.id, rating: val },
-                        });
-                        queryClient.invalidateQueries({ queryKey: ["match_attendance", id] });
-                        toast.success("Nota atualizada");
-                      } catch (e: any) {
-                        toast.error(e?.message ?? "Erro ao salvar nota");
-                      }
-                    }}
-                    onRemove={() => removeMember(m.id)}
-                  />
-                ))
+                <>
+                  {referees.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-yellow-300/80">
+                        Juízes
+                      </p>
+                      {referees.map((m) => (
+                        <RefereeRow
+                          key={m.id}
+                          profile={m}
+                          onRemove={() => removeMember(m.id)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                  {players.map((m) => (
+                    <MemberRow
+                      key={m.id}
+                      profile={m}
+                      isAdmin={m.id === match?.admin_id}
+                      rating={ratings[m.id] ?? 5}
+                      onRatingChange={async (val) => {
+                        setRatings((prev) => ({ ...prev, [m.id]: val }));
+                        try {
+                          await saveRating({
+                            data: { matchId: id, userId: m.id, rating: val },
+                          });
+                          queryClient.invalidateQueries({ queryKey: ["match_attendance", id] });
+                          toast.success("Nota atualizada");
+                        } catch (e: any) {
+                          toast.error(e?.message ?? "Erro ao salvar nota");
+                        }
+                      }}
+                      onRemove={() => removeMember(m.id)}
+                    />
+                  ))}
+                </>
               )}
             </div>
           </div>
@@ -293,6 +347,20 @@ function UsuariosPage() {
         onPick={(p) => {
           inviteMember(p);
           setOpen(false);
+        }}
+      />
+
+      <AddPlayerDialog
+        open={refereeOpen}
+        onOpenChange={setRefereeOpen}
+        existingIds={referees.map((m) => m.id)}
+        pendingIds={[]}
+        title="Chamar Juiz"
+        actionLabel="Chamar Juiz"
+        accentClass="amber"
+        onPick={(p) => {
+          inviteReferee(p);
+          setRefereeOpen(false);
         }}
       />
     </main>
@@ -384,19 +452,68 @@ function MemberRow({
   );
 }
 
+function RefereeRow({
+  profile,
+  onRemove,
+}: {
+  profile: Profile;
+  onRemove: () => void;
+}) {
+  const display = profile.full_name?.trim() || profile.username;
+  return (
+    <div className="flex w-full items-center gap-2 rounded-xl border border-yellow-400/40 bg-yellow-400/5 p-2 backdrop-blur-xl sm:gap-3 sm:px-3 sm:py-2.5">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-yellow-400/40 bg-zinc-800 text-xs font-bold text-yellow-300 sm:h-10 sm:w-10">
+        {profile.avatar_url ? (
+          <img src={profile.avatar_url} alt={display} className="h-full w-full object-cover" />
+        ) : display ? (
+          initials(display)
+        ) : (
+          <UserIcon className="h-4 w-4" />
+        )}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-semibold text-zinc-100">{display}</p>
+        <p className="truncate text-xs text-zinc-500">@{profile.username}</p>
+      </div>
+      <span className="shrink-0 rounded-md border border-yellow-400/50 bg-yellow-400/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-yellow-300 sm:px-2">
+        🏁 Juiz
+      </span>
+      <button
+        type="button"
+        onClick={onRemove}
+        aria-label="Remover juiz"
+        className="shrink-0 rounded-lg border border-red-500/30 bg-red-500/5 p-1.5 text-red-400 transition hover:bg-red-500/15 hover:text-red-300 sm:p-2"
+      >
+        <Trash2 className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
 function AddPlayerDialog({
   open,
   onOpenChange,
   existingIds,
   pendingIds,
   onPick,
+  title,
+  actionLabel,
+  accentClass,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   existingIds: string[];
   pendingIds?: string[];
   onPick: (p: Profile) => void;
+  title?: string;
+  actionLabel?: string;
+  accentClass?: "green" | "amber";
 }) {
+  const isAmber = accentClass === "amber";
+  const headerColor = isAmber ? "text-yellow-300" : "text-[#00FF00]";
+  const ringClass = isAmber
+    ? "border-yellow-400/50 bg-yellow-400/10 text-yellow-300 hover:bg-yellow-400/20"
+    : "border-[#00FF00]/50 bg-[#00FF00]/10 text-[#00FF00] hover:bg-[#00FF00]/20";
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Profile[]>([]);
   const [searching, setSearching] = useState(false);
@@ -447,7 +564,7 @@ function AddPlayerDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="border-white/10 bg-zinc-950 text-zinc-100">
         <DialogHeader>
-          <DialogTitle className="text-[#00FF00]">Incluir Jogador</DialogTitle>
+          <DialogTitle className={headerColor}>{title ?? "Incluir Jogador"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3 py-2">
           <div className="relative">
@@ -498,10 +615,10 @@ function AddPlayerDialog({
                       className={`rounded-lg border px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition ${
                         already || pending
                           ? "cursor-not-allowed border-white/10 bg-zinc-900 text-zinc-600"
-                          : "border-[#00FF00]/50 bg-[#00FF00]/10 text-[#00FF00] hover:bg-[#00FF00]/20"
+                          : ringClass
                       }`}
                     >
-                      {already ? "Já incluso" : pending ? "Convite enviado" : "Convidar"}
+                      {already ? "Já incluso" : pending ? "Convite enviado" : (actionLabel ?? "Convidar")}
                     </button>
                   </div>
                 );

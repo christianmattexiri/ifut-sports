@@ -242,15 +242,21 @@ export const listMatchMembers = createServerFn({ method: "POST" })
 
     const { data: memberRows } = await supabaseAdmin
       .from("match_members")
-      .select("user_id, rating")
+      .select("user_id, rating, role")
       .eq("match_id", data.matchId);
-    const memberRowsTyped = (memberRows ?? []) as { user_id: string; rating: number | null }[];
+    const memberRowsTyped = (memberRows ?? []) as {
+      user_id: string;
+      rating: number | null;
+      role: string | null;
+    }[];
     const memberIds = Array.from(
       new Set(memberRowsTyped.map((r) => r.user_id).filter(Boolean)),
     );
     const ratingMap: Record<string, number> = {};
+    const roleMap: Record<string, "player" | "juiz"> = {};
     for (const r of memberRowsTyped) {
       ratingMap[r.user_id] = Number(r.rating ?? 5);
+      roleMap[r.user_id] = (r.role === "juiz" ? "juiz" : "player");
     }
 
     const ids = Array.from(new Set([match.admin_id, ...memberIds].filter(Boolean)));
@@ -274,6 +280,7 @@ export const listMatchMembers = createServerFn({ method: "POST" })
       memberIds,
       profiles,
       ratings: ratingMap,
+      roles: roleMap,
       pendingInviteIds: (invs ?? []).map((i: any) => i.invitee_id),
     };
   });
@@ -314,6 +321,46 @@ export const setMemberRating = createServerFn({ method: "POST" })
       .update({ rating: data.rating })
       .eq("match_id", data.matchId)
       .eq("player_id", data.userId);
+
+    return { ok: true };
+  });
+
+export const inviteRefereeToMatch = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({ matchId: z.string().uuid(), userId: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const [{ data: prof }, { data: match }] = await Promise.all([
+      supabaseAdmin.from("profiles").select("username").eq("id", context.userId).maybeSingle(),
+      supabaseAdmin.from("matches").select("id, admin_id").eq("id", data.matchId).maybeSingle(),
+    ]);
+    if (!match) throw new Error("Pelada não encontrada");
+    const isSuper = isSuperAdminUsername(prof?.username);
+    const isOwner = match.admin_id === context.userId;
+    if (!isSuper && !isOwner) throw new Error("Acesso restrito");
+    if (match.admin_id === data.userId) throw new Error("O admin não pode ser juiz");
+
+    const { error } = await supabaseAdmin
+      .from("match_members")
+      .upsert(
+        {
+          match_id: data.matchId,
+          user_id: data.userId,
+          is_goalkeeper: false,
+          rating: 0,
+          role: "juiz",
+        },
+        { onConflict: "match_id,user_id" },
+      );
+    if (error) throw new Error(error.message);
+
+    await supabaseAdmin
+      .from("match_invitations")
+      .update({ status: "accepted" })
+      .eq("match_id", data.matchId)
+      .eq("invitee_id", data.userId)
+      .eq("status", "pending");
 
     return { ok: true };
   });

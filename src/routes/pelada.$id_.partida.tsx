@@ -8,6 +8,7 @@ import {
 import { isSuperAdminUsername } from "@/lib/admin";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { peladaMatchQuery, viewerQuery, matchAttendanceQuery } from "@/lib/pelada-queries";
+import { matchRefereesQuery } from "@/lib/pelada-queries";
 import { peladaSettingsQuery, DEFAULT_SETTINGS } from "@/lib/pelada-settings";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
@@ -41,6 +42,14 @@ function PartidaPage() {
   const isAdmin =
     !!viewer && !!match &&
     (match.admin_id === viewer.id || isSuperAdminUsername(viewer.username));
+  const refereesQuery = useQuery(matchRefereesQuery(id));
+  const referees = refereesQuery.data ?? [];
+  const isReferee = !!viewer && referees.some((r) => r.user_id === viewer.id);
+  const canRegister = isAdmin || isReferee;
+  const refereeUserIds = useMemo(
+    () => new Set(referees.map((r) => r.user_id)),
+    [referees],
+  );
   useEffect(() => {
     if (!viewerLoading && viewer === null) navigate({ to: "/" });
   }, [viewer, viewerLoading, navigate]);
@@ -58,7 +67,9 @@ function PartidaPage() {
 
   const confirmed = useMemo<Player[]>(() => {
     const rows = attendanceQuery.data ?? [];
-    return rows.map((r) => {
+    return rows
+      .filter((r) => !r.is_referee && !(r.player_id && refereeUserIds.has(r.player_id)))
+      .map((r) => {
       const userId = (r.player_id as string | null) ?? null;
       const rowId = r.id as string;
       return {
@@ -69,7 +80,7 @@ function PartidaPage() {
         userId,
       };
     });
-  }, [attendanceQuery.data]);
+  }, [attendanceQuery.data, refereeUserIds]);
 
   const enriched = confirmed;
   const isSorteioSalvo = !!saved && saved.teamA.length > 0;
@@ -252,7 +263,18 @@ function PartidaPage() {
             </button>
             {!isAdmin && <p className="text-center text-xs text-zinc-500">Somente o admin pode sortear.</p>}
 
-            {isAdmin && isSorteioSalvo && (
+            {referees.length > 0 && (
+              <div className="rounded-2xl border-2 border-yellow-400/60 bg-yellow-400/5 px-4 py-3 shadow-[0_0_25px_-12px_rgba(250,204,21,0.7)]">
+                <p className="mb-1 text-[10px] font-black uppercase tracking-wider text-yellow-300/80">
+                  🏁 Juiz da partida
+                </p>
+                <p className="text-sm font-bold text-zinc-100">
+                  {referees.map((r) => r.full_name?.trim() || r.username || "Juiz").join(", ")}
+                </p>
+              </div>
+            )}
+
+            {canRegister && isSorteioSalvo && (
               <div className="flex flex-col gap-3 pt-2">
                 <button type="button" onClick={copyTeams} className="inline-flex items-center justify-center gap-2 rounded-xl border border-[var(--pelada-accent)]/50 bg-[var(--pelada-accent)]/10 px-4 py-2 text-sm font-bold uppercase tracking-wider text-[var(--pelada-accent)] transition hover:bg-[var(--pelada-accent)]/20">
                   <ClipboardCopy className="h-4 w-4" /> Copiar Times

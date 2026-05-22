@@ -30,6 +30,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { peladaMatchQuery, viewerQuery, matchAttendanceQuery } from "@/lib/pelada-queries";
+import { matchRefereesQuery } from "@/lib/pelada-queries";
 import { useAvatars } from "@/lib/avatars";
 import {
   Dialog,
@@ -108,6 +109,12 @@ function ListaPresencaPage() {
 
   // ===== Lista de presença: query compartilhada (lift state up) =====
   const attendanceQuery = useQuery(matchAttendanceQuery(id));
+  const refereesQuery = useQuery(matchRefereesQuery(id));
+  const referees = refereesQuery.data ?? [];
+  const refereeUserIds = useMemo(
+    () => new Set(referees.map((r) => r.user_id)),
+    [referees],
+  );
   const invalidateAttendance = () =>
     queryClient.invalidateQueries({ queryKey: ["match_attendance", id] });
   // Resolved from match_members: whether the viewer is registered as a GK
@@ -168,7 +175,9 @@ function ListaPresencaPage() {
   // Players derivados da query de match_attendance
   const players = useMemo<Player[]>(() => {
     const rows = attendanceQuery.data ?? [];
-    return rows.map((r) => {
+    return rows
+      .filter((r) => !r.is_referee && !(r.player_id && refereeUserIds.has(r.player_id)))
+      .map((r) => {
       const userId = (r.player_id as string | null) ?? null;
       const rowId = r.id as string;
       const stableId = userId ?? rowId;
@@ -182,7 +191,7 @@ function ListaPresencaPage() {
         rating: Number(r.rating ?? 5),
       };
     });
-  }, [attendanceQuery.data]);
+  }, [attendanceQuery.data, refereeUserIds]);
   const isListLoading = attendanceQuery.isLoading;
 
   // Dados dinâmicos (Data/Hora/Local/Valores/Pix) vêm direto do Supabase.
@@ -799,6 +808,36 @@ Bora pro jogo! 🔥
 
             {/* Lista de Jogadores */}
             <div className="space-y-2 pt-2">
+              {referees.length > 0 && (
+                <div className="space-y-2">
+                  {referees.map((r) => {
+                    const display = r.full_name?.trim() || r.username || "Juiz";
+                    return (
+                      <div
+                        key={r.user_id}
+                        className="flex items-center gap-3 rounded-xl border-2 border-yellow-400/60 bg-yellow-400/5 px-3 py-2.5 shadow-[0_0_25px_-12px_rgba(250,204,21,0.7)] backdrop-blur-xl"
+                      >
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-yellow-400/50 bg-zinc-800 text-xs font-bold text-yellow-300">
+                          {r.avatar_url ? (
+                            <img src={r.avatar_url} alt={display} className="h-full w-full object-cover" />
+                          ) : (
+                            display.charAt(0).toUpperCase()
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-bold text-zinc-100">{display}</p>
+                          <p className="truncate text-[11px] uppercase tracking-wider text-yellow-300/70">
+                            Apita a partida
+                          </p>
+                        </div>
+                        <span className="shrink-0 rounded-md border border-yellow-400/60 bg-yellow-400/15 px-2 py-1 text-[10px] font-black uppercase tracking-wider text-yellow-300">
+                          🏁 Juiz
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
               {isListLoading ? (
                 <div className="space-y-2">
                   {Array.from({ length: 4 }).map((_, i) => (
