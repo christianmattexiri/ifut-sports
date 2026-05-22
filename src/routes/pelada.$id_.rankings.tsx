@@ -164,6 +164,7 @@ function RankingsPage() {
               </Link>
             )}
           </div>
+          <div className="h-32 w-full shrink-0" aria-hidden />
         </aside>
 
         {/* Main */}

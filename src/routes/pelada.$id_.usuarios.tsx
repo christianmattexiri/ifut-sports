@@ -170,14 +170,14 @@ function UsuariosPage() {
   const peladaLogo = match?.logo_url ?? null;
 
   return (
-    <main className="relative min-h-screen w-full bg-zinc-950 pt-14 text-zinc-100 font-sans antialiased">
+    <main className="relative min-h-screen w-full overflow-x-hidden bg-zinc-950 pt-14 text-zinc-100 font-sans antialiased">
       <div
         aria-hidden
         className="pointer-events-none fixed -top-40 left-1/3 h-[480px] w-[480px] rounded-full bg-[#00FF00]/10 blur-[160px]"
       />
 
       <div className="relative z-10 flex min-h-screen">
-        <aside className="hidden w-[280px] shrink-0 flex-col border-r border-white/5 bg-zinc-900/40 px-5 py-5 backdrop-blur-xl md:flex">
+        <aside className="sticky top-0 hidden h-screen w-[280px] shrink-0 flex-col overflow-y-auto border-r border-white/5 bg-zinc-900/40 px-5 py-5 backdrop-blur-xl md:flex">
           <button
             type="button"
             onClick={() => navigate({ to: "/dashboard" })}
@@ -226,6 +226,7 @@ function UsuariosPage() {
               Administrador
             </button>
           </div>
+          <div className="h-32 w-full shrink-0" aria-hidden />
         </aside>
 
         <section className="flex-1 px-4 py-6 md:px-10 md:py-10">
@@ -334,8 +335,8 @@ function MemberRow({
     setLocalRating(rating);
   }, [rating]);
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-zinc-900/40 px-3 py-2.5 backdrop-blur-xl">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#00FF00]/30 bg-zinc-800 text-xs font-bold text-[#00FF00]">
+    <div className="flex w-full items-center gap-2 rounded-xl border border-white/10 bg-zinc-900/40 p-2 backdrop-blur-xl sm:gap-3 sm:px-3 sm:py-2.5">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#00FF00]/30 bg-zinc-800 text-xs font-bold text-[#00FF00] sm:h-10 sm:w-10">
         {profile.avatar_url ? (
           <img src={profile.avatar_url} alt={display} className="h-full w-full object-cover" />
         ) : display ? (
@@ -344,12 +345,12 @@ function MemberRow({
           <UserIcon className="h-4 w-4" />
         )}
       </div>
-      <div className="flex-1 min-w-0">
+      <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold text-zinc-100">{display}</p>
         <p className="truncate text-xs text-zinc-500">@{profile.username}</p>
       </div>
-      <div className="flex items-center gap-1.5 rounded-lg border border-amber-400/30 bg-amber-400/5 px-2 py-1">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300/80">Nota</span>
+      <div className="flex shrink-0 items-center gap-1 rounded-lg border border-amber-400/30 bg-amber-400/5 px-1.5 py-1 sm:gap-1.5 sm:px-2">
+        <span className="hidden text-[10px] font-bold uppercase tracking-wider text-amber-300/80 sm:inline">Nota</span>
         <input
           type="number"
           min={1}
@@ -362,11 +363,11 @@ function MemberRow({
             setLocalRating(v);
             if (v !== rating) onRatingChange(v);
           }}
-          className="w-14 rounded-md border border-amber-400/30 bg-zinc-950/60 px-1.5 py-0.5 text-center text-sm font-bold text-amber-200 outline-none focus:border-amber-300"
+          className="w-11 rounded-md border border-amber-400/30 bg-zinc-950/60 px-1 py-0.5 text-center text-sm font-bold text-amber-200 outline-none focus:border-amber-300 sm:w-14 sm:px-1.5"
         />
       </div>
       {isAdmin ? (
-        <span className="rounded-md border border-amber-400/40 bg-amber-400/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-300">
+        <span className="shrink-0 rounded-md border border-amber-400/40 bg-amber-400/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-300 sm:px-2">
           Admin
         </span>
       ) : (
@@ -374,7 +375,7 @@ function MemberRow({
           type="button"
           onClick={onRemove}
           aria-label="Remover do grupo"
-          className="rounded-lg border border-red-500/30 bg-red-500/5 p-2 text-red-400 transition hover:bg-red-500/15 hover:text-red-300"
+          className="shrink-0 rounded-lg border border-red-500/30 bg-red-500/5 p-1.5 text-red-400 transition hover:bg-red-500/15 hover:text-red-300 sm:p-2"
         >
           <Trash2 className="h-4 w-4" />
         </button>

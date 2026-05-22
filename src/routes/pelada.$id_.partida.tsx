@@ -228,6 +228,7 @@ function PartidaPage() {
             {isAdmin && <Link to="/pelada/$id/usuarios" params={{ id }} className="mb-2 block"><NavItem icon={<UserCog className="h-4 w-4" />} label="Gerenciamento de Usuários" /></Link>}
             {isAdmin && <button type="button" className="flex w-full items-center gap-2.5 rounded-xl border border-amber-400/30 bg-amber-400/5 px-3 py-2.5 text-sm font-semibold text-amber-300 transition hover:bg-amber-400/10"><ShieldCheck className="h-4 w-4" /> Administrador</button>}
           </div>
+          <div className="h-32 w-full shrink-0" aria-hidden />
         </aside>
 
         <section className="flex-1 px-5 py-8 md:px-10 md:py-10">

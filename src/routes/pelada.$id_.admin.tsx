@@ -173,9 +173,9 @@ function AdminPage() {
   if (!isAdmin) return null;
 
   return (
-    <main className="min-h-dvh bg-zinc-950 pt-14 text-zinc-100">
+    <main className="min-h-dvh w-full overflow-x-hidden bg-zinc-950 pt-14 text-zinc-100">
       <div className="mx-auto flex min-h-dvh w-full max-w-[1400px] flex-col md:flex-row">
-        <aside className="hidden w-72 shrink-0 flex-col border-r border-white/5 bg-zinc-950/80 px-5 py-7 md:flex">
+        <aside className="sticky top-0 hidden h-screen w-72 shrink-0 flex-col overflow-y-auto border-r border-white/5 bg-zinc-950/80 px-5 py-7 md:flex">
           <button
             onClick={() => navigate({ to: "/pelada/$id", params: { id } })}
             className="mb-6 inline-flex items-center gap-2 self-start rounded-full border border-white/10 bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:text-[#00FF00]"
@@ -205,11 +205,12 @@ function AdminPage() {
             </Link>
             <NavItem icon={<ShieldCheck className="h-4 w-4" />} label="Administrador" amberActive />
           </div>
+          <div className="h-32 w-full shrink-0" aria-hidden />
         </aside>
 
         <section className="flex-1 px-5 py-8 md:px-10 md:py-10">
           <div className="mx-auto max-w-3xl space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h1 className="text-3xl font-black uppercase tracking-tight text-amber-300 md:text-4xl">Administrador</h1>
                 <p className="mt-1 text-sm text-zinc-400">Configurações da pelada — visíveis apenas para admins.</p>
