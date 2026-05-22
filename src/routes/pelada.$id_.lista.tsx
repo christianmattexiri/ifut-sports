@@ -305,13 +305,26 @@ function ListaPresencaPage() {
         }
       }
     }
+    // Se rating não foi passado mas é um usuário logado, herda a nota
+    // que o admin definiu para ele dentro da pelada (match_members.rating).
+    let effectiveRating = typeof rating === "number" ? rating : undefined;
+    if (typeof effectiveRating !== "number" && userId) {
+      const { data: memberRow } = await supabase
+        .from("match_members")
+        .select("rating")
+        .eq("match_id", id!)
+        .eq("user_id", userId)
+        .maybeSingle();
+      const r = (memberRow as { rating?: number | null } | null)?.rating;
+      if (typeof r === "number") effectiveRating = r;
+    }
     const { error } = await supabase.from("match_attendance").insert({
       match_id: id,
       player_id: userId ?? null,
       player_name: name.trim(),
       is_goalkeeper: isGK,
       has_paid: false,
-      rating: typeof rating === "number" ? rating : 5,
+      rating: typeof effectiveRating === "number" ? effectiveRating : 5,
     });
     if (error) {
       toast.error("Não foi possível adicionar à lista");
