@@ -391,7 +391,7 @@ function AddPlayerDialog({
       const { data, error } = await supabase
         .from("profiles")
         .select("id, full_name, username, avatar_url")
-        .ilike("username", `%${q}%`)
+        .or(`username.ilike.%${q}%,full_name.ilike.%${q}%`)
         .limit(10);
       if (cancelled) return;
       if (error) {
@@ -421,7 +421,7 @@ function AddPlayerDialog({
               autoFocus
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Buscar por @username"
+              placeholder="Buscar por @username ou nome completo"
               className="border-white/10 bg-zinc-900 pl-9 text-zinc-100"
             />
           </div>
@@ -429,7 +429,7 @@ function AddPlayerDialog({
           <div className="max-h-72 space-y-1.5 overflow-y-auto">
             {query.trim().length < 2 ? (
               <p className="py-6 text-center text-xs text-zinc-500">
-                Digite ao menos 2 letras do username para buscar.
+                Digite ao menos 2 letras (username ou nome) para buscar.
               </p>
             ) : searching ? (
               <p className="py-6 text-center text-xs text-zinc-500">Buscando...</p>
