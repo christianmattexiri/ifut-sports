@@ -192,6 +192,29 @@ function ListaPresencaPage() {
       };
     });
   }, [attendanceQuery.data, refereeUserIds]);
+
+  // Juízes que estão de fato na lista de presença (entraram via "Colocar meu
+  // nome" ou foram adicionados pelo admin). NÃO listamos todos os juízes da
+  // pelada automaticamente.
+  const attendingReferees = useMemo(() => {
+    const rows = attendanceQuery.data ?? [];
+    return rows
+      .filter((r) => r.is_referee || (r.player_id && refereeUserIds.has(r.player_id)))
+      .map((r) => {
+        const userId = (r.player_id as string | null) ?? null;
+        const prof = userId ? referees.find((rf) => rf.user_id === userId) : null;
+        return {
+          rowId: r.id as string,
+          userId,
+          name:
+            prof?.full_name?.trim() ||
+            prof?.username ||
+            (r.player_name as string) ||
+            "Juiz",
+          avatarUrl: prof?.avatar_url ?? null,
+        };
+      });
+  }, [attendanceQuery.data, refereeUserIds, referees]);
   const isListLoading = attendanceQuery.isLoading;
 
   // Dados dinâmicos (Data/Hora/Local/Valores/Pix) vêm direto do Supabase.
@@ -229,9 +252,14 @@ function ListaPresencaPage() {
   };
 
   const { lineLimit, gkLimit, subLimit } = settings;
+  const meIsReferee = !!me && refereeUserIds.has(me.id);
   const meInList = useMemo(
-    () => (me ? players.some((p) => p.userId === me.id) : false),
-    [players, me],
+    () =>
+      me
+        ? players.some((p) => p.userId === me.id) ||
+          attendingReferees.some((r) => r.userId === me.id)
+        : false,
+    [players, attendingReferees, me],
   );
 
   // Categorize players based on entry order: line / goalkeepers / suplentes
@@ -281,6 +309,7 @@ function ListaPresencaPage() {
     isGK = false,
     userId?: string,
     rating?: number,
+    isReferee = false,
   ) => {
     if (!name.trim()) return;
     const totalConfirmed = categorized.line.length + categorized.gks.length;
@@ -331,9 +360,10 @@ function ListaPresencaPage() {
       match_id: id,
       player_id: userId ?? null,
       player_name: name.trim(),
-      is_goalkeeper: isGK,
+      is_goalkeeper: isReferee ? false : isGK,
       has_paid: false,
       rating: typeof effectiveRating === "number" ? effectiveRating : 5,
+      is_referee: isReferee,
     });
     if (error) {
       toast.error("Não foi possível adicionar à lista");
@@ -382,10 +412,15 @@ function ListaPresencaPage() {
   const toggleMyName = async () => {
     if (!me) return;
     if (meInList) {
-      const mine = players.find((p) => p.userId === me.id);
-      if (mine) await removePlayer(mine.rowId);
+      const mineRef = attendingReferees.find((r) => r.userId === me.id);
+      if (mineRef) {
+        await removePlayer(mineRef.rowId);
+      } else {
+        const mine = players.find((p) => p.userId === me.id);
+        if (mine) await removePlayer(mine.rowId);
+      }
     } else {
-      await addPlayer(me.fullName, myIsGK, me.id);
+      await addPlayer(me.fullName, myIsGK, me.id, undefined, meIsReferee);
     }
   };
 
@@ -808,18 +843,19 @@ Bora pro jogo! 🔥
 
             {/* Lista de Jogadores */}
             <div className="space-y-2 pt-2">
-              {referees.length > 0 && (
+              {attendingReferees.length > 0 && (
                 <div className="space-y-2">
-                  {referees.map((r) => {
-                    const display = r.full_name?.trim() || r.username || "Juiz";
+                  {attendingReferees.map((r) => {
+                    const display = r.name;
+                    const canRemove = isAdmin || (me && r.userId === me.id);
                     return (
                       <div
-                        key={r.user_id}
+                        key={r.rowId}
                         className="flex items-center gap-3 rounded-xl border-2 border-yellow-400/60 bg-yellow-400/5 px-3 py-2.5 shadow-[0_0_25px_-12px_rgba(250,204,21,0.7)] backdrop-blur-xl"
                       >
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-yellow-400/50 bg-zinc-800 text-xs font-bold text-yellow-300">
-                          {r.avatar_url ? (
-                            <img src={r.avatar_url} alt={display} className="h-full w-full object-cover" />
+                          {r.avatarUrl ? (
+                            <img src={r.avatarUrl} alt={display} className="h-full w-full object-cover" />
                           ) : (
                             display.charAt(0).toUpperCase()
                           )}
@@ -833,6 +869,17 @@ Bora pro jogo! 🔥
                         <span className="shrink-0 rounded-md border border-yellow-400/60 bg-yellow-400/15 px-2 py-1 text-[10px] font-black uppercase tracking-wider text-yellow-300">
                           🏁 Juiz
                         </span>
+                        {canRemove && (
+                          <button
+                            type="button"
+                            onClick={() => removePlayer(r.rowId)}
+                            aria-label="Remover juiz da lista"
+                            title="Remover juiz da lista"
+                            className="shrink-0 rounded-md p-1.5 text-zinc-500 transition hover:bg-red-500/10 hover:text-red-300"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        )}
                       </div>
                     );
                   })}
@@ -1029,11 +1076,15 @@ Bora pro jogo! 🔥
           </DialogHeader>
           <AddMemberPicker
             peladaId={id}
-            excludeIds={players.map((p) => p.userId).filter((v): v is string => !!v)}
+            excludeIds={[
+              ...players.map((p) => p.userId),
+              ...attendingReferees.map((r) => r.userId),
+            ].filter((v): v is string => !!v)}
             open={addOpen}
             onAdd={(profile, isGK) => {
               const display = profile.full_name?.trim() || profile.username || "Jogador";
-              addPlayer(display, isGK, profile.id);
+              const isJuiz = refereeUserIds.has(profile.id);
+              addPlayer(display, isGK, profile.id, undefined, isJuiz);
               setAddOpen(false);
             }}
           />

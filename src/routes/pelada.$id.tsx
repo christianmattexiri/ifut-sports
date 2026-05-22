@@ -155,6 +155,7 @@ function PeladaPage() {
       let line = 0;
       let gks = 0;
       for (const r of attendance) {
+        if (r.is_referee) continue;
         if (r.is_goalkeeper) {
           if (gks < c.gkLimit) gks++;
         } else {
