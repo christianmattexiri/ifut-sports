@@ -101,6 +101,7 @@ export type Database = {
           pereba_id: string | null
           score_a: number | null
           score_b: number | null
+          video_url: string | null
           voting_open: boolean | null
         }
         Insert: {
@@ -112,6 +113,7 @@ export type Database = {
           pereba_id?: string | null
           score_a?: number | null
           score_b?: number | null
+          video_url?: string | null
           voting_open?: boolean | null
         }
         Update: {
@@ -123,6 +125,7 @@ export type Database = {
           pereba_id?: string | null
           score_a?: number | null
           score_b?: number | null
+          video_url?: string | null
           voting_open?: boolean | null
         }
         Relationships: [
