@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, ShieldCheck, Trophy, KeyRound, Users } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Trophy, KeyRound, Users, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
 import { Switch } from "@/components/ui/switch";
@@ -9,7 +9,7 @@ import { ProTag } from "@/routes/pelada.$id";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useServerFn } from "@tanstack/react-start";
-import { listAllUsers, resetUserPassword, setMatchPro } from "@/lib/admin-users.functions";
+import { listAllUsers, resetUserPassword, setMatchPro, deleteMatch } from "@/lib/admin-users.functions";
 import type { AdminUserRow } from "@/lib/admin-users.types";
 
 export const Route = createFileRoute("/super-admin")({
@@ -39,6 +39,9 @@ function SuperAdminPage() {
   const fetchUsers = useServerFn(listAllUsers);
   const doReset = useServerFn(resetUserPassword);
   const doSetPro = useServerFn(setMatchPro);
+  const doDelete = useServerFn(deleteMatch);
+  const [deleteTarget, setDeleteTarget] = useState<Row | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -94,6 +97,21 @@ function SuperAdminPage() {
       toast.error(e?.message || "Erro ao atualizar");
     } finally {
       setSavingId(null);
+    }
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await doDelete({ data: { matchId: deleteTarget.id } });
+      setRows((rs) => rs.filter((r) => r.id !== deleteTarget.id));
+      toast.success("Pelada excluída");
+      setDeleteTarget(null);
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao excluir");
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -160,6 +178,13 @@ function SuperAdminPage() {
                     onCheckedChange={(v) => togglePro(r, v)}
                     className="data-[state=checked]:bg-amber-400"
                   />
+                  <button
+                    onClick={() => setDeleteTarget(r)}
+                    title="Excluir pelada"
+                    className="ml-1 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-red-500/30 bg-red-500/10 text-red-300 hover:bg-red-500/20"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
                 </div>
               </div>
             ))}
@@ -271,6 +296,36 @@ function SuperAdminPage() {
               className="rounded-lg bg-amber-400 px-3 py-2 text-xs font-bold uppercase text-zinc-950 hover:bg-amber-300 disabled:opacity-60"
             >
               {resetSaving ? "Salvando..." : "Confirmar reset"}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!deleteTarget} onOpenChange={(o) => !o && !deleting && setDeleteTarget(null)}>
+        <DialogContent className="border-red-500/30 bg-zinc-900 text-zinc-100">
+          <DialogHeader>
+            <DialogTitle className="text-red-400">
+              Excluir pelada {deleteTarget?.name}?
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-zinc-400">
+            Esta ação é <strong className="text-red-300">irreversível</strong>. Todos os jogos,
+            estatísticas, votos, listas de presença e membros desta pelada serão removidos.
+          </p>
+          <DialogFooter>
+            <button
+              onClick={() => setDeleteTarget(null)}
+              disabled={deleting}
+              className="rounded-lg border border-white/10 px-3 py-2 text-xs font-bold uppercase text-zinc-300 hover:bg-white/5"
+            >
+              Cancelar
+            </button>
+            <button
+              disabled={deleting}
+              onClick={confirmDelete}
+              className="rounded-lg bg-red-500 px-3 py-2 text-xs font-bold uppercase text-white hover:bg-red-400 disabled:opacity-60"
+            >
+              {deleting ? "Excluindo..." : "Excluir definitivamente"}
             </button>
           </DialogFooter>
         </DialogContent>
