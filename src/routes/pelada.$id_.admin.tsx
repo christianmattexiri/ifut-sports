@@ -175,7 +175,7 @@ function AdminPage() {
   return (
     <main className="min-h-dvh bg-zinc-950 pt-14 text-zinc-100">
       <div className="mx-auto flex min-h-dvh w-full max-w-[1400px] flex-col md:flex-row">
-        <aside className="hidden w-72 shrink-0 flex-col border-r border-white/5 bg-zinc-950/80 px-5 py-7 md:flex">
+        <aside className="sticky top-0 hidden h-screen w-72 shrink-0 flex-col overflow-y-auto border-r border-white/5 bg-zinc-950/80 px-5 py-7 md:flex">
           <button
             onClick={() => navigate({ to: "/pelada/$id", params: { id } })}
             className="mb-6 inline-flex items-center gap-2 self-start rounded-full border border-white/10 bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:text-[#00FF00]"
