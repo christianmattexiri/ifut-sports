@@ -141,6 +141,7 @@ export type Database = {
           has_paid: boolean | null
           id: string
           is_goalkeeper: boolean | null
+          is_referee: boolean
           match_id: string
           player_id: string | null
           player_name: string
@@ -151,6 +152,7 @@ export type Database = {
           has_paid?: boolean | null
           id?: string
           is_goalkeeper?: boolean | null
+          is_referee?: boolean
           match_id: string
           player_id?: string | null
           player_name: string
@@ -161,6 +163,7 @@ export type Database = {
           has_paid?: boolean | null
           id?: string
           is_goalkeeper?: boolean | null
+          is_referee?: boolean
           match_id?: string
           player_id?: string | null
           player_name?: string
@@ -217,6 +220,7 @@ export type Database = {
           is_goalkeeper: boolean
           match_id: string
           rating: number
+          role: string
           user_id: string
         }
         Insert: {
@@ -224,6 +228,7 @@ export type Database = {
           is_goalkeeper?: boolean
           match_id: string
           rating?: number
+          role?: string
           user_id: string
         }
         Update: {
@@ -231,6 +236,7 @@ export type Database = {
           is_goalkeeper?: boolean
           match_id?: string
           rating?: number
+          role?: string
           user_id?: string
         }
         Relationships: [
