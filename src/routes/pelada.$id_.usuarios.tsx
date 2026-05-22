@@ -391,7 +391,7 @@ function AddPlayerDialog({
       const { data, error } = await supabase
         .from("profiles")
         .select("id, full_name, username, avatar_url")
-        .ilike("username", `%${q}%`)
+        .or(`username.ilike.%${q}%,full_name.ilike.%${q}%`)
         .limit(10);
       if (cancelled) return;
       if (error) {
