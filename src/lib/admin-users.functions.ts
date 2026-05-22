@@ -139,3 +139,42 @@ export const deleteMatch = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export const directAddMember = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        matchId: z.string().uuid(),
+        userId: z.string().uuid(),
+        isGoalkeeper: z.boolean().optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: prof } = await supabaseAdmin
+      .from("profiles").select("username").eq("id", context.userId).maybeSingle();
+    if (!isSuperAdminUsername(prof?.username)) throw new Error("Acesso restrito");
+
+    const { error } = await supabaseAdmin
+      .from("match_members")
+      .upsert(
+        {
+          match_id: data.matchId,
+          user_id: data.userId,
+          is_goalkeeper: data.isGoalkeeper ?? false,
+        },
+        { onConflict: "match_id,user_id" },
+      );
+    if (error) throw new Error(error.message);
+
+    // Mark any pending invitation as accepted to keep state coherent.
+    await supabaseAdmin
+      .from("match_invitations")
+      .update({ status: "accepted" })
+      .eq("match_id", data.matchId)
+      .eq("invitee_id", data.userId)
+      .eq("status", "pending");
+
+    return { ok: true };
+  });
