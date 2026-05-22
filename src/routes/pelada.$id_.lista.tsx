@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { peladaMatchQuery, viewerQuery, matchAttendanceQuery } from "@/lib/pelada-queries";
 import { useAvatars } from "@/lib/avatars";
 import {
@@ -61,6 +61,9 @@ type Match = {
   match_time: string | null;
   location: string | null;
   logo_url: string | null;
+  price_player: number | null;
+  price_goalkeeper: number | null;
+  pix_key: string | null;
 };
 
 type Player = {
@@ -75,24 +78,12 @@ type Player = {
 };
 
 type Settings = {
-  dayOfWeek: string;
-  matchTime: string;
-  location: string;
-  valorLinha: string;
-  valorGoleiro: string;
-  pix: string;
   lineLimit: number;
   gkLimit: number;
   subLimit: number;
 };
 
 const DEFAULT_SETTINGS: Settings = {
-  dayOfWeek: "",
-  matchTime: "",
-  location: "",
-  valorLinha: "10,00",
-  valorGoleiro: "5,00",
-  pix: "",
   lineLimit: 16,
   gkLimit: 2,
   subLimit: 2,
@@ -194,16 +185,39 @@ function ListaPresencaPage() {
   }, [attendanceQuery.data]);
   const isListLoading = attendanceQuery.isLoading;
 
-  // Hydrate match-derived defaults into settings once match arrives.
-  useEffect(() => {
-    if (!match) return;
-    setSettings((s) => ({
-      ...s,
-      dayOfWeek: s.dayOfWeek || match.day_of_week || "",
-      matchTime: s.matchTime || match.match_time || "",
-      location: s.location || match.location || "",
-    }));
-  }, [match]);
+  // Dados dinâmicos (Data/Hora/Local/Valores/Pix) vêm direto do Supabase.
+  // Sem localStorage: garantem sincronização entre dispositivos.
+  const dayOfWeek = match?.day_of_week ?? "";
+  const matchTime = match?.match_time ?? "";
+  const location = match?.location ?? "";
+  const formatMoney = (v: number | null | undefined) =>
+    v == null ? "" : v.toFixed(2).replace(".", ",");
+  const valorLinha = formatMoney(match?.price_player);
+  const valorGoleiro = formatMoney(match?.price_goalkeeper);
+  const pix = match?.pix_key ?? "";
+
+  const updateMatchMutation = useMutation({
+    mutationFn: async (patch: Record<string, unknown>) => {
+      const { error } = await supabase
+        .from("matches")
+        .update(patch as never)
+        .eq("id", id!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pelada-match", id] });
+    },
+    onError: () => {
+      toast.error("Não foi possível salvar as alterações");
+    },
+  });
+  const parseMoney = (raw: string | undefined): number | null => {
+    if (raw == null) return null;
+    const cleaned = raw.replace(/[^\d,.-]/g, "").replace(",", ".");
+    if (!cleaned) return null;
+    const n = Number(cleaned);
+    return Number.isFinite(n) ? n : null;
+  };
 
   const { lineLimit, gkLimit, subLimit } = settings;
   const meInList = useMemo(
@@ -394,8 +408,8 @@ function ListaPresencaPage() {
 
 ⚽ ${match?.name ?? "Pelada"} ⚽
 
-🗓 ${settings.dayOfWeek || "-"} | ⏰ ${settings.matchTime || "-"}
-📍 Local: ${settings.location || "-"}
+🗓 ${dayOfWeek || "-"} | ⏰ ${matchTime || "-"}
+📍 Local: ${location || "-"}
 
 *LISTA DE CONFIRMADOS:*
 ${linhasPrincipal.join("\n")}
@@ -616,12 +630,12 @@ Bora pro jogo! 🔥
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-[var(--pelada-accent)]" />
                   <span>
-                    {settings.dayOfWeek || "Domingo"} – {settings.matchTime || "9h"}
+                    {dayOfWeek || "Domingo"} – {matchTime || "9h"}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-[var(--pelada-accent)]" />
-                  <span>{settings.location || "Local a definir"}</span>
+                  <span>{location || "Local a definir"}</span>
                 </div>
               </div>
             </div>
@@ -644,13 +658,13 @@ Bora pro jogo! 🔥
               </h3>
               <div className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
                 <p className="text-zinc-300">
-                  Linha: <span className="font-semibold text-amber-300">R$ {settings.valorLinha}</span>
+                  Linha: <span className="font-semibold text-amber-300">R$ {valorLinha}</span>
                 </p>
                 <p className="text-zinc-300">
-                  Goleiro: <span className="font-semibold text-amber-300">R$ {settings.valorGoleiro}</span>
+                  Goleiro: <span className="font-semibold text-amber-300">R$ {valorGoleiro}</span>
                 </p>
                 <p className="text-zinc-300 sm:col-span-2">
-                  Pix: <span className="font-semibold text-amber-300">{settings.pix}</span>
+                  Pix: <span className="font-semibold text-amber-300">{pix}</span>
                 </p>
               </div>
             </div>
@@ -980,11 +994,17 @@ Bora pro jogo! 🔥
         title="Editar Próxima Pelada"
         accent="var(--pelada-accent)"
         fields={[
-          { key: "dayOfWeek", label: "Dia da semana", value: settings.dayOfWeek },
-          { key: "matchTime", label: "Horário", value: settings.matchTime },
-          { key: "location", label: "Local", value: settings.location },
+          { key: "dayOfWeek", label: "Dia da semana", value: dayOfWeek },
+          { key: "matchTime", label: "Horário", value: matchTime },
+          { key: "location", label: "Local", value: location },
         ]}
-        onSave={(vals) => setSettings((s) => ({ ...s, ...vals }))}
+        onSave={(vals) =>
+          updateMatchMutation.mutate({
+            day_of_week: vals.dayOfWeek ?? dayOfWeek,
+            match_time: vals.matchTime ?? matchTime,
+            location: vals.location ?? location,
+          })
+        }
       />
 
       {/* Modal: Editar Valores */}
@@ -994,11 +1014,17 @@ Bora pro jogo! 🔥
         title="Editar Valores"
         accent="#fbbf24"
         fields={[
-          { key: "valorLinha", label: "Valor Linha (R$)", value: settings.valorLinha },
-          { key: "valorGoleiro", label: "Valor Goleiro (R$)", value: settings.valorGoleiro },
-          { key: "pix", label: "Chave Pix", value: settings.pix, placeholder: "Sua chave pix AQUI" },
+          { key: "valorLinha", label: "Valor Linha (R$)", value: valorLinha },
+          { key: "valorGoleiro", label: "Valor Goleiro (R$)", value: valorGoleiro },
+          { key: "pix", label: "Chave Pix", value: pix, placeholder: "Sua chave pix AQUI" },
         ]}
-        onSave={(vals) => setSettings((s) => ({ ...s, ...vals }))}
+        onSave={(vals) =>
+          updateMatchMutation.mutate({
+            price_player: parseMoney(vals.valorLinha) ?? match?.price_player ?? null,
+            price_goalkeeper: parseMoney(vals.valorGoleiro) ?? match?.price_goalkeeper ?? null,
+            pix_key: vals.pix ?? pix,
+          })
+        }
       />
 
       {/* Modal: Editar Limites */}

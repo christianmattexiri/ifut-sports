@@ -10,6 +10,10 @@ export type PeladaMatch = {
   logo_url: string | null;
   admin_id: string | null;
   is_pro: boolean | null;
+  next_match_date: string | null;
+  price_player: number | null;
+  price_goalkeeper: number | null;
+  pix_key: string | null;
 };
 
 export type ViewerProfile = {
@@ -28,7 +32,7 @@ export const peladaMatchQuery = (id: string | undefined) =>
     queryFn: async () => {
       const { data } = await supabase
         .from("matches")
-        .select("id, name, day_of_week, match_time, location, logo_url, admin_id, is_pro")
+        .select("id, name, day_of_week, match_time, location, logo_url, admin_id, is_pro, next_match_date, price_player, price_goalkeeper, pix_key")
         .eq("id", id!)
         .maybeSingle();
       return (data ?? null) as PeladaMatch | null;
