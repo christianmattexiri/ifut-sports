@@ -12,6 +12,9 @@ import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { deleteMatch } from "@/lib/admin-users.functions";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import {
   DEFAULT_SETTINGS,
   peladaSettingsQuery,
@@ -54,6 +57,11 @@ function AdminPage() {
   const [settings, setSettings] = useState<AdminSettings>(DEFAULT_SETTINGS);
   const [uploading, setUploading] = useState(false);
   const [isPro, setIsPro] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const doDeleteMatch = useServerFn(deleteMatch);
   const { data: cloudSettings } = useQuery(peladaSettingsQuery(id));
   const updateSettings = useUpdatePeladaSettings(id);
 
@@ -87,6 +95,7 @@ function AdminPage() {
       }
       setIsAdmin(true);
       setMatch(mm);
+      setIsOwner(owner);
       setName(mm?.name ?? "");
       setDay(mm?.day_of_week ?? "");
       setTime(mm?.match_time ?? "");
@@ -328,9 +337,73 @@ function AdminPage() {
             >
               Salvar Configurações
             </button>
+
+            {isOwner && (
+              <Section title="Zona de perigo" subtitle="Ações irreversíveis. Tenha certeza antes de prosseguir.">
+                <div className="flex flex-col gap-3 rounded-xl border border-red-500/30 bg-red-500/5 p-4">
+                  <div>
+                    <p className="text-sm font-bold text-red-300">Excluir esta pelada</p>
+                    <p className="mt-1 text-xs text-zinc-400">
+                      Todos os jogos, estatísticas, votos, listas de presença e membros serão apagados permanentemente.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => { setDeleteConfirmText(""); setDeleteOpen(true); }}
+                    className="self-start inline-flex items-center gap-2 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-xs font-bold uppercase tracking-wider text-red-300 hover:bg-red-500/20"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" /> Excluir pelada
+                  </button>
+                </div>
+              </Section>
+            )}
           </div>
         </section>
       </div>
+
+      <Dialog open={deleteOpen} onOpenChange={(o) => !deleting && setDeleteOpen(o)}>
+        <DialogContent className="border-red-500/30 bg-zinc-900 text-zinc-100">
+          <DialogHeader>
+            <DialogTitle className="text-red-400">Excluir {match?.name}?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-zinc-400">
+            Esta ação é <strong className="text-red-300">irreversível</strong>. Para confirmar, digite o nome exato da pelada abaixo:
+          </p>
+          <p className="text-xs text-zinc-500"><code className="text-zinc-300">{match?.name}</code></p>
+          <Input
+            autoFocus
+            value={deleteConfirmText}
+            onChange={(e) => setDeleteConfirmText(e.target.value)}
+            placeholder="Digite o nome da pelada"
+            className="bg-zinc-950 border-white/10"
+          />
+          <DialogFooter>
+            <button
+              onClick={() => setDeleteOpen(false)}
+              disabled={deleting}
+              className="rounded-lg border border-white/10 px-3 py-2 text-xs font-bold uppercase text-zinc-300 hover:bg-white/5"
+            >
+              Cancelar
+            </button>
+            <button
+              disabled={deleting || deleteConfirmText.trim() !== (match?.name ?? "").trim()}
+              onClick={async () => {
+                setDeleting(true);
+                try {
+                  await doDeleteMatch({ data: { matchId: id } });
+                  toast.success("Pelada excluída");
+                  navigate({ to: "/dashboard" });
+                } catch (e: any) {
+                  toast.error(e?.message ?? "Erro ao excluir");
+                  setDeleting(false);
+                }
+              }}
+              className="rounded-lg bg-red-500 px-3 py-2 text-xs font-bold uppercase text-white hover:bg-red-400 disabled:opacity-60"
+            >
+              {deleting ? "Excluindo..." : "Excluir definitivamente"}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }
