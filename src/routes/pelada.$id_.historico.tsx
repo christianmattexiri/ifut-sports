@@ -740,12 +740,12 @@ function StatStepper({
   onDelta: (d: number) => void;
 }) {
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
       <span className={`text-[11px] font-bold ${labelClass}`}>{label}:</span>
       <button
         type="button"
         onClick={() => onDelta(-1)}
-        className="rounded border border-white/10 p-0.5 text-zinc-400 hover:bg-white/5"
+        className="rounded border border-white/10 p-0.5 text-zinc-400 hover:bg-white/5 sm:p-1"
         aria-label="Diminuir"
       >
         <Minus className="h-3 w-3" />
@@ -763,12 +763,12 @@ function StatStepper({
           if (Number.isFinite(n) && n >= 0) onChange(n);
         }}
         placeholder="0"
-        className="w-12 appearance-none rounded border border-white/10 bg-zinc-900 px-1.5 py-0.5 text-center text-sm tabular-nums text-zinc-100 placeholder:text-zinc-600 focus:border-[var(--pelada-accent)]/40 focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
+        className="w-9 appearance-none rounded border border-white/10 bg-zinc-900 px-1 py-0.5 text-center text-sm tabular-nums text-zinc-100 placeholder:text-zinc-600 focus:border-[var(--pelada-accent)]/40 focus:outline-none sm:w-12 sm:px-1.5 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
       />
       <button
         type="button"
         onClick={() => onDelta(1)}
-        className="rounded border border-white/10 p-0.5 text-zinc-400 hover:bg-white/5"
+        className="rounded border border-white/10 p-0.5 text-zinc-400 hover:bg-white/5 sm:p-1"
         aria-label="Aumentar"
       >
         <Plus className="h-3 w-3" />
