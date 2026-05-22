@@ -452,6 +452,44 @@ function MemberRow({
   );
 }
 
+function RefereeRow({
+  profile,
+  onRemove,
+}: {
+  profile: Profile;
+  onRemove: () => void;
+}) {
+  const display = profile.full_name?.trim() || profile.username;
+  return (
+    <div className="flex w-full items-center gap-2 rounded-xl border border-yellow-400/40 bg-yellow-400/5 p-2 backdrop-blur-xl sm:gap-3 sm:px-3 sm:py-2.5">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-yellow-400/40 bg-zinc-800 text-xs font-bold text-yellow-300 sm:h-10 sm:w-10">
+        {profile.avatar_url ? (
+          <img src={profile.avatar_url} alt={display} className="h-full w-full object-cover" />
+        ) : display ? (
+          initials(display)
+        ) : (
+          <UserIcon className="h-4 w-4" />
+        )}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-semibold text-zinc-100">{display}</p>
+        <p className="truncate text-xs text-zinc-500">@{profile.username}</p>
+      </div>
+      <span className="shrink-0 rounded-md border border-yellow-400/50 bg-yellow-400/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-yellow-300 sm:px-2">
+        🏁 Juiz
+      </span>
+      <button
+        type="button"
+        onClick={onRemove}
+        aria-label="Remover juiz"
+        className="shrink-0 rounded-lg border border-red-500/30 bg-red-500/5 p-1.5 text-red-400 transition hover:bg-red-500/15 hover:text-red-300 sm:p-2"
+      >
+        <Trash2 className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
 function AddPlayerDialog({
   open,
   onOpenChange,
