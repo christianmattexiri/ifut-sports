@@ -396,6 +396,19 @@ function MatchAccordion({
           <span className="truncate text-xs font-medium text-zinc-200 sm:text-sm">{m.name}</span>
         </button>
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
+          {m.videoUrl && (
+            <a
+              href={m.videoUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="rounded-lg p-1 text-red-500 transition hover:bg-red-500/10 sm:p-1.5"
+              aria-label="Assistir vídeo da partida"
+              title="Assistir vídeo da partida"
+            >
+              <Video className="h-4 w-4" />
+            </a>
+          )}
           <span className="flex items-center gap-1.5 font-mono text-sm font-bold tabular-nums sm:gap-2 sm:text-base">
             <span className={aWin ? "text-[var(--pelada-accent)] drop-shadow-[0_0_8px_color-mix(in_oklab,var(--pelada-accent)_70%,transparent)]" : "text-zinc-400"}>
               {sa}
