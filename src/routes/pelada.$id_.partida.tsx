@@ -27,7 +27,7 @@ export const Route = createFileRoute("/pelada/$id_/partida")({
   },
 });
 
-type Match = { id: string; name: string; logo_url: string | null; admin_id?: string | null };
+type Match = { id: string; name: string; logo_url: string | null; admin_id?: string | null; current_draw?: unknown | null };
 type Player = { id: string; name: string; isGoalkeeper: boolean; rating?: number; userId?: string | null };
 type SavedTeams = { teamA: Player[]; teamB: Player[] };
 
@@ -62,6 +62,17 @@ function PartidaPage() {
   const [teamB, setTeamB] = useState<Player[]>([]);
   const [pool, setPool] = useState<Player[]>([]);
   const [editing, setEditing] = useState<HistMatch | null>(null);
+  const [liveMatch, setLiveMatch] = useState<HistMatch | null>(null);
+  const [liveTarget, setLiveTarget] = useState<{ playerId: string; team: "A" | "B"; name: string } | null>(null);
+  const liveMode = !!liveMatch;
+
+  // Hydrate saved teams from matches.current_draw (DB persistence).
+  useEffect(() => {
+    const draw = (match?.current_draw ?? null) as SavedTeams | null;
+    if (draw && Array.isArray(draw.teamA) && Array.isArray(draw.teamB) && draw.teamA.length > 0) {
+      setSaved(draw);
+    }
+  }, [match?.current_draw]);
 
   // Lista de presença: query compartilhada (cacheada pelo loader pai).
   const attendanceQuery = useQuery(matchAttendanceQuery(id));
@@ -144,14 +155,17 @@ function PartidaPage() {
     setPool((s) => [...s, p]);
   }
 
-  function saveTeams() {
+  async function saveTeams() {
     const data: SavedTeams = { teamA, teamB };
     setSaved(data);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(`pelada:${id}:teams`, JSON.stringify({ ...data, savedAt: Date.now() }));
-    }
-    toast.success("Times salvos!");
     setSepOpen(false);
+    try {
+      await saveCurrentDraw(id, data);
+      queryClient.invalidateQueries({ queryKey: ["pelada-match", id] });
+      toast.success("Times salvos!");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao persistir");
+    }
   }
 
   async function copyTeams() {
@@ -185,6 +199,57 @@ function PartidaPage() {
       mvp: null, topScorers: [], topAssists: [],
     };
     setEditing(m);
+  }
+
+  async function startLive() {
+    if (!saved) { toast.error("Sorteie e salve os times primeiro"); return; }
+    const today = new Date().toISOString().slice(0, 10);
+    const draft: HistMatch = {
+      id: crypto.randomUUID(),
+      date: today,
+      name: `${match?.name ?? "iFut"} ${today.split("-").reverse().join("/")}`,
+      teamA: { label: "Time A", players: saved.teamA.map((p) => ({ id: p.id, name: p.name, goals: 0, assists: 0 })) },
+      teamB: { label: "Time B", players: saved.teamB.map((p) => ({ id: p.id, name: p.name, goals: 0, assists: 0 })) },
+      mvp: null, topScorers: [], topAssists: [],
+    };
+    try {
+      await saveMatchToDb(id, draft);
+      setLiveMatch(draft);
+      toast.success("Modo Ao Vivo iniciado");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao iniciar");
+    }
+  }
+
+  async function registerLiveStat(field: "goals" | "assists") {
+    if (!liveMatch || !liveTarget) return;
+    const { playerId, team, name } = liveTarget;
+    setLiveTarget(null);
+    // Optimistic local update.
+    setLiveMatch((prev) => {
+      if (!prev) return prev;
+      const updateTeam = (t: HistMatch["teamA"]) => ({
+        ...t,
+        players: t.players.map((p) =>
+          p.id === playerId ? { ...p, [field]: (p[field] || 0) + 1 } : p,
+        ),
+      });
+      return team === "A"
+        ? { ...prev, teamA: updateTeam(prev.teamA) }
+        : { ...prev, teamB: updateTeam(prev.teamB) };
+    });
+    try {
+      await incrementPlayerStat(liveMatch.id, playerId, field, 1);
+      toast.success(`${field === "goals" ? "Gol" : "Assistência"} de ${name} salvo!`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao salvar");
+    }
+  }
+
+  function finishLive() {
+    if (!liveMatch) return;
+    setEditing(liveMatch);
+    setLiveMatch(null);
   }
 
   async function handleSaveMatch(updated: HistMatch) {
