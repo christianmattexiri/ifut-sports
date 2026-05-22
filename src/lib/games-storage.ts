@@ -184,8 +184,33 @@ export async function fetchLatest(
   peladaId: string,
   peladaName = "Pelada",
 ): Promise<HistMatch | null> {
-  const list = await fetchHistory(peladaId, peladaName);
-  return list[0] ?? null;
+  const { data: game, error } = await supabase
+    .from("games")
+    .select("id, game_date, score_a, score_b, mvp_id, pereba_id, voting_open, created_at")
+    .eq("match_id", peladaId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error || !game) return null;
+
+  const { data: stats } = await supabase
+    .from("game_player_stats")
+    .select("game_id, user_id, player_name, team, goals, assists")
+    .eq("game_id", game.id);
+
+  let mvp_id = game.mvp_id ?? null;
+  let pereba_id = game.pereba_id ?? null;
+  if (game.voting_open === false && (!mvp_id || !pereba_id)) {
+    const { data: voteRows } = await supabase
+      .from("game_votes")
+      .select("game_id, mvp_id, pereba_id, apitto_ratings")
+      .eq("game_id", game.id);
+    const fallback = closedVoteWinners((voteRows ?? []) as VoteWinnerRow[]).get(game.id);
+    mvp_id = mvp_id ?? fallback?.mvp_id ?? null;
+    pereba_id = pereba_id ?? fallback?.pereba_id ?? null;
+  }
+
+  return buildHistMatch({ ...game, mvp_id, pereba_id }, stats ?? [], peladaName);
 }
 
 /**
