@@ -623,6 +623,20 @@ export function EditMatchDialog({
             </label>
           </div>
 
+          <label className="block text-xs">
+            <span className="mb-1 block text-zinc-400">
+              Vídeo da partida <span className="text-zinc-500">(Opcional)</span>
+            </span>
+            <Input
+              type="url"
+              inputMode="url"
+              placeholder="https://youtube.com/..."
+              value={draft.videoUrl ?? ""}
+              onChange={(e) => setDraft({ ...draft, videoUrl: e.target.value })}
+              className="border-white/10 bg-zinc-900"
+            />
+          </label>
+
           {/* Stats */}
           <div>
             <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-zinc-400">
