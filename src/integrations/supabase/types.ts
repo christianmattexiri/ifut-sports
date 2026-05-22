@@ -252,6 +252,10 @@ export type Database = {
           match_time: string | null
           match_type: string | null
           name: string
+          next_match_date: string | null
+          pix_key: string | null
+          price_goalkeeper: number | null
+          price_player: number | null
           settings: Json
         }
         Insert: {
@@ -265,6 +269,10 @@ export type Database = {
           match_time?: string | null
           match_type?: string | null
           name: string
+          next_match_date?: string | null
+          pix_key?: string | null
+          price_goalkeeper?: number | null
+          price_player?: number | null
           settings?: Json
         }
         Update: {
@@ -278,6 +286,10 @@ export type Database = {
           match_time?: string | null
           match_type?: string | null
           name?: string
+          next_match_date?: string | null
+          pix_key?: string | null
+          price_goalkeeper?: number | null
+          price_player?: number | null
           settings?: Json
         }
         Relationships: []
