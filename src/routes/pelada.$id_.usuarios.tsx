@@ -471,6 +471,11 @@ function AddPlayerDialog({
   actionLabel?: string;
   accentClass?: "green" | "amber";
 }) {
+  const isAmber = accentClass === "amber";
+  const headerColor = isAmber ? "text-yellow-300" : "text-[#00FF00]";
+  const ringClass = isAmber
+    ? "border-yellow-400/50 bg-yellow-400/10 text-yellow-300 hover:bg-yellow-400/20"
+    : "border-[#00FF00]/50 bg-[#00FF00]/10 text-[#00FF00] hover:bg-[#00FF00]/20";
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Profile[]>([]);
   const [searching, setSearching] = useState(false);
