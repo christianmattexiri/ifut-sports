@@ -574,7 +574,7 @@ export function EditMatchDialog({
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto border-white/10 bg-zinc-950 text-zinc-100">
+      <DialogContent className="max-h-[90vh] w-[calc(100vw-1rem)] max-w-4xl overflow-x-hidden overflow-y-auto border-white/10 bg-zinc-950 text-zinc-100">
         <DialogHeader>
           <DialogTitle className="text-[var(--pelada-accent)]">Editar Partida</DialogTitle>
         </DialogHeader>
@@ -618,13 +618,13 @@ export function EditMatchDialog({
                       <h4 className="text-sm font-bold uppercase tracking-wider">{t.label}</h4>
                     </div>
                     <ul className="space-y-1.5">
-                      {t.players.map((p) => (
+                       {t.players.map((p) => (
                         <li
                           key={p.id}
-                          className="flex items-center justify-between rounded-lg border border-white/5 bg-zinc-900/60 px-3 py-2"
+                          className="flex flex-wrap items-center justify-between gap-1 rounded-lg border border-white/5 bg-zinc-900/60 p-2 sm:flex-nowrap sm:gap-3 sm:px-3"
                         >
-                          <span className="text-sm text-zinc-200">{p.name}</span>
-                          <div className="flex items-center gap-3">
+                          <span className="min-w-[80px] flex-1 truncate text-sm text-zinc-200">{p.name}</span>
+                          <div className="flex items-center gap-2 sm:gap-3">
                             <StatStepper
                               label="G"
                               labelClass="text-amber-400"
