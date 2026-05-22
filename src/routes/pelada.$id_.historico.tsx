@@ -365,6 +365,7 @@ function MatchAccordion({
   open,
   onToggle,
   isAdmin,
+  canEdit,
   onEdit,
   onDelete,
 }: {
@@ -372,6 +373,7 @@ function MatchAccordion({
   open: boolean;
   onToggle: () => void;
   isAdmin: boolean;
+  canEdit?: boolean;
   onEdit: () => void;
   onDelete: () => void;
 }) {
@@ -401,7 +403,7 @@ function MatchAccordion({
               {sb}
             </span>
           </span>
-          {isAdmin && (
+          {(canEdit ?? isAdmin) && (
             <>
               <button
                 type="button"
@@ -411,14 +413,14 @@ function MatchAccordion({
               >
                 <Pencil className="h-4 w-4" />
               </button>
-              <button
+              {isAdmin && <button
                 type="button"
                 onClick={onDelete}
                 className="rounded-lg p-1 text-red-500 transition hover:bg-red-500/10 sm:p-1.5"
                 aria-label="Excluir"
               >
                 <Trash2 className="h-4 w-4" />
-              </button>
+              </button>}
             </>
           )}
           <button
