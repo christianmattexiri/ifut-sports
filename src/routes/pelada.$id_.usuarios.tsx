@@ -18,7 +18,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
 import { useServerFn } from "@tanstack/react-start";
-import { listMatchMembers } from "@/lib/admin-users.functions";
+import { listMatchMembers, setMemberRating } from "@/lib/admin-users.functions";
 import {
   Dialog,
   DialogContent,
@@ -60,8 +60,10 @@ function UsuariosPage() {
   const navigate = useNavigate();
   const { id } = useParams({ from: "/pelada/$id_/usuarios" });
   const fetchMembers = useServerFn(listMatchMembers);
+  const saveRating = useServerFn(setMemberRating);
   const [match, setMatch] = useState<Match | null>(null);
   const [members, setMembers] = useState<Profile[]>([]);
+  const [ratings, setRatings] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [pendingInviteIds, setPendingInviteIds] = useState<Set<string>>(new Set());
@@ -109,6 +111,7 @@ function UsuariosPage() {
           if (p) list.push(p);
         }
         setMembers(list);
+        setRatings(res.ratings ?? {});
         setPendingInviteIds(new Set(res.pendingInviteIds));
       } catch (e: any) {
         toast.error(e?.message ?? "Erro ao carregar membros");
@@ -257,6 +260,17 @@ function UsuariosPage() {
                     key={m.id}
                     profile={m}
                     isAdmin={m.id === match?.admin_id}
+                    rating={ratings[m.id] ?? 5}
+                    onRatingChange={async (val) => {
+                      setRatings((prev) => ({ ...prev, [m.id]: val }));
+                      try {
+                        await saveRating({
+                          data: { matchId: id, userId: m.id, rating: val },
+                        });
+                      } catch (e: any) {
+                        toast.error(e?.message ?? "Erro ao salvar nota");
+                      }
+                    }}
                     onRemove={() => removeMember(m.id)}
                   />
                 ))
@@ -300,13 +314,21 @@ function NavItem({ icon, label, active, gold }: { icon: React.ReactNode; label: 
 function MemberRow({
   profile,
   isAdmin,
+  rating,
+  onRatingChange,
   onRemove,
 }: {
   profile: Profile;
   isAdmin: boolean;
+  rating: number;
+  onRatingChange: (value: number) => void;
   onRemove: () => void;
 }) {
   const display = profile.full_name?.trim() || profile.username;
+  const [localRating, setLocalRating] = useState<number>(rating);
+  useEffect(() => {
+    setLocalRating(rating);
+  }, [rating]);
   return (
     <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-zinc-900/40 px-3 py-2.5 backdrop-blur-xl">
       <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#00FF00]/30 bg-zinc-800 text-xs font-bold text-[#00FF00]">
@@ -321,6 +343,23 @@ function MemberRow({
       <div className="flex-1 min-w-0">
         <p className="truncate text-sm font-semibold text-zinc-100">{display}</p>
         <p className="truncate text-xs text-zinc-500">@{profile.username}</p>
+      </div>
+      <div className="flex items-center gap-1.5 rounded-lg border border-amber-400/30 bg-amber-400/5 px-2 py-1">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300/80">Nota</span>
+        <input
+          type="number"
+          min={1}
+          max={10}
+          step={0.5}
+          value={localRating}
+          onChange={(e) => setLocalRating(Number(e.target.value))}
+          onBlur={() => {
+            const v = Math.max(1, Math.min(10, Number(localRating) || 5));
+            setLocalRating(v);
+            if (v !== rating) onRatingChange(v);
+          }}
+          className="w-14 rounded-md border border-amber-400/30 bg-zinc-950/60 px-1.5 py-0.5 text-center text-sm font-bold text-amber-200 outline-none focus:border-amber-300"
+        />
       </div>
       {isAdmin ? (
         <span className="rounded-md border border-amber-400/40 bg-amber-400/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-300">
