@@ -998,7 +998,13 @@ Bora pro jogo! 🔥
           { key: "matchTime", label: "Horário", value: matchTime },
           { key: "location", label: "Local", value: location },
         ]}
-        onSave={(vals) => setSettings((s) => ({ ...s, ...vals }))}
+        onSave={(vals) =>
+          updateMatchMutation.mutate({
+            day_of_week: vals.dayOfWeek ?? dayOfWeek,
+            match_time: vals.matchTime ?? matchTime,
+            location: vals.location ?? location,
+          })
+        }
       />
 
       {/* Modal: Editar Valores */}
@@ -1012,7 +1018,13 @@ Bora pro jogo! 🔥
           { key: "valorGoleiro", label: "Valor Goleiro (R$)", value: valorGoleiro },
           { key: "pix", label: "Chave Pix", value: pix, placeholder: "Sua chave pix AQUI" },
         ]}
-        onSave={(vals) => setSettings((s) => ({ ...s, ...vals }))}
+        onSave={(vals) =>
+          updateMatchMutation.mutate({
+            price_player: parseMoney(vals.valorLinha) ?? match?.price_player ?? null,
+            price_goalkeeper: parseMoney(vals.valorGoleiro) ?? match?.price_goalkeeper ?? null,
+            pix_key: vals.pix ?? pix,
+          })
+        }
       />
 
       {/* Modal: Editar Limites */}
