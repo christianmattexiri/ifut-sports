@@ -17,8 +17,6 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
-import { useServerFn } from "@tanstack/react-start";
-import { directAddMember } from "@/lib/admin-users.functions";
 import {
   Dialog,
   DialogContent,
@@ -64,8 +62,6 @@ function UsuariosPage() {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [pendingInviteIds, setPendingInviteIds] = useState<Set<string>>(new Set());
-  const [isSuper, setIsSuper] = useState(false);
-  const directAdd = useServerFn(directAddMember);
 
   useEffect(() => {
     (async () => {
@@ -89,7 +85,6 @@ function UsuariosPage() {
         .maybeSingle();
       const isOwner = match?.admin_id === uid;
       const isSuper = isSuperAdminUsername(myProf?.username);
-      setIsSuper(isSuper);
       if (!match || (!isOwner && !isSuper)) {
         toast.error("Acesso restrito ao admin da pelada");
         navigate({ to: "/pelada/$id", params: { id } });
@@ -179,25 +174,6 @@ function UsuariosPage() {
     }
     setPendingInviteIds((s) => new Set(s).add(p.id));
     toast.success(`Convite enviado para ${p.full_name || p.username}!`);
-  };
-
-  const directAddPlayer = async (p: Profile) => {
-    if (members.some((m) => m.id === p.id)) {
-      toast.info("Esse jogador já está na pelada");
-      return;
-    }
-    try {
-      await directAdd({ data: { matchId: id, userId: p.id } });
-      setMembers((prev) => (prev.some((m) => m.id === p.id) ? prev : [...prev, p]));
-      setPendingInviteIds((s) => {
-        const next = new Set(s);
-        next.delete(p.id);
-        return next;
-      });
-      toast.success("Usuário adicionado diretamente à pelada!");
-    } catch (e: any) {
-      toast.error(e?.message || "Erro ao adicionar");
-    }
   };
 
   const peladaName = match?.name ?? "Minha Pelada";
@@ -310,13 +286,8 @@ function UsuariosPage() {
         onOpenChange={setOpen}
         existingIds={members.map((m) => m.id)}
         pendingIds={Array.from(pendingInviteIds)}
-        isSuper={isSuper}
         onPick={(p) => {
           inviteMember(p);
-          setOpen(false);
-        }}
-        onDirectAdd={(p) => {
-          directAddPlayer(p);
           setOpen(false);
         }}
       />
@@ -389,17 +360,13 @@ function AddPlayerDialog({
   onOpenChange,
   existingIds,
   pendingIds,
-  isSuper,
   onPick,
-  onDirectAdd,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   existingIds: string[];
   pendingIds?: string[];
-  isSuper?: boolean;
   onPick: (p: Profile) => void;
-  onDirectAdd?: (p: Profile) => void;
 }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Profile[]>([]);
@@ -507,16 +474,6 @@ function AddPlayerDialog({
                     >
                       {already ? "Já incluso" : pending ? "Convite enviado" : "Convidar"}
                     </button>
-                    {isSuper && !already && onDirectAdd && (
-                      <button
-                        type="button"
-                        onClick={() => onDirectAdd(p)}
-                        title="Adicionar direto (Super Admin)"
-                        className="rounded-lg border border-blue-400/60 bg-blue-600/80 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-blue-600 shadow-[0_0_15px_-4px_rgba(59,130,246,0.7)]"
-                      >
-                        ⚡ Add Direto
-                      </button>
-                    )}
                   </div>
                 );
               })

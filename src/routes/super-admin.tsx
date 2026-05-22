@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, ShieldCheck, Trophy, KeyRound, Users, Trash2 } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Trophy, KeyRound, Users, Trash2, UserPlus, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
 import { Switch } from "@/components/ui/switch";
@@ -9,7 +9,7 @@ import { ProTag } from "@/routes/pelada.$id";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useServerFn } from "@tanstack/react-start";
-import { listAllUsers, resetUserPassword, setMatchPro, deleteMatch } from "@/lib/admin-users.functions";
+import { listAllUsers, resetUserPassword, setMatchPro, deleteMatch, directAddMember, deleteUser as deleteUserFn } from "@/lib/admin-users.functions";
 import type { AdminUserRow } from "@/lib/admin-users.types";
 
 export const Route = createFileRoute("/super-admin")({
@@ -40,8 +40,16 @@ function SuperAdminPage() {
   const doReset = useServerFn(resetUserPassword);
   const doSetPro = useServerFn(setMatchPro);
   const doDelete = useServerFn(deleteMatch);
+  const doLinkUser = useServerFn(directAddMember);
+  const doDeleteUser = useServerFn(deleteUserFn);
   const [deleteTarget, setDeleteTarget] = useState<Row | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [actionsTarget, setActionsTarget] = useState<AdminUserRow | null>(null);
+  const [linkTarget, setLinkTarget] = useState<AdminUserRow | null>(null);
+  const [linkMatchId, setLinkMatchId] = useState("");
+  const [linking, setLinking] = useState(false);
+  const [deleteUserTarget, setDeleteUserTarget] = useState<AdminUserRow | null>(null);
+  const [deletingUser, setDeletingUser] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -119,6 +127,50 @@ function SuperAdminPage() {
     return <div className="flex min-h-screen items-center justify-center bg-zinc-950 text-zinc-400">Carregando...</div>;
   }
   if (!allowed) return null;
+
+  async function reloadUsers() {
+    try {
+      const u = await fetchUsers();
+      setUsers(u);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erro ao recarregar usuários");
+    }
+  }
+
+  async function confirmLink() {
+    if (!linkTarget || !linkMatchId) return;
+    setLinking(true);
+    try {
+      await doLinkUser({ data: { matchId: linkMatchId, userId: linkTarget.id } });
+      const match = rows.find((r) => r.id === linkMatchId);
+      toast.success(`Usuário vinculado com sucesso à pelada ${match?.name ?? ""}!`);
+      setLinkTarget(null);
+      setLinkMatchId("");
+      setActionsTarget(null);
+      await reloadUsers();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erro ao vincular");
+    } finally {
+      setLinking(false);
+    }
+  }
+
+  async function confirmDeleteUser() {
+    if (!deleteUserTarget) return;
+    setDeletingUser(true);
+    try {
+      await doDeleteUser({ data: { userId: deleteUserTarget.id } });
+      toast.success("Usuário removido da plataforma.");
+      setUsers((us) => us.filter((u) => u.id !== deleteUserTarget.id));
+      setRows((rs) => rs.filter((r) => r.admin_id !== deleteUserTarget.id));
+      setDeleteUserTarget(null);
+      setActionsTarget(null);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erro ao deletar");
+    } finally {
+      setDeletingUser(false);
+    }
+  }
 
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100 pt-14">
@@ -234,12 +286,20 @@ function SuperAdminPage() {
                           ))}
                         </div>
                       </div>
-                      <button
-                        onClick={() => { setResetTarget(u); setNewPw(""); }}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-amber-400/30 bg-amber-400/10 px-2.5 py-1.5 text-xs font-bold uppercase tracking-wider text-amber-300 hover:bg-amber-400/20"
-                      >
-                        <KeyRound className="h-3.5 w-3.5" /> Resetar
-                      </button>
+                      <div className="flex flex-col gap-1.5">
+                        <button
+                          onClick={() => setActionsTarget(u)}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs font-bold uppercase tracking-wider text-zinc-200 hover:bg-white/10"
+                        >
+                          <Settings className="h-3.5 w-3.5" /> Ações
+                        </button>
+                        <button
+                          onClick={() => { setResetTarget(u); setNewPw(""); }}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-amber-400/30 bg-amber-400/10 px-2.5 py-1.5 text-xs font-bold uppercase tracking-wider text-amber-300 hover:bg-amber-400/20"
+                        >
+                          <KeyRound className="h-3.5 w-3.5" /> Resetar
+                        </button>
+                      </div>
                     </div>
                   );
                 })}
@@ -326,6 +386,106 @@ function SuperAdminPage() {
               className="rounded-lg bg-red-500 px-3 py-2 text-xs font-bold uppercase text-white hover:bg-red-400 disabled:opacity-60"
             >
               {deleting ? "Excluindo..." : "Excluir definitivamente"}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Ações do Usuário */}
+      <Dialog open={!!actionsTarget} onOpenChange={(o) => !o && setActionsTarget(null)}>
+        <DialogContent className="border-white/10 bg-zinc-900 text-zinc-100">
+          <DialogHeader>
+            <DialogTitle className="text-zinc-100">
+              Ações para {actionsTarget?.full_name || actionsTarget?.username}
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-zinc-400">@{actionsTarget?.username} · {actionsTarget?.email ?? "—"}</p>
+          <div className="mt-2 flex flex-col gap-2">
+            <button
+              onClick={() => { setLinkTarget(actionsTarget); setLinkMatchId(""); }}
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#00FF00]/40 bg-[#00FF00]/10 px-3 py-2.5 text-sm font-bold uppercase tracking-wider text-[#00FF00] hover:bg-[#00FF00]/20"
+            >
+              <UserPlus className="h-4 w-4" /> ➕ Vincular a uma Pelada
+            </button>
+            <button
+              onClick={() => setDeleteUserTarget(actionsTarget)}
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2.5 text-sm font-bold uppercase tracking-wider text-red-300 hover:bg-red-500/20"
+            >
+              <Trash2 className="h-4 w-4" /> 🗑️ Deletar Usuário
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Sub-modal: Vincular usuário a uma pelada */}
+      <Dialog open={!!linkTarget} onOpenChange={(o) => !o && !linking && (setLinkTarget(null), setLinkMatchId(""))}>
+        <DialogContent className="border-[#00FF00]/30 bg-zinc-900 text-zinc-100">
+          <DialogHeader>
+            <DialogTitle className="text-[#00FF00]">
+              Vincular {linkTarget?.full_name || linkTarget?.username} a uma pelada
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-zinc-400">
+            Selecione a pelada. O usuário será adicionado diretamente como membro,
+            sem precisar aceitar convite.
+          </p>
+          <select
+            value={linkMatchId}
+            onChange={(e) => setLinkMatchId(e.target.value)}
+            className="mt-2 w-full rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-[#00FF00]"
+          >
+            <option value="">— escolha uma pelada —</option>
+            {rows.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.name} {r.admin_username ? `(@${r.admin_username})` : ""}
+              </option>
+            ))}
+          </select>
+          <DialogFooter>
+            <button
+              onClick={() => { setLinkTarget(null); setLinkMatchId(""); }}
+              disabled={linking}
+              className="rounded-lg border border-white/10 px-3 py-2 text-xs font-bold uppercase text-zinc-300 hover:bg-white/5"
+            >
+              Cancelar
+            </button>
+            <button
+              disabled={linking || !linkMatchId}
+              onClick={confirmLink}
+              className="rounded-lg bg-[#00FF00] px-3 py-2 text-xs font-bold uppercase text-zinc-950 hover:bg-[#00FF00]/90 disabled:opacity-60"
+            >
+              {linking ? "Vinculando..." : "Confirmar Vínculo"}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Sub-modal: Confirmar deleção de usuário */}
+      <Dialog open={!!deleteUserTarget} onOpenChange={(o) => !o && !deletingUser && setDeleteUserTarget(null)}>
+        <DialogContent className="border-red-500/30 bg-zinc-900 text-zinc-100">
+          <DialogHeader>
+            <DialogTitle className="text-red-400">
+              Deletar {deleteUserTarget?.full_name || deleteUserTarget?.username}?
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-zinc-400">
+            Tem certeza? Esta ação é <strong className="text-red-300">irreversível</strong> e
+            apagará o perfil, peladas administradas, presenças, votos e estatísticas deste usuário.
+          </p>
+          <DialogFooter>
+            <button
+              onClick={() => setDeleteUserTarget(null)}
+              disabled={deletingUser}
+              className="rounded-lg border border-white/10 px-3 py-2 text-xs font-bold uppercase text-zinc-300 hover:bg-white/5"
+            >
+              Cancelar
+            </button>
+            <button
+              disabled={deletingUser}
+              onClick={confirmDeleteUser}
+              className="rounded-lg bg-red-500 px-3 py-2 text-xs font-bold uppercase text-white hover:bg-red-400 disabled:opacity-60"
+            >
+              {deletingUser ? "Deletando..." : "Deletar definitivamente"}
             </button>
           </DialogFooter>
         </DialogContent>
