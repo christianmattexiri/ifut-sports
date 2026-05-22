@@ -389,13 +389,17 @@ function AddPlayerDialog({
   onOpenChange,
   existingIds,
   pendingIds,
+  isSuper,
   onPick,
+  onDirectAdd,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   existingIds: string[];
   pendingIds?: string[];
+  isSuper?: boolean;
   onPick: (p: Profile) => void;
+  onDirectAdd?: (p: Profile) => void;
 }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Profile[]>([]);
@@ -503,6 +507,16 @@ function AddPlayerDialog({
                     >
                       {already ? "Já incluso" : pending ? "Convite enviado" : "Convidar"}
                     </button>
+                    {isSuper && !already && onDirectAdd && (
+                      <button
+                        type="button"
+                        onClick={() => onDirectAdd(p)}
+                        title="Adicionar direto (Super Admin)"
+                        className="rounded-lg border border-blue-400/60 bg-blue-600/80 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-blue-600 shadow-[0_0_15px_-4px_rgba(59,130,246,0.7)]"
+                      >
+                        ⚡ Add Direto
+                      </button>
+                    )}
                   </div>
                 );
               })
