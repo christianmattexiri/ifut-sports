@@ -408,8 +408,8 @@ function ListaPresencaPage() {
 
 ⚽ ${match?.name ?? "Pelada"} ⚽
 
-🗓 ${settings.dayOfWeek || "-"} | ⏰ ${settings.matchTime || "-"}
-📍 Local: ${settings.location || "-"}
+🗓 ${dayOfWeek || "-"} | ⏰ ${matchTime || "-"}
+📍 Local: ${location || "-"}
 
 *LISTA DE CONFIRMADOS:*
 ${linhasPrincipal.join("\n")}
@@ -630,12 +630,12 @@ Bora pro jogo! 🔥
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-[var(--pelada-accent)]" />
                   <span>
-                    {settings.dayOfWeek || "Domingo"} – {settings.matchTime || "9h"}
+                    {dayOfWeek || "Domingo"} – {matchTime || "9h"}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-[var(--pelada-accent)]" />
-                  <span>{settings.location || "Local a definir"}</span>
+                  <span>{location || "Local a definir"}</span>
                 </div>
               </div>
             </div>
@@ -658,13 +658,13 @@ Bora pro jogo! 🔥
               </h3>
               <div className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
                 <p className="text-zinc-300">
-                  Linha: <span className="font-semibold text-amber-300">R$ {settings.valorLinha}</span>
+                  Linha: <span className="font-semibold text-amber-300">R$ {valorLinha}</span>
                 </p>
                 <p className="text-zinc-300">
-                  Goleiro: <span className="font-semibold text-amber-300">R$ {settings.valorGoleiro}</span>
+                  Goleiro: <span className="font-semibold text-amber-300">R$ {valorGoleiro}</span>
                 </p>
                 <p className="text-zinc-300 sm:col-span-2">
-                  Pix: <span className="font-semibold text-amber-300">{settings.pix}</span>
+                  Pix: <span className="font-semibold text-amber-300">{pix}</span>
                 </p>
               </div>
             </div>
@@ -994,9 +994,9 @@ Bora pro jogo! 🔥
         title="Editar Próxima Pelada"
         accent="var(--pelada-accent)"
         fields={[
-          { key: "dayOfWeek", label: "Dia da semana", value: settings.dayOfWeek },
-          { key: "matchTime", label: "Horário", value: settings.matchTime },
-          { key: "location", label: "Local", value: settings.location },
+          { key: "dayOfWeek", label: "Dia da semana", value: dayOfWeek },
+          { key: "matchTime", label: "Horário", value: matchTime },
+          { key: "location", label: "Local", value: location },
         ]}
         onSave={(vals) => setSettings((s) => ({ ...s, ...vals }))}
       />
@@ -1008,9 +1008,9 @@ Bora pro jogo! 🔥
         title="Editar Valores"
         accent="#fbbf24"
         fields={[
-          { key: "valorLinha", label: "Valor Linha (R$)", value: settings.valorLinha },
-          { key: "valorGoleiro", label: "Valor Goleiro (R$)", value: settings.valorGoleiro },
-          { key: "pix", label: "Chave Pix", value: settings.pix, placeholder: "Sua chave pix AQUI" },
+          { key: "valorLinha", label: "Valor Linha (R$)", value: valorLinha },
+          { key: "valorGoleiro", label: "Valor Goleiro (R$)", value: valorGoleiro },
+          { key: "pix", label: "Chave Pix", value: pix, placeholder: "Sua chave pix AQUI" },
         ]}
         onSave={(vals) => setSettings((s) => ({ ...s, ...vals }))}
       />
