@@ -267,6 +267,63 @@ export async function deleteMatch(gameId: string): Promise<void> {
   await supabase.from("games").delete().eq("id", gameId);
 }
 
+/**
+ * Persist the current draw (Time A vs Time B) on the matches table so the
+ * Partida screen can restore it on reload.
+ */
+export async function saveCurrentDraw(
+  peladaId: string,
+  draw: unknown | null,
+): Promise<void> {
+  const { error } = await supabase
+    .from("matches")
+    .update({ current_draw: draw as never })
+    .eq("id", peladaId);
+  if (error) throw new Error(`Falha ao salvar sorteio: ${error.message}`);
+}
+
+/**
+ * Increment a single stat (goals / assists) for a player in a given game.
+ * Used by the Live Tracking mode so each tap persists instantly.
+ */
+export async function incrementPlayerStat(
+  gameId: string,
+  userId: string,
+  field: "goals" | "assists",
+  delta = 1,
+): Promise<number> {
+  const { data: cur, error: selErr } = await supabase
+    .from("game_player_stats")
+    .select("id, goals, assists")
+    .eq("game_id", gameId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (selErr) throw new Error(selErr.message);
+  if (!cur) throw new Error("Jogador não encontrado nessa partida");
+  const next = Math.max(0, (cur[field] ?? 0) + delta);
+  const patch: Record<string, number> = { [field]: next };
+  const { error: updErr } = await supabase
+    .from("game_player_stats")
+    .update(patch)
+    .eq("id", cur.id);
+  if (updErr) throw new Error(updErr.message);
+  // Recompute score for the side this stat affects (goals only).
+  if (field === "goals") {
+    const { data: stats } = await supabase
+      .from("game_player_stats")
+      .select("team, goals")
+      .eq("game_id", gameId);
+    const score_a = (stats ?? [])
+      .filter((s) => s.team === "A")
+      .reduce((s, r) => s + (r.goals ?? 0), 0);
+    const score_b = (stats ?? [])
+      .filter((s) => s.team === "B")
+      .reduce((s, r) => s + (r.goals ?? 0), 0);
+    await supabase.from("games").update({ score_a, score_b }).eq("id", gameId);
+  }
+  return next;
+}
+
 export async function updateMatchWinners(
   gameId: string,
   patch: { mvp_id?: string | null; pereba_id?: string | null },
