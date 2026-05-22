@@ -377,17 +377,17 @@ function MatchAccordion({
 
   return (
     <div className="overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/40 backdrop-blur-xl transition hover:border-white/20">
-      <div className="flex items-center gap-3 px-5 py-4">
+      <div className="flex items-center gap-2 px-3 py-3 sm:gap-3 sm:px-5 sm:py-4">
         <button
           type="button"
           onClick={onToggle}
-          className="flex flex-1 items-center gap-4 text-left"
+          className="flex min-w-0 flex-1 items-center gap-2 text-left sm:gap-4"
         >
-          <span className="text-xs tabular-nums text-zinc-500">{formatDate(m.date)}</span>
-          <span className="text-sm font-medium text-zinc-200">{m.name}</span>
+          <span className="shrink-0 text-[11px] tabular-nums text-zinc-500 sm:text-xs">{formatDate(m.date)}</span>
+          <span className="truncate text-xs font-medium text-zinc-200 sm:text-sm">{m.name}</span>
         </button>
-        <div className="flex items-center gap-3">
-          <span className="flex items-center gap-2 font-mono text-base font-bold tabular-nums">
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
+          <span className="flex items-center gap-1.5 font-mono text-sm font-bold tabular-nums sm:gap-2 sm:text-base">
             <span className={aWin ? "text-[var(--pelada-accent)] drop-shadow-[0_0_8px_color-mix(in_oklab,var(--pelada-accent)_70%,transparent)]" : "text-zinc-400"}>
               {sa}
             </span>
@@ -401,7 +401,7 @@ function MatchAccordion({
               <button
                 type="button"
                 onClick={onEdit}
-                className="rounded-lg p-1.5 text-amber-400 transition hover:bg-amber-400/10"
+                className="rounded-lg p-1 text-amber-400 transition hover:bg-amber-400/10 sm:p-1.5"
                 aria-label="Editar"
               >
                 <Pencil className="h-4 w-4" />
@@ -409,7 +409,7 @@ function MatchAccordion({
               <button
                 type="button"
                 onClick={onDelete}
-                className="rounded-lg p-1.5 text-red-500 transition hover:bg-red-500/10"
+                className="rounded-lg p-1 text-red-500 transition hover:bg-red-500/10 sm:p-1.5"
                 aria-label="Excluir"
               >
                 <Trash2 className="h-4 w-4" />
@@ -419,7 +419,7 @@ function MatchAccordion({
           <button
             type="button"
             onClick={onToggle}
-            className="rounded-lg p-1.5 text-zinc-400 transition hover:bg-white/5"
+            className="rounded-lg p-1 text-zinc-400 transition hover:bg-white/5 sm:p-1.5"
             aria-label={open ? "Recolher" : "Expandir"}
           >
             <ChevronDown className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`} />
