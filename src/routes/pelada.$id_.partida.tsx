@@ -315,6 +315,62 @@ function NavItem({ icon, label, active, gold }: { icon: React.ReactNode; label: 
   );
 }
 
+function TeamsVersusView({ teamA, teamB }: { teamA: Player[]; teamB: Player[] }) {
+  const sortGK = (a: Player, b: Player) =>
+    Number(b.isGoalkeeper) - Number(a.isGoalkeeper);
+  const a = [...teamA].sort(sortGK);
+  const b = [...teamB].sort(sortGK);
+  return (
+    <div className="relative flex w-full items-start justify-between gap-2 rounded-2xl border border-[var(--pelada-accent)]/30 bg-zinc-900/50 p-3 backdrop-blur-xl sm:gap-4 sm:p-5">
+      <TeamSideColumn title="Time A" players={a} accent="var(--pelada-accent)" align="left" />
+      <div className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 text-xl font-bold italic text-zinc-500 sm:top-4 sm:text-2xl">
+        VS
+      </div>
+      <TeamSideColumn title="Time B" players={b} accent="#ef4444" align="right" />
+    </div>
+  );
+}
+
+function TeamSideColumn({
+  title,
+  players,
+  accent,
+  align,
+}: {
+  title: string;
+  players: Player[];
+  accent: string;
+  align: "left" | "right";
+}) {
+  return (
+    <div className={`flex w-1/2 min-w-0 flex-col gap-1.5 ${align === "right" ? "items-end text-right" : "items-start text-left"}`}>
+      <p
+        className="mb-1 text-xs font-black uppercase tracking-wider sm:text-sm"
+        style={{ color: accent }}
+      >
+        {title}
+      </p>
+      {players.length === 0 ? (
+        <p className="text-xs text-zinc-500">Sem jogadores</p>
+      ) : (
+        players.map((p) => (
+          <div
+            key={p.id}
+            className={`flex w-full min-w-0 items-center gap-1.5 rounded-lg border border-white/10 bg-zinc-950/60 px-2 py-1.5 text-xs sm:text-sm ${
+              align === "right" ? "flex-row-reverse" : ""
+            }`}
+          >
+            <span className="shrink-0" aria-hidden>
+              {p.isGoalkeeper ? "🧤" : "●"}
+            </span>
+            <span className="min-w-0 flex-1 truncate text-zinc-100">{p.name}</span>
+          </div>
+        ))
+      )}
+    </div>
+  );
+}
+
 function TeamView({ title, players, accent }: { title: string; players: Player[]; accent: string }) {
   return (
     <div className="rounded-2xl border bg-zinc-900/50 p-5 backdrop-blur-xl" style={{ borderColor: `${accent}55`, boxShadow: `0 0 30px -12px ${accent}66` }}>
