@@ -176,25 +176,6 @@ function UsuariosPage() {
     toast.success(`Convite enviado para ${p.full_name || p.username}!`);
   };
 
-  const directAddPlayer = async (p: Profile) => {
-    if (members.some((m) => m.id === p.id)) {
-      toast.info("Esse jogador já está na pelada");
-      return;
-    }
-    try {
-      await directAdd({ data: { matchId: id, userId: p.id } });
-      setMembers((prev) => (prev.some((m) => m.id === p.id) ? prev : [...prev, p]));
-      setPendingInviteIds((s) => {
-        const next = new Set(s);
-        next.delete(p.id);
-        return next;
-      });
-      toast.success("Usuário adicionado diretamente à pelada!");
-    } catch (e: any) {
-      toast.error(e?.message || "Erro ao adicionar");
-    }
-  };
-
   const peladaName = match?.name ?? "Minha Pelada";
   const peladaLogo = match?.logo_url ?? null;
 
@@ -305,13 +286,8 @@ function UsuariosPage() {
         onOpenChange={setOpen}
         existingIds={members.map((m) => m.id)}
         pendingIds={Array.from(pendingInviteIds)}
-        isSuper={isSuper}
         onPick={(p) => {
           inviteMember(p);
-          setOpen(false);
-        }}
-        onDirectAdd={(p) => {
-          directAddPlayer(p);
           setOpen(false);
         }}
       />
