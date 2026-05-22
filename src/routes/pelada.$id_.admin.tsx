@@ -210,7 +210,7 @@ function AdminPage() {
 
         <section className="flex-1 px-5 py-8 md:px-10 md:py-10">
           <div className="mx-auto max-w-3xl space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h1 className="text-3xl font-black uppercase tracking-tight text-amber-300 md:text-4xl">Administrador</h1>
                 <p className="mt-1 text-sm text-zinc-400">Configurações da pelada — visíveis apenas para admins.</p>
