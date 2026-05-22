@@ -17,8 +17,6 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
-import { useServerFn } from "@tanstack/react-start";
-import { directAddMember } from "@/lib/admin-users.functions";
 import {
   Dialog,
   DialogContent,
@@ -64,8 +62,6 @@ function UsuariosPage() {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [pendingInviteIds, setPendingInviteIds] = useState<Set<string>>(new Set());
-  const [isSuper, setIsSuper] = useState(false);
-  const directAdd = useServerFn(directAddMember);
 
   useEffect(() => {
     (async () => {
@@ -89,7 +85,6 @@ function UsuariosPage() {
         .maybeSingle();
       const isOwner = match?.admin_id === uid;
       const isSuper = isSuperAdminUsername(myProf?.username);
-      setIsSuper(isSuper);
       if (!match || (!isOwner && !isSuper)) {
         toast.error("Acesso restrito ao admin da pelada");
         navigate({ to: "/pelada/$id", params: { id } });
