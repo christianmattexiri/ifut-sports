@@ -301,7 +301,8 @@ export async function incrementPlayerStat(
   if (selErr) throw new Error(selErr.message);
   if (!cur) throw new Error("Jogador não encontrado nessa partida");
   const next = Math.max(0, (cur[field] ?? 0) + delta);
-  const patch: Record<string, number> = { [field]: next };
+  const patch =
+    field === "goals" ? { goals: next } : { assists: next };
   const { error: updErr } = await supabase
     .from("game_player_stats")
     .update(patch)
