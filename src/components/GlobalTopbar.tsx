@@ -36,11 +36,11 @@ export function GlobalTopbar() {
   // Hide on auth/landing pages.
   const hide = pathname === "/" || pathname.startsWith("/auth");
   if (hide) return null;
-  if (!viewer) return null;
 
-  const username = viewer.username ?? "jogador";
-  const fullName = viewer.full_name?.trim() || username;
+  const username = viewer?.username ?? "jogador";
+  const fullName = viewer?.full_name?.trim() || username;
   const isSuperAdmin = isSuperAdminUsername(username);
+  const viewerId = viewer?.id ?? "";
 
   async function handleSignOut() {
     await supabase.auth.signOut();
@@ -83,7 +83,7 @@ export function GlobalTopbar() {
               <MobileMenuContent
                 peladaId={peladaId}
                 isSuperAdmin={isSuperAdmin}
-                viewerId={viewer.id}
+                viewerId={viewerId}
                 onClose={() => setOpen(false)}
               />
             </SheetContent>
