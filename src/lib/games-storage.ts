@@ -28,6 +28,7 @@ export type HistMatch = {
   pereba?: string | null;
   topScorers: string[];
   topAssists: string[];
+  videoUrl?: string | null;
 };
 
 type VoteWinnerRow = {
@@ -95,6 +96,7 @@ function buildHistMatch(
     score_b: number | null;
     mvp_id: string | null;
     pereba_id: string | null;
+    video_url?: string | null;
   },
   stats: Array<{
     user_id: string;
@@ -133,13 +135,14 @@ function buildHistMatch(
     pereba: game.pereba_id,
     topScorers,
     topAssists,
+    videoUrl: game.video_url ?? null,
   };
 }
 
 export async function fetchHistory(peladaId: string, peladaName = "Pelada"): Promise<HistMatch[]> {
   const { data: games, error } = await supabase
     .from("games")
-    .select("id, game_date, score_a, score_b, mvp_id, pereba_id, voting_open, created_at")
+    .select("id, game_date, score_a, score_b, mvp_id, pereba_id, video_url, voting_open, created_at")
     .eq("match_id", peladaId)
     .order("game_date", { ascending: false })
     .order("created_at", { ascending: false });
@@ -186,7 +189,7 @@ export async function fetchLatest(
 ): Promise<HistMatch | null> {
   const { data: game, error } = await supabase
     .from("games")
-    .select("id, game_date, score_a, score_b, mvp_id, pereba_id, voting_open, created_at")
+    .select("id, game_date, score_a, score_b, mvp_id, pereba_id, video_url, voting_open, created_at")
     .eq("match_id", peladaId)
     .order("created_at", { ascending: false })
     .limit(1)
@@ -234,6 +237,7 @@ export async function saveMatch(
     mvp_id: string | null;
     pereba_id: string | null;
     voting_open?: boolean;
+    video_url?: string | null;
   } = {
     id: m.id,
     match_id: peladaId,
@@ -242,6 +246,7 @@ export async function saveMatch(
     score_b,
     mvp_id: m.mvp && isUuid(m.mvp) ? m.mvp : null,
     pereba_id: m.pereba && isUuid(m.pereba) ? m.pereba : null,
+    video_url: m.videoUrl ? m.videoUrl.trim() || null : null,
   };
   if (typeof opts?.votingOpen === "boolean") {
     baseRow.voting_open = opts.votingOpen;
