@@ -1076,11 +1076,15 @@ Bora pro jogo! 🔥
           </DialogHeader>
           <AddMemberPicker
             peladaId={id}
-            excludeIds={players.map((p) => p.userId).filter((v): v is string => !!v)}
+            excludeIds={[
+              ...players.map((p) => p.userId),
+              ...attendingReferees.map((r) => r.userId),
+            ].filter((v): v is string => !!v)}
             open={addOpen}
             onAdd={(profile, isGK) => {
               const display = profile.full_name?.trim() || profile.username || "Jogador";
-              addPlayer(display, isGK, profile.id);
+              const isJuiz = refereeUserIds.has(profile.id);
+              addPlayer(display, isGK, profile.id, undefined, isJuiz);
               setAddOpen(false);
             }}
           />
