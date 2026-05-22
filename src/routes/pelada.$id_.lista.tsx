@@ -843,18 +843,19 @@ Bora pro jogo! 🔥
 
             {/* Lista de Jogadores */}
             <div className="space-y-2 pt-2">
-              {referees.length > 0 && (
+              {attendingReferees.length > 0 && (
                 <div className="space-y-2">
-                  {referees.map((r) => {
-                    const display = r.full_name?.trim() || r.username || "Juiz";
+                  {attendingReferees.map((r) => {
+                    const display = r.name;
+                    const canRemove = isAdmin || (me && r.userId === me.id);
                     return (
                       <div
-                        key={r.user_id}
+                        key={r.rowId}
                         className="flex items-center gap-3 rounded-xl border-2 border-yellow-400/60 bg-yellow-400/5 px-3 py-2.5 shadow-[0_0_25px_-12px_rgba(250,204,21,0.7)] backdrop-blur-xl"
                       >
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-yellow-400/50 bg-zinc-800 text-xs font-bold text-yellow-300">
-                          {r.avatar_url ? (
-                            <img src={r.avatar_url} alt={display} className="h-full w-full object-cover" />
+                          {r.avatarUrl ? (
+                            <img src={r.avatarUrl} alt={display} className="h-full w-full object-cover" />
                           ) : (
                             display.charAt(0).toUpperCase()
                           )}
@@ -868,6 +869,17 @@ Bora pro jogo! 🔥
                         <span className="shrink-0 rounded-md border border-yellow-400/60 bg-yellow-400/15 px-2 py-1 text-[10px] font-black uppercase tracking-wider text-yellow-300">
                           🏁 Juiz
                         </span>
+                        {canRemove && (
+                          <button
+                            type="button"
+                            onClick={() => removePlayer(r.rowId)}
+                            aria-label="Remover juiz da lista"
+                            title="Remover juiz da lista"
+                            className="shrink-0 rounded-md p-1.5 text-zinc-500 transition hover:bg-red-500/10 hover:text-red-300"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        )}
                       </div>
                     );
                   })}
