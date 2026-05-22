@@ -388,18 +388,24 @@ function AddPlayerDialog({
     let cancelled = false;
     setSearching(true);
     const t = setTimeout(async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, full_name, username, avatar_url")
-        .or(`username.ilike.%${q}%,full_name.ilike.%${q}%`)
-        .limit(10);
+      const [{ data: byUsername }, { data: byFullName }] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("id, full_name, username, avatar_url")
+          .ilike("username", `%${q}%`)
+          .limit(10),
+        supabase
+          .from("profiles")
+          .select("id, full_name, username, avatar_url")
+          .ilike("full_name", `%${q}%`)
+          .limit(10),
+      ]);
       if (cancelled) return;
-      if (error) {
-        toast.error("Erro ao buscar usuários");
-        setResults([]);
-      } else {
-        setResults((data ?? []) as Profile[]);
+      const map = new Map<string, Profile>();
+      for (const p of [...(byUsername ?? []), ...(byFullName ?? [])] as Profile[]) {
+        map.set(p.id, p);
       }
+      setResults(Array.from(map.values()));
       setSearching(false);
     }, 250);
     return () => {
