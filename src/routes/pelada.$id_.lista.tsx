@@ -30,6 +30,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { peladaMatchQuery, viewerQuery, matchAttendanceQuery } from "@/lib/pelada-queries";
+import { matchRefereesQuery } from "@/lib/pelada-queries";
 import { useAvatars } from "@/lib/avatars";
 import {
   Dialog,
@@ -108,6 +109,12 @@ function ListaPresencaPage() {
 
   // ===== Lista de presença: query compartilhada (lift state up) =====
   const attendanceQuery = useQuery(matchAttendanceQuery(id));
+  const refereesQuery = useQuery(matchRefereesQuery(id));
+  const referees = refereesQuery.data ?? [];
+  const refereeUserIds = useMemo(
+    () => new Set(referees.map((r) => r.user_id)),
+    [referees],
+  );
   const invalidateAttendance = () =>
     queryClient.invalidateQueries({ queryKey: ["match_attendance", id] });
   // Resolved from match_members: whether the viewer is registered as a GK
@@ -168,7 +175,9 @@ function ListaPresencaPage() {
   // Players derivados da query de match_attendance
   const players = useMemo<Player[]>(() => {
     const rows = attendanceQuery.data ?? [];
-    return rows.map((r) => {
+    return rows
+      .filter((r) => !r.is_referee && !(r.player_id && refereeUserIds.has(r.player_id)))
+      .map((r) => {
       const userId = (r.player_id as string | null) ?? null;
       const rowId = r.id as string;
       const stableId = userId ?? rowId;
@@ -182,7 +191,7 @@ function ListaPresencaPage() {
         rating: Number(r.rating ?? 5),
       };
     });
-  }, [attendanceQuery.data]);
+  }, [attendanceQuery.data, refereeUserIds]);
   const isListLoading = attendanceQuery.isLoading;
 
   // Dados dinâmicos (Data/Hora/Local/Valores/Pix) vêm direto do Supabase.
