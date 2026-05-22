@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { peladaMatchQuery, viewerQuery, matchAttendanceQuery } from "@/lib/pelada-queries";
 import { useAvatars } from "@/lib/avatars";
 import {
@@ -61,6 +61,9 @@ type Match = {
   match_time: string | null;
   location: string | null;
   logo_url: string | null;
+  price_player: number | null;
+  price_goalkeeper: number | null;
+  pix_key: string | null;
 };
 
 type Player = {
