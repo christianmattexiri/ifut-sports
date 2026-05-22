@@ -574,7 +574,7 @@ export function EditMatchDialog({
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto border-white/10 bg-zinc-950 text-zinc-100">
+      <DialogContent className="max-h-[90vh] w-[calc(100vw-1rem)] max-w-4xl overflow-x-hidden overflow-y-auto border-white/10 bg-zinc-950 text-zinc-100">
         <DialogHeader>
           <DialogTitle className="text-[var(--pelada-accent)]">Editar Partida</DialogTitle>
         </DialogHeader>
@@ -618,13 +618,13 @@ export function EditMatchDialog({
                       <h4 className="text-sm font-bold uppercase tracking-wider">{t.label}</h4>
                     </div>
                     <ul className="space-y-1.5">
-                      {t.players.map((p) => (
+                       {t.players.map((p) => (
                         <li
                           key={p.id}
-                          className="flex items-center justify-between rounded-lg border border-white/5 bg-zinc-900/60 px-3 py-2"
+                          className="flex flex-wrap items-center justify-between gap-1 rounded-lg border border-white/5 bg-zinc-900/60 p-2 sm:flex-nowrap sm:gap-3 sm:px-3"
                         >
-                          <span className="text-sm text-zinc-200">{p.name}</span>
-                          <div className="flex items-center gap-3">
+                          <span className="min-w-[80px] flex-1 truncate text-sm text-zinc-200">{p.name}</span>
+                          <div className="flex items-center gap-2 sm:gap-3">
                             <StatStepper
                               label="G"
                               labelClass="text-amber-400"
@@ -740,12 +740,12 @@ function StatStepper({
   onDelta: (d: number) => void;
 }) {
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
       <span className={`text-[11px] font-bold ${labelClass}`}>{label}:</span>
       <button
         type="button"
         onClick={() => onDelta(-1)}
-        className="rounded border border-white/10 p-0.5 text-zinc-400 hover:bg-white/5"
+        className="rounded border border-white/10 p-0.5 text-zinc-400 hover:bg-white/5 sm:p-1"
         aria-label="Diminuir"
       >
         <Minus className="h-3 w-3" />
@@ -763,12 +763,12 @@ function StatStepper({
           if (Number.isFinite(n) && n >= 0) onChange(n);
         }}
         placeholder="0"
-        className="w-12 appearance-none rounded border border-white/10 bg-zinc-900 px-1.5 py-0.5 text-center text-sm tabular-nums text-zinc-100 placeholder:text-zinc-600 focus:border-[var(--pelada-accent)]/40 focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
+        className="w-9 appearance-none rounded border border-white/10 bg-zinc-900 px-1 py-0.5 text-center text-sm tabular-nums text-zinc-100 placeholder:text-zinc-600 focus:border-[var(--pelada-accent)]/40 focus:outline-none sm:w-12 sm:px-1.5 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
       />
       <button
         type="button"
         onClick={() => onDelta(1)}
-        className="rounded border border-white/10 p-0.5 text-zinc-400 hover:bg-white/5"
+        className="rounded border border-white/10 p-0.5 text-zinc-400 hover:bg-white/5 sm:p-1"
         aria-label="Aumentar"
       >
         <Plus className="h-3 w-3" />
