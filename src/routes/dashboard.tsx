@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { peladaMatchQuery, matchAttendanceQuery } from "@/lib/pelada-queries";
 import {
   Home,
@@ -14,6 +14,7 @@ import {
   Repeat,
   RefreshCw,
   Mail,
+  Bell,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -58,7 +59,23 @@ function Dashboard() {
   const [fixoOpen, setFixoOpen] = useState(false);
   const [installOpen, setInstallOpen] = useState(false);
   const [peladas, setPeladas] = useState<Pelada[]>([]);
-  const [pendingInvites, setPendingInvites] = useState(0);
+
+  // Reactive pending invites count (refreshes when the user navigates back
+  // from /convites or accepts/rejects something).
+  const { data: pendingInvites = 0 } = useQuery({
+    queryKey: ["pending-invites", profile?.id ?? "anon"],
+    enabled: !!profile?.id,
+    staleTime: 30 * 1000,
+    queryFn: async () => {
+      if (!profile?.id) return 0;
+      const { count } = await supabase
+        .from("match_invitations")
+        .select("id", { count: "exact", head: true })
+        .eq("invitee_id", profile.id)
+        .eq("status", "pending");
+      return count ?? 0;
+    },
+  });
 
   useEffect(() => {
     let active = true;
@@ -69,7 +86,7 @@ function Dashboard() {
         return;
       }
       const uid = sess.session.user.id;
-      const [{ data }, { data: ownMatches }, { data: memberRows }, { count: invitesCount }] = await Promise.all([
+      const [{ data }, { data: ownMatches }, { data: memberRows }] = await Promise.all([
         supabase
           .from("profiles")
           .select("id, full_name, username, avatar_url")
@@ -84,11 +101,6 @@ function Dashboard() {
           .from("match_members")
           .select("match:matches(id, name, day_of_week, match_time, location, logo_url, is_pro)")
           .eq("user_id", uid),
-        supabase
-          .from("match_invitations")
-          .select("id", { count: "exact", head: true })
-          .eq("invitee_id", uid)
-          .eq("status", "pending"),
       ]);
       if (!active) return;
       setProfile(
@@ -145,7 +157,6 @@ function Dashboard() {
       }
 
       setPeladas(list);
-      setPendingInvites(invitesCount ?? 0);
       setReady(true);
 
       // Prefetch silencioso: assim que os cards aparecem, já buscamos em
@@ -274,6 +285,18 @@ function Dashboard() {
               <h1 className="mt-2 text-4xl font-bold tracking-tight md:text-5xl">
                 Olá, {firstName} <span className="inline-block">👋</span>
               </h1>
+              {pendingInvites > 0 && (
+                <button
+                  type="button"
+                  onClick={() => navigate({ to: "/convites" })}
+                  className="bg-yellow-500 text-black font-bold py-2 px-4 rounded-full flex items-center gap-2 animate-pulse mt-4 w-fit cursor-pointer active:scale-95 transition-all shadow-[0_0_15px_rgba(234,179,8,0.5)]"
+                >
+                  <Bell className="h-4 w-4" />
+                  {pendingInvites === 1
+                    ? "Você foi convidado para uma pelada!"
+                    : `Você tem ${pendingInvites} convites pendentes!`}
+                </button>
+              )}
             </div>
             <p className="text-sm text-zinc-400">
               <span className="font-semibold text-zinc-200">{peladas.length}</span> Peladas no Total
@@ -281,7 +304,7 @@ function Dashboard() {
           </header>
 
           {peladas.length === 0 ? (
-            <EmptyState />
+            <EmptyState hasInvites={pendingInvites > 0} onGoToInvites={() => navigate({ to: "/convites" })} />
           ) : (
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
               {peladas.map((p) => (
