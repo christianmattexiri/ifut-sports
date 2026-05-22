@@ -266,6 +266,31 @@ function ListaPresencaPage() {
       toast.error("Lista cheia (incluindo suplentes)");
       return;
     }
+    // Onboarding via link direto: se o usuário logado está se inscrevendo,
+    // garante que ele vire membro oficial da pelada antes de entrar na lista.
+    if (userId && me?.id === userId) {
+      const { data: existing } = await supabase
+        .from("match_members")
+        .select("user_id")
+        .eq("match_id", id!)
+        .eq("user_id", userId)
+        .maybeSingle();
+      const { data: matchRow } = await supabase
+        .from("matches")
+        .select("admin_id")
+        .eq("id", id!)
+        .maybeSingle();
+      const isAdmin = matchRow?.admin_id === userId;
+      if (!existing && !isAdmin) {
+        const { error: memberErr } = await supabase
+          .from("match_members")
+          .insert({ match_id: id!, user_id: userId, is_goalkeeper: isGK });
+        if (memberErr) {
+          toast.error("Não foi possível vincular você à pelada");
+          return;
+        }
+      }
+    }
     const { error } = await supabase.from("match_attendance").insert({
       match_id: id,
       player_id: userId ?? null,
