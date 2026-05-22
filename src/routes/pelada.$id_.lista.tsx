@@ -304,6 +304,7 @@ function ListaPresencaPage() {
     isGK = false,
     userId?: string,
     rating?: number,
+    isReferee = false,
   ) => {
     if (!name.trim()) return;
     const totalConfirmed = categorized.line.length + categorized.gks.length;
@@ -354,9 +355,10 @@ function ListaPresencaPage() {
       match_id: id,
       player_id: userId ?? null,
       player_name: name.trim(),
-      is_goalkeeper: isGK,
+      is_goalkeeper: isReferee ? false : isGK,
       has_paid: false,
       rating: typeof effectiveRating === "number" ? effectiveRating : 5,
+      is_referee: isReferee,
     });
     if (error) {
       toast.error("Não foi possível adicionar à lista");
