@@ -1,35 +1,29 @@
-## Plano de implementação
+## Plano — Excluir peladas (Super Admin e Admin da pelada)
 
-1. **Navegação da tela inicial da pelada**
-   - Transformar o card/botão **Ranking** em link para `/pelada/$id/rankings`.
-   - Transformar o card/botão **Stats** em link para `/pelada/$id/perfil`.
+### Objetivo
+Permitir que `christianmatte` e `leofreitas` (super admins) excluam qualquer pelada pela tela `/super-admin`, e que o admin de cada pelada exclua a sua própria pelada pelo menu Administrador.
 
-2. **Perfil de outro jogador na pelada**
-   - Criar rota reutilizando o visual da tela atual de perfil: `/pelada/$id/perfil/$userId`.
-   - O perfil do próprio usuário continua em `/pelada/$id/perfil` com botão **Editar Perfil**.
-   - Perfis de terceiros usam o mesmo layout, estatísticas e histórico, mas **sem** botão de edição.
-   - Jogadores clicáveis no pódio da tela inicial, rankings e listas de partidas apontam para esse perfil.
+### O que vai mudar
 
-3. **Limpeza do perfil e modal de edição**
-   - Remover os hardcoded **“RAFAEL BORRÉ F.C”** e **“Volante”**.
-   - Mostrar apenas avatar/fallback, nome atual e username.
-   - Ajustar o `ProfileDialog` para sincronizar o campo **Nome de exibição** sempre que abrir ou quando `fullName` mudar, evitando o valor estático “Jogador”.
-   - Manter upload no bucket de avatares e salvar `avatar_url` em `profiles`.
+**1. Server function `deleteMatch` (`src/lib/admin-users.functions.ts`)**
+- Nova `createServerFn` protegida por `requireSupabaseAuth` recebendo `{ matchId }`.
+- Carrega `matches.admin_id` + username do chamador.
+- Autoriza se: usuário é super admin **OU** é o `admin_id` da pelada.
+- Usa `supabaseAdmin` para limpar em ordem (já que não há FKs em cascata): `game_votes`, `game_player_stats`, `games` (pelos game_ids do match), `match_attendance`, `match_invitations`, `match_members`, e por fim `matches`.
+- Retorna `{ ok: true }`.
 
-4. **Sincronização instantânea de nome/foto**
-   - Criar um pequeno mecanismo global de perfil por evento/local state compartilhado: ao salvar nome/foto, disparar um evento interno e atualizar também os dados persistidos em `localStorage` que dependem daquele jogador.
-   - Atualizar presença, times salvos e histórico local para trocar apenas campos visuais (`name`/`avatarUrl`) do mesmo `user_id`, sem alterar estatísticas.
-   - Fazer as páginas que exibem jogadores ouvirem esse evento para refletir mudanças sem reload.
+**2. Super Admin (`src/routes/super-admin.tsx`)**
+- Adicionar botão de lixeira (ícone `Trash2`) em cada linha de pelada, ao lado do switch PRO.
+- Ao clicar abre `AlertDialog` de confirmação ("Excluir pelada `<nome>`? Esta ação é irreversível.").
+- Confirmar chama `deleteMatch` e remove a linha localmente; toast de sucesso/erro.
 
-5. **Correção crítica ID vs nome**
-   - Refatorar a tela de perfil para filtrar **Meus Últimos Jogos** e somar estatísticas por `userId`/`player.id`, nunca por nome.
-   - Refatorar o destaque no acordeão para comparar `p.id === userId`.
-   - Manter `name` apenas para renderização visual.
+**3. Tela do Administrador da pelada (`src/routes/pelada.$id_.admin.tsx`)**
+- Nova `Section` no fim ("Zona de perigo") com botão vermelho "Excluir esta pelada".
+- Só aparece quando o usuário atual é o `admin_id` da pelada (não para super admin acessando pelada alheia — eles usam a tela `/super-admin`).
+- `AlertDialog` exigindo digitar o nome da pelada para confirmar.
+- Após sucesso: toast + `navigate({ to: "/dashboard" })`.
 
-6. **Rankings e histórico consistentes**
-   - Ajustar agregação dos rankings para usar `id` como chave permanente e, quando possível, buscar/mesclar nomes e avatares atuais de `profiles`.
-   - Garantir que gols, assistências, MVPs, vitórias e derrotas permaneçam vinculados ao mesmo `id` mesmo após troca de nome/avatar.
-   - Adicionar links nos nomes/avatar do leaderboard para o perfil do jogador.
-
-7. **Validação**
-   - Conferir os fluxos principais: edição de perfil, atualização visual imediata, navegação Ranking/Stats, clique em Matador/MVP/Maestro e preservação do histórico após troca de nome.
+### Notas técnicas
+- A lógica de "quem pode deletar" fica **no servidor** (server fn), não confiamos na UI.
+- Avatares no Storage não são removidos (mantém comportamento atual de outras exclusões; pode virar follow-up).
+- Nenhuma migration necessária — RLS atual já permite as deleções via `service_role` no `supabaseAdmin`.
