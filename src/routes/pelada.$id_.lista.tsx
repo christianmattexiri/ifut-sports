@@ -991,9 +991,9 @@ Bora pro jogo! 🔥
             peladaId={id}
             excludeIds={players.map((p) => p.userId).filter((v): v is string => !!v)}
             open={addOpen}
-            onAdd={(profile, isGK, rating) => {
+            onAdd={(profile, isGK) => {
               const display = profile.full_name?.trim() || profile.username || "Jogador";
-              addPlayer(display, isGK, profile.id, rating);
+              addPlayer(display, isGK, profile.id);
               setAddOpen(false);
             }}
           />
