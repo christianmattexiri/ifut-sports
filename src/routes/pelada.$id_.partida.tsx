@@ -262,6 +262,10 @@ function PartidaPage() {
                 </button>
               </div>
             )}
+
+            {isSorteioSalvo && saved && (
+              <TeamsVersusView teamA={saved.teamA} teamB={saved.teamB} />
+            )}
           </div>
         </section>
       </div>
