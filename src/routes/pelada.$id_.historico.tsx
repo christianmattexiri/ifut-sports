@@ -125,6 +125,10 @@ function HistoricoPage() {
   const match = (matchData ?? null) as Match | null;
   const { data: viewer, isLoading: viewerLoading } = useQuery(viewerQuery());
   const isAdmin = !!viewer && !!match && match.admin_id === viewer.id;
+  const { data: refereesData } = useQuery(matchRefereesQuery(id));
+  const isReferee =
+    !!viewer && (refereesData ?? []).some((r) => r.user_id === viewer.id);
+  const canEdit = isAdmin || isReferee;
   useEffect(() => {
     if (!viewerLoading && viewer === null) navigate({ to: "/" });
   }, [viewer, viewerLoading, navigate]);
