@@ -319,17 +319,19 @@ function PartidaPage() {
                 : `${confirmed.length} jogador${confirmed.length === 1 ? "" : "es"} confirmado${confirmed.length === 1 ? "" : "s"} na lista de presença.`}
             </p>
 
-            <button
-              type="button"
-              onClick={() => setSorteioOpen(true)}
-              disabled={!isAdmin}
-              className="w-full rounded-2xl border-2 border-[var(--pelada-accent)] bg-[var(--pelada-accent)]/10 px-6 py-8 text-2xl font-black uppercase tracking-wider text-[var(--pelada-accent)] transition hover:bg-[var(--pelada-accent)]/20 hover:shadow-[0_0_50px_-8px_color-mix(in_oklab,var(--pelada-accent)_90%,transparent)] disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              ⚽ Sortear Times
-            </button>
-            {!isAdmin && <p className="text-center text-xs text-zinc-500">Somente o admin pode sortear.</p>}
+            {!liveMode && (
+              <button
+                type="button"
+                onClick={() => setSorteioOpen(true)}
+                disabled={!isAdmin}
+                className="w-full rounded-2xl border-2 border-[var(--pelada-accent)] bg-[var(--pelada-accent)]/10 px-6 py-8 text-2xl font-black uppercase tracking-wider text-[var(--pelada-accent)] transition hover:bg-[var(--pelada-accent)]/20 hover:shadow-[0_0_50px_-8px_color-mix(in_oklab,var(--pelada-accent)_90%,transparent)] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                ⚽ Sortear Times
+              </button>
+            )}
+            {!liveMode && !isAdmin && <p className="text-center text-xs text-zinc-500">Somente o admin pode sortear.</p>}
 
-            {referees.length > 0 && (
+            {!liveMode && referees.length > 0 && (
               <div className="rounded-2xl border-2 border-yellow-400/60 bg-yellow-400/5 px-4 py-3 shadow-[0_0_25px_-12px_rgba(250,204,21,0.7)]">
                 <p className="mb-1 text-[10px] font-black uppercase tracking-wider text-yellow-300/80">
                   🏁 Juiz da partida
@@ -340,10 +342,21 @@ function PartidaPage() {
               </div>
             )}
 
-            {canRegister && isSorteioSalvo && (
+            {!liveMode && canRegister && isSorteioSalvo && (
               <div className="flex flex-col gap-3 pt-2">
                 <button type="button" onClick={copyTeams} className="inline-flex items-center justify-center gap-2 rounded-xl border border-[var(--pelada-accent)]/50 bg-[var(--pelada-accent)]/10 px-4 py-2 text-sm font-bold uppercase tracking-wider text-[var(--pelada-accent)] transition hover:bg-[var(--pelada-accent)]/20">
                   <ClipboardCopy className="h-4 w-4" /> Copiar Times
+                </button>
+                <button
+                  type="button"
+                  onClick={startLive}
+                  className="inline-flex w-full items-center justify-center gap-3 rounded-2xl border-2 border-red-500 bg-red-500/10 px-6 py-5 text-lg font-black uppercase tracking-wider text-red-400 transition hover:bg-red-500/20 hover:shadow-[0_0_30px_-8px_rgba(239,68,68,0.7)]"
+                >
+                  <span className="relative flex h-3 w-3">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+                    <span className="relative inline-flex h-3 w-3 rounded-full bg-red-500" />
+                  </span>
+                  <Radio className="h-5 w-5 animate-pulse" /> Registrar Ao Vivo
                 </button>
                 <button type="button" onClick={startRegister} className="w-full rounded-2xl border-2 border-yellow-400 bg-yellow-400/10 px-6 py-5 text-lg font-black uppercase tracking-wider text-yellow-400 transition hover:bg-yellow-400/20 hover:shadow-[0_0_30px_-8px_rgba(250,204,21,0.7)]">
                   📋 Registrar Partida
@@ -351,8 +364,34 @@ function PartidaPage() {
               </div>
             )}
 
-            {isSorteioSalvo && saved && (
+            {!liveMode && isSorteioSalvo && saved && (
               <TeamsVersusView teamA={saved.teamA} teamB={saved.teamB} />
+            )}
+
+            {liveMode && liveMatch && (
+              <>
+                <div className="rounded-2xl border-2 border-red-500/60 bg-red-500/5 px-4 py-3 text-center">
+                  <p className="inline-flex items-center justify-center gap-2 text-xs font-black uppercase tracking-wider text-red-400">
+                    <span className="relative flex h-2.5 w-2.5">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+                      <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+                    </span>
+                    Modo Ao Vivo · Toque em um jogador para registrar
+                  </p>
+                </div>
+                <LiveVersusView
+                  teamA={liveMatch.teamA.players}
+                  teamB={liveMatch.teamB.players}
+                  onTap={(p, team) => setLiveTarget({ playerId: p.id, name: p.name, team })}
+                />
+                <button
+                  type="button"
+                  onClick={finishLive}
+                  className="inline-flex w-full items-center justify-center gap-3 rounded-2xl border-2 border-red-500 bg-red-500 px-6 py-5 text-lg font-black uppercase tracking-wider text-white transition hover:bg-red-600"
+                >
+                  <OctagonAlert className="h-5 w-5" /> Finalizar Partida
+                </button>
+              </>
             )}
           </div>
         </section>
@@ -389,6 +428,34 @@ function PartidaPage() {
       </Dialog>
 
       {editing && <EditMatchDialog match={editing} onClose={() => setEditing(null)} onSave={handleSaveMatch} />}
+
+      <Dialog open={!!liveTarget} onOpenChange={(o) => { if (!o) setLiveTarget(null); }}>
+        <DialogContent className="max-w-sm border-red-500/40 bg-zinc-950 text-zinc-100">
+          <DialogHeader>
+            <DialogTitle className="text-center text-xl font-black uppercase tracking-wider text-red-400">
+              {liveTarget?.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-1 gap-3 py-2 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => registerLiveStat("goals")}
+              className="flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-emerald-500 bg-emerald-500/10 px-6 py-8 text-2xl font-black uppercase tracking-wider text-emerald-400 transition hover:bg-emerald-500/20"
+            >
+              <span className="text-4xl">⚽</span>
+              GOL
+            </button>
+            <button
+              type="button"
+              onClick={() => registerLiveStat("assists")}
+              className="flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-sky-500 bg-sky-500/10 px-6 py-8 text-2xl font-black uppercase tracking-wider text-sky-400 transition hover:bg-sky-500/20"
+            >
+              <span className="text-4xl">👟</span>
+              Assistência
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }
