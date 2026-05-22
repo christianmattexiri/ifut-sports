@@ -456,19 +456,38 @@ function CreatePeladaDialog({
   );
 }
 
-function EmptyState() {
+function EmptyState({ hasInvites, onGoToInvites }: { hasInvites?: boolean; onGoToInvites?: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center gap-4 rounded-3xl border border-dashed border-white/10 bg-zinc-900/30 px-6 py-16 text-center backdrop-blur-xl">
       <div className="flex h-20 w-20 items-center justify-center rounded-full border border-[#00FF00]/30 bg-[#00FF00]/5 text-[#00FF00] shadow-[0_0_40px_-12px_rgba(0,255,0,0.6)]">
         <CalendarDays className="h-9 w-9" strokeWidth={1.6} />
       </div>
-      <p className="max-w-sm text-base text-zinc-400">
-        Você ainda não participa de nenhuma pelada.
-      </p>
-      <div className="mt-2 flex flex-col items-center gap-1 text-sm font-medium text-[#00FF00]">
-        <span>Crie a sua primeira logo abaixo</span>
-        <ArrowDown className="h-5 w-5 animate-bounce" />
-      </div>
+      {hasInvites ? (
+        <>
+          <p className="max-w-sm text-base text-zinc-200">
+            Você tem convites esperando por você. Aceite para começar a jogar!
+          </p>
+          {onGoToInvites && (
+            <button
+              type="button"
+              onClick={onGoToInvites}
+              className="mt-2 inline-flex items-center gap-2 rounded-full bg-yellow-500 px-4 py-2 text-sm font-bold text-black shadow-[0_0_15px_rgba(234,179,8,0.5)] transition active:scale-95"
+            >
+              <Mail className="h-4 w-4" />
+              Ver convites
+            </button>
+          )}
+        </>
+      ) : (
+        <>
+          <p className="max-w-sm text-base text-zinc-400">
+            Você ainda não participa de nenhuma pelada. Crie a sua primeira logo abaixo.
+          </p>
+          <div className="mt-2 flex flex-col items-center gap-1 text-sm font-medium text-[#00FF00]">
+            <ArrowDown className="h-5 w-5 animate-bounce" />
+          </div>
+        </>
+      )}
     </div>
   );
 }
