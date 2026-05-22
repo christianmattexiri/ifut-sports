@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { peladaMatchQuery, viewerQuery } from "@/lib/pelada-queries";
+import { peladaMatchQuery, viewerQuery, matchRefereesQuery } from "@/lib/pelada-queries";
 import {
   fetchHistory,
   saveMatch as saveGameMatch,
