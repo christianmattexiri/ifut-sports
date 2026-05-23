@@ -1,7 +1,8 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, ShieldCheck, Trophy, KeyRound, Users, Trash2, UserPlus, Settings } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Trophy, KeyRound, Users, Trash2, UserPlus, Settings, DatabaseZap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { isSuperAdminUsername } from "@/lib/admin";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
@@ -50,6 +51,9 @@ function SuperAdminPage() {
   const [linking, setLinking] = useState(false);
   const [deleteUserTarget, setDeleteUserTarget] = useState<AdminUserRow | null>(null);
   const [deletingUser, setDeletingUser] = useState(false);
+  const [seeding, setSeeding] = useState(false);
+  const [seedConfirmOpen, setSeedConfirmOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     (async () => {
