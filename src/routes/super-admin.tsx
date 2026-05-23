@@ -377,6 +377,63 @@ function SuperAdminPage() {
     }
   }
 
+  const updateAwardsList: Array<{ name: string; mvp: number; pereba: number; aliases?: string[] }> = [
+    { name: "Jonathas pacheco", mvp: 2, pereba: 0 },
+    { name: "Mauricio", mvp: 4, pereba: 0 },
+    { name: "Bruno Santos", mvp: 3, pereba: 0 },
+    { name: "Daniel Selistre", mvp: 4, pereba: 3 },
+    { name: "Yang", mvp: 3, pereba: 0 },
+    { name: "Dudu", mvp: 0, pereba: 1 },
+    { name: "Paulo Nascimento dos Santos", mvp: 2, pereba: 1, aliases: ["Paulo Santos"] },
+    { name: "Leonardo dos Santos lemos", mvp: 0, pereba: 3, aliases: ["Leonardo Lemos", "Léo Pires", "Leo Pires"] },
+    { name: "Leonardo Silveira", mvp: 0, pereba: 3 },
+    { name: "Tiago Folle", mvp: 1, pereba: 1, aliases: ["Thiago Folle", "Folle"] },
+    { name: "Diego de souza", mvp: 2, pereba: 2 },
+    { name: "Vin", mvp: 0, pereba: 3, aliases: ["Jonas Ribeiro"] },
+    { name: "Richard de souza", mvp: 0, pereba: 1 },
+    { name: "Cássio", mvp: 0, pereba: 1, aliases: ["Cassio"] },
+    { name: "Airon", mvp: 0, pereba: 2, aliases: ["Airon Selistre"] },
+  ];
+
+  async function handleUpdateAwards() {
+    setUpdatingAwards(true);
+    try {
+      let updated = 0;
+      let missing: string[] = [];
+      for (const item of updateAwardsList) {
+        const candidates = [item.name, ...(item.aliases ?? [])];
+        let profileId: string | null = null;
+        for (const c of candidates) {
+          const { data } = await supabase
+            .from("profiles")
+            .select("id")
+            .or(`full_name.ilike.${c},username.ilike.${c}`)
+            .limit(1)
+            .maybeSingle();
+          if (data?.id) { profileId = data.id; break; }
+        }
+        if (!profileId) { missing.push(item.name); continue; }
+        const { error } = await supabase
+          .from("profiles")
+          .update({ total_mvps: item.mvp, total_perebas: item.pereba })
+          .eq("id", profileId);
+        if (error) throw error;
+        updated += 1;
+      }
+      await queryClient.invalidateQueries();
+      if (missing.length > 0) {
+        toast.warning(`Atualizados ${updated}. Sem perfil: ${missing.join(", ")}`);
+      } else {
+        toast.success("MVPs e Perebas atualizados com sucesso!");
+      }
+    } catch (e: any) {
+      console.error(e);
+      toast.error(e?.message ?? "Erro ao atualizar prêmios");
+    } finally {
+      setUpdatingAwards(false);
+    }
+  }
+
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100 pt-14">
       <div className="mx-auto max-w-5xl px-5 py-8">
