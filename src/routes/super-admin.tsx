@@ -653,6 +653,36 @@ function SuperAdminPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Confirmação Reset+Seed do Futebol da Gurizada */}
+      <Dialog open={seedConfirmOpen} onOpenChange={(o) => !o && !seeding && setSeedConfirmOpen(false)}>
+        <DialogContent className="border-amber-400/30 bg-zinc-900 text-zinc-100">
+          <DialogHeader>
+            <DialogTitle className="text-amber-300">Reset e Seed Histórico</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-zinc-400">
+            Esta ação irá <strong className="text-red-300">apagar todos os jogos</strong> da pelada
+            "Futebol da Gurizada" e inserir 3 partidas-seed. Os agregados de perfil
+            (gols/assistências) <strong>não</strong> serão alterados.
+          </p>
+          <DialogFooter>
+            <button
+              onClick={() => setSeedConfirmOpen(false)}
+              disabled={seeding}
+              className="rounded-lg border border-white/10 px-3 py-2 text-xs font-bold uppercase text-zinc-300 hover:bg-white/5"
+            >
+              Cancelar
+            </button>
+            <button
+              disabled={seeding}
+              onClick={runResetAndSeed}
+              className="rounded-lg bg-amber-400 px-3 py-2 text-xs font-bold uppercase text-zinc-950 hover:bg-amber-300 disabled:opacity-60"
+            >
+              {seeding ? "Processando..." : "Confirmar"}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }
