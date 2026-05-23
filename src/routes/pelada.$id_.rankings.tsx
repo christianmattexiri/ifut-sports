@@ -14,6 +14,7 @@ import {
   ArrowDown,
   Minus,
   Crown,
+  Frown,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
@@ -38,7 +39,7 @@ export const Route = createFileRoute("/pelada/$id_/rankings")({
 
 type Match = { id: string; name: string; logo_url: string | null; admin_id?: string | null };
 
-type Stat = "gols" | "assistencias" | "mvps" | "vitorias" | "derrotas";
+type Stat = "gols" | "assistencias" | "mvps" | "vitorias" | "perebas";
 
 type PlayerStats = {
   id: string;
@@ -49,6 +50,7 @@ type PlayerStats = {
   mvps: number;
   vitorias: number;
   derrotas: number;
+  perebas: number;
   jogos: number;
 };
 
@@ -57,7 +59,7 @@ const TABS: { key: Stat; label: string; emoji: string }[] = [
   { key: "assistencias", label: "Maestros", emoji: "👟" },
   { key: "mvps", label: "MVP", emoji: "👑" },
   { key: "vitorias", label: "Vitórias", emoji: "🤝" },
-  { key: "derrotas", label: "Lanternas", emoji: "💀" },
+  { key: "perebas", label: "Perebas", emoji: "😖" },
 ];
 
 // Aggregation now happens server-side via fetchAggregatedStats.
@@ -398,8 +400,8 @@ function statLabel(s: Stat) {
       return "MVP";
     case "vitorias":
       return "Vitórias";
-    case "derrotas":
-      return "Derrotas";
+    case "perebas":
+      return "Perebas";
   }
 }
 
