@@ -318,6 +318,7 @@ export type Database = {
           id: string
           total_assists: number | null
           total_matches: number | null
+          total_mvps: number | null
           total_perebas: number | null
           updated_at: string
           username: string
@@ -330,6 +331,7 @@ export type Database = {
           id: string
           total_assists?: number | null
           total_matches?: number | null
+          total_mvps?: number | null
           total_perebas?: number | null
           updated_at?: string
           username: string
@@ -342,6 +344,7 @@ export type Database = {
           id?: string
           total_assists?: number | null
           total_matches?: number | null
+          total_mvps?: number | null
           total_perebas?: number | null
           updated_at?: string
           username?: string
