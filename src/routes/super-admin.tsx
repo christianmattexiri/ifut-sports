@@ -417,6 +417,14 @@ function SuperAdminPage() {
             >
               <DatabaseZap className="h-3.5 w-3.5" /> Reset e Seed Histórico
             </button>
+            <button
+              onClick={handleUpdateStats}
+              disabled={updatingStats}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-emerald-400/40 bg-emerald-400/10 px-3 py-2 text-xs font-bold uppercase tracking-wider text-emerald-300 hover:bg-emerald-400/20 disabled:opacity-50"
+            >
+              <DatabaseZap className="h-3.5 w-3.5" />
+              {updatingStats ? "Atualizando..." : "Atualizar Partidas/Assistências"}
+            </button>
           </div>
         </div>
         <div className="rounded-2xl border border-white/10 bg-zinc-900/40 p-4 backdrop-blur-xl">
