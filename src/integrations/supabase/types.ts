@@ -321,6 +321,7 @@ export type Database = {
           total_matches: number | null
           total_mvps: number | null
           total_perebas: number | null
+          total_wins: number | null
           updated_at: string
           username: string
         }
@@ -335,6 +336,7 @@ export type Database = {
           total_matches?: number | null
           total_mvps?: number | null
           total_perebas?: number | null
+          total_wins?: number | null
           updated_at?: string
           username: string
         }
@@ -349,6 +351,7 @@ export type Database = {
           total_matches?: number | null
           total_mvps?: number | null
           total_perebas?: number | null
+          total_wins?: number | null
           updated_at?: string
           username?: string
         }
