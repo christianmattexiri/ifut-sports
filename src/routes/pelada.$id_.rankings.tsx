@@ -14,7 +14,6 @@ import {
   ArrowDown,
   Minus,
   Crown,
-  Frown,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
