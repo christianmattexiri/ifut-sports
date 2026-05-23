@@ -378,6 +378,7 @@ export type AggregatedStat = {
   mvps: number;
   vitorias: number;
   derrotas: number;
+  perebas: number;
   jogos: number;
 };
 
@@ -421,7 +422,7 @@ export async function fetchAggregatedStats(peladaId: string): Promise<Aggregated
   const ensure = (id: string, name: string) => {
     let p = map.get(id);
     if (!p) {
-      p = { id, name, gols: 0, assistencias: 0, mvps: 0, vitorias: 0, derrotas: 0, jogos: 0 };
+      p = { id, name, gols: 0, assistencias: 0, mvps: 0, vitorias: 0, derrotas: 0, perebas: 0, jogos: 0 };
       map.set(id, p);
     } else if (!p.name && name) {
       p.name = name;
@@ -448,6 +449,25 @@ export async function fetchAggregatedStats(peladaId: string): Promise<Aggregated
     if (g.mvp_id) {
       const entry = map.get(g.mvp_id);
       if (entry) entry.mvps += 1;
+    }
+    if (g.pereba_id) {
+      const entry = map.get(g.pereba_id);
+      if (entry) entry.perebas += 1;
+    }
+  }
+  // Apply profile overrides (total_matches / total_assists / total_perebas)
+  const ids = Array.from(map.keys());
+  if (ids.length > 0) {
+    const { data: profs } = await supabase
+      .from("profiles")
+      .select("id, total_matches, total_assists, total_perebas")
+      .in("id", ids);
+    for (const p of (profs ?? []) as Array<{ id: string; total_matches: number | null; total_assists: number | null; total_perebas: number | null }>) {
+      const entry = map.get(p.id);
+      if (!entry) continue;
+      if (p.total_matches != null) entry.jogos = p.total_matches;
+      if (p.total_assists != null) entry.assistencias = p.total_assists;
+      if (p.total_perebas != null) entry.perebas = p.total_perebas;
     }
   }
   return Array.from(map.values());
