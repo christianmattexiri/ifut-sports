@@ -1,7 +1,8 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, ShieldCheck, Trophy, KeyRound, Users, Trash2, UserPlus, Settings } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Trophy, KeyRound, Users, Trash2, UserPlus, Settings, DatabaseZap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { isSuperAdminUsername } from "@/lib/admin";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
@@ -50,6 +51,9 @@ function SuperAdminPage() {
   const [linking, setLinking] = useState(false);
   const [deleteUserTarget, setDeleteUserTarget] = useState<AdminUserRow | null>(null);
   const [deletingUser, setDeletingUser] = useState(false);
+  const [seeding, setSeeding] = useState(false);
+  const [seedConfirmOpen, setSeedConfirmOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     (async () => {
@@ -172,6 +176,149 @@ function SuperAdminPage() {
     }
   }
 
+  async function runResetAndSeed() {
+    const PELADA_ID = "7d5e2a58-2419-45ee-8176-eba8ae483513";
+    setSeeding(true);
+    try {
+      // 1) Buscar IDs de jogos existentes da pelada
+      const { data: existing, error: exErr } = await supabase
+        .from("games").select("id").eq("match_id", PELADA_ID);
+      if (exErr) throw exErr;
+      const ids = (existing ?? []).map((g: any) => g.id);
+
+      // 2) Apagar stats e votos vinculados, depois os jogos
+      if (ids.length > 0) {
+        await supabase.from("game_player_stats").delete().in("game_id", ids);
+        await supabase.from("game_votes").delete().in("game_id", ids);
+        const { error: delErr } = await supabase.from("games").delete().in("id", ids);
+        if (delErr) throw delErr;
+      }
+
+      // 3) Dados das partidas (seed)
+      const historicoPartidas = [
+        {
+          date: "2026-05-16",
+          score_a: 12, score_b: 14,
+          team_a: [
+            { name: "Mauricio", goals: 0 }, { name: "Tiago Atanasoff", goals: 0 },
+            { name: "Diego de souza", goals: 0 }, { name: "Jonathas pacheco", goals: 4 },
+            { name: "Leonardo dos Santos lemos", goals: 0 }, { name: "Yang", goals: 3 },
+            { name: "Daniel Selistre", goals: 5 },
+          ],
+          team_b: [
+            { name: "Richard de souza", goals: 0 }, { name: "Dudu", goals: 0 },
+            { name: "Leonardo Silveira", goals: 2 }, { name: "Paulo Nascimento dos Santos", goals: 3 },
+            { name: "Airon", goals: 2 }, { name: "Tiago Folle", goals: 4 },
+            { name: "Bruno Santos", goals: 3 },
+          ],
+        },
+        {
+          date: "2026-05-09",
+          score_a: 10, score_b: 8,
+          team_a: [
+            { name: "Vin", goals: 0 }, { name: "Cássio", goals: 0 },
+            { name: "Jonathas pacheco", goals: 1 }, { name: "Daniel Selistre", goals: 3 },
+            { name: "Tiago Atanasoff", goals: 2 }, { name: "Mauricio", goals: 4 },
+            { name: "Leonardo dos Santos lemos", goals: 0 },
+          ],
+          team_b: [
+            { name: "Richard de souza", goals: 0 }, { name: "Airon", goals: 0 },
+            { name: "Paulo Nascimento dos Santos", goals: 3 }, { name: "Tiago Folle", goals: 2 },
+            { name: "Dudu", goals: 0 }, { name: "Diego de souza", goals: 0 },
+            { name: "Bruno Santos", goals: 3 },
+          ],
+        },
+        {
+          date: "2026-04-25",
+          score_a: 6, score_b: 8,
+          team_a: [
+            { name: "Richard de souza", goals: 0 }, { name: "Cássio", goals: 0 },
+            { name: "Airon", goals: 0 }, { name: "Leonardo Silveira", goals: 1 },
+            { name: "Tiago Folle", goals: 0 }, { name: "Diego de souza", goals: 3 },
+            { name: "Bruno Santos", goals: 2 },
+          ],
+          team_b: [
+            { name: "Vin", goals: 0 }, { name: "Dudu", goals: 0 },
+            { name: "Jonathas pacheco", goals: 1 }, { name: "Tiago Atanasoff", goals: 3 },
+            { name: "Mauricio", goals: 3 }, { name: "Paulo Nascimento dos Santos", goals: 0 },
+            { name: "Leonardo dos Santos lemos", goals: 1 },
+          ],
+        },
+      ];
+
+      // 4) Resolver UUIDs por nome (case-insensitive via ilike em full_name e username).
+      // Aliases para apelidos que não batem com o full_name no banco.
+      const aliasMap: Record<string, string> = {
+        "vin": "Jonas Ribeiro",
+        "tiago": "Tiago Atanasoff",
+      };
+      const allNames = Array.from(
+        new Set(
+          historicoPartidas.flatMap((p) => [...p.team_a, ...p.team_b]).map((pl) => pl.name)
+        )
+      );
+      const nameToId = new Map<string, string>();
+      for (const original of allNames) {
+        const key = original.toLowerCase();
+        const lookup = aliasMap[key] ?? original;
+        const { data: found } = await supabase
+          .from("profiles")
+          .select("id, full_name, username")
+          .or(`full_name.ilike.${lookup},username.ilike.${lookup}`)
+          .limit(1);
+        const id = (found && found[0]?.id) || null;
+        if (id) nameToId.set(original, id);
+      }
+
+      // 5) Inserir os jogos e as estatísticas. NENHUM update em profiles.
+      for (const p of historicoPartidas) {
+        const { data: game, error: gErr } = await supabase
+          .from("games")
+          .insert({
+            match_id: PELADA_ID,
+            game_date: p.date,
+            score_a: p.score_a,
+            score_b: p.score_b,
+            voting_open: false,
+          })
+          .select("id")
+          .single();
+        if (gErr || !game) throw gErr ?? new Error("Falha ao criar jogo");
+
+        const statsRows: any[] = [];
+        for (const pl of p.team_a) {
+          const uid = nameToId.get(pl.name);
+          if (!uid) continue; // sem vínculo: pula (user_id é NOT NULL)
+          statsRows.push({
+            game_id: game.id, user_id: uid, team: "A",
+            goals: pl.goals, assists: 0, player_name: pl.name,
+          });
+        }
+        for (const pl of p.team_b) {
+          const uid = nameToId.get(pl.name);
+          if (!uid) continue;
+          statsRows.push({
+            game_id: game.id, user_id: uid, team: "B",
+            goals: pl.goals, assists: 0, player_name: pl.name,
+          });
+        }
+        if (statsRows.length > 0) {
+          const { error: sErr } = await supabase.from("game_player_stats").insert(statsRows);
+          if (sErr) throw sErr;
+        }
+      }
+
+      await queryClient.invalidateQueries();
+      toast.success("Histórico resetado e 3 partidas importadas com sucesso!");
+      setSeedConfirmOpen(false);
+    } catch (e: any) {
+      console.error(e);
+      toast.error(e?.message ?? "Erro ao resetar/semear histórico");
+    } finally {
+      setSeeding(false);
+    }
+  }
+
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100 pt-14">
       <div className="mx-auto max-w-5xl px-5 py-8">
@@ -199,6 +346,22 @@ function SuperAdminPage() {
           </TabsList>
 
           <TabsContent value="peladas" className="mt-4">
+        <div className="mb-3 rounded-2xl border border-amber-400/30 bg-amber-400/5 p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-amber-300">Futebol da Gurizada</p>
+              <p className="text-xs text-zinc-400">
+                Apaga TODO o histórico de jogos desta pelada e injeta 3 partidas-seed (sem mexer em agregados de perfil).
+              </p>
+            </div>
+            <button
+              onClick={() => setSeedConfirmOpen(true)}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-amber-400/40 bg-amber-400/10 px-3 py-2 text-xs font-bold uppercase tracking-wider text-amber-300 hover:bg-amber-400/20"
+            >
+              <DatabaseZap className="h-3.5 w-3.5" /> Reset e Seed Histórico
+            </button>
+          </div>
+        </div>
         <div className="rounded-2xl border border-white/10 bg-zinc-900/40 p-4 backdrop-blur-xl">
           <p className="mb-3 text-xs uppercase tracking-wider text-zinc-500">
             {rows.length} peladas no total
@@ -486,6 +649,36 @@ function SuperAdminPage() {
               className="rounded-lg bg-red-500 px-3 py-2 text-xs font-bold uppercase text-white hover:bg-red-400 disabled:opacity-60"
             >
               {deletingUser ? "Deletando..." : "Deletar definitivamente"}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirmação Reset+Seed do Futebol da Gurizada */}
+      <Dialog open={seedConfirmOpen} onOpenChange={(o) => !o && !seeding && setSeedConfirmOpen(false)}>
+        <DialogContent className="border-amber-400/30 bg-zinc-900 text-zinc-100">
+          <DialogHeader>
+            <DialogTitle className="text-amber-300">Reset e Seed Histórico</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-zinc-400">
+            Esta ação irá <strong className="text-red-300">apagar todos os jogos</strong> da pelada
+            "Futebol da Gurizada" e inserir 3 partidas-seed. Os agregados de perfil
+            (gols/assistências) <strong>não</strong> serão alterados.
+          </p>
+          <DialogFooter>
+            <button
+              onClick={() => setSeedConfirmOpen(false)}
+              disabled={seeding}
+              className="rounded-lg border border-white/10 px-3 py-2 text-xs font-bold uppercase text-zinc-300 hover:bg-white/5"
+            >
+              Cancelar
+            </button>
+            <button
+              disabled={seeding}
+              onClick={runResetAndSeed}
+              className="rounded-lg bg-amber-400 px-3 py-2 text-xs font-bold uppercase text-zinc-950 hover:bg-amber-300 disabled:opacity-60"
+            >
+              {seeding ? "Processando..." : "Confirmar"}
             </button>
           </DialogFooter>
         </DialogContent>
