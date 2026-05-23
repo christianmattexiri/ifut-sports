@@ -54,6 +54,7 @@ function SuperAdminPage() {
   const [seeding, setSeeding] = useState(false);
   const [seedConfirmOpen, setSeedConfirmOpen] = useState(false);
   const [updatingStats, setUpdatingStats] = useState(false);
+  const [updatingAwards, setUpdatingAwards] = useState(false);
   const queryClient = useQueryClient();
 
   useEffect(() => {
