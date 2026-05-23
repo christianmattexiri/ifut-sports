@@ -53,6 +53,7 @@ function SuperAdminPage() {
   const [deletingUser, setDeletingUser] = useState(false);
   const [seeding, setSeeding] = useState(false);
   const [seedConfirmOpen, setSeedConfirmOpen] = useState(false);
+  const [updatingStats, setUpdatingStats] = useState(false);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -317,6 +318,64 @@ function SuperAdminPage() {
     }
   }
 
+  const updateStatsList: Array<{ name: string; matches: number; assists: number; aliases?: string[] }> = [
+    { name: "Tiago Atanasoff", matches: 21, assists: 8, aliases: ["Tiago"] },
+    { name: "Jonathas pacheco", matches: 21, assists: 10 },
+    { name: "Mauricio", matches: 21, assists: 18 },
+    { name: "Bruno Santos", matches: 20, assists: 7 },
+    { name: "Daniel Selistre", matches: 21, assists: 11 },
+    { name: "Yang", matches: 18, assists: 3 },
+    { name: "Dudu", matches: 21, assists: 9 },
+    { name: "Paulo Nascimento dos Santos", matches: 21, assists: 10, aliases: ["Paulo Santos"] },
+    { name: "Leonardo dos Santos lemos", matches: 13, assists: 3, aliases: ["Leonardo Lemos", "Léo Pires", "Leo Pires"] },
+    { name: "Leonardo Silveira", matches: 12, assists: 4 },
+    { name: "Tiago Folle", matches: 18, assists: 13, aliases: ["Thiago Folle", "Folle"] },
+    { name: "Diego de souza", matches: 18, assists: 14 },
+    { name: "Vin", matches: 16, assists: 10, aliases: ["Jonas Ribeiro"] },
+    { name: "Richard de souza", matches: 14, assists: 3 },
+    { name: "Cássio", matches: 17, assists: 7, aliases: ["Cassio"] },
+    { name: "Airon", matches: 13, assists: 6, aliases: ["Airon Selistre"] },
+  ];
+
+  async function handleUpdateStats() {
+    setUpdatingStats(true);
+    try {
+      let updated = 0;
+      let missing: string[] = [];
+      for (const item of updateStatsList) {
+        const candidates = [item.name, ...(item.aliases ?? [])];
+        let profileId: string | null = null;
+        for (const c of candidates) {
+          const { data } = await supabase
+            .from("profiles")
+            .select("id")
+            .or(`full_name.ilike.${c},username.ilike.${c}`)
+            .limit(1)
+            .maybeSingle();
+          if (data?.id) { profileId = data.id; break; }
+        }
+        if (!profileId) { missing.push(item.name); continue; }
+        const { error } = await supabase
+          .from("profiles")
+          .update({ total_matches: item.matches, total_assists: item.assists })
+          .eq("id", profileId);
+        if (error) throw error;
+        updated += 1;
+      }
+      await queryClient.invalidateQueries();
+      if (missing.length > 0) {
+        toast.warning(`Atualizados ${updated}. Sem perfil: ${missing.join(", ")}`);
+      } else {
+        toast.success("Partidas e Assistências atualizadas com sucesso!");
+      }
+    } catch (e: any) {
+      console.error(e);
+      toast.error(e?.message ?? "Erro ao atualizar estatísticas");
+    } finally {
+      setUpdatingStats(false);
+    }
+  }
+
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100 pt-14">
       <div className="mx-auto max-w-5xl px-5 py-8">
@@ -357,6 +416,14 @@ function SuperAdminPage() {
               className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-amber-400/40 bg-amber-400/10 px-3 py-2 text-xs font-bold uppercase tracking-wider text-amber-300 hover:bg-amber-400/20"
             >
               <DatabaseZap className="h-3.5 w-3.5" /> Reset e Seed Histórico
+            </button>
+            <button
+              onClick={handleUpdateStats}
+              disabled={updatingStats}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-emerald-400/40 bg-emerald-400/10 px-3 py-2 text-xs font-bold uppercase tracking-wider text-emerald-300 hover:bg-emerald-400/20 disabled:opacity-50"
+            >
+              <DatabaseZap className="h-3.5 w-3.5" />
+              {updatingStats ? "Atualizando..." : "Atualizar Partidas/Assistências"}
             </button>
           </div>
         </div>
