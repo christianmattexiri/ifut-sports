@@ -317,6 +317,7 @@ export type Database = {
           full_name: string | null
           id: string
           total_assists: number | null
+          total_goals: number | null
           total_matches: number | null
           total_mvps: number | null
           total_perebas: number | null
@@ -330,6 +331,7 @@ export type Database = {
           full_name?: string | null
           id: string
           total_assists?: number | null
+          total_goals?: number | null
           total_matches?: number | null
           total_mvps?: number | null
           total_perebas?: number | null
@@ -343,6 +345,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           total_assists?: number | null
+          total_goals?: number | null
           total_matches?: number | null
           total_mvps?: number | null
           total_perebas?: number | null
