@@ -194,67 +194,65 @@ function SuperAdminPage() {
         if (delErr) throw delErr;
       }
 
-      // 3) Dados das partidas (seed)
-      const historicoPartidas = [
-        {
-          date: "2026-05-16",
-          score_a: 12, score_b: 14,
-          team_a: [
-            { name: "Mauricio", goals: 0 }, { name: "Tiago Atanasoff", goals: 0 },
-            { name: "Diego de souza", goals: 0 }, { name: "Jonathas pacheco", goals: 4 },
-            { name: "Leonardo dos Santos lemos", goals: 0 }, { name: "Yang", goals: 3 },
-            { name: "Daniel Selistre", goals: 5 },
-          ],
-          team_b: [
-            { name: "Richard de souza", goals: 0 }, { name: "Dudu", goals: 0 },
-            { name: "Leonardo Silveira", goals: 2 }, { name: "Paulo Nascimento dos Santos", goals: 3 },
-            { name: "Airon", goals: 2 }, { name: "Tiago Folle", goals: 4 },
-            { name: "Bruno Santos", goals: 3 },
-          ],
-        },
-        {
-          date: "2026-05-09",
-          score_a: 10, score_b: 8,
-          team_a: [
-            { name: "Vin", goals: 0 }, { name: "Cássio", goals: 0 },
-            { name: "Jonathas pacheco", goals: 1 }, { name: "Daniel Selistre", goals: 3 },
-            { name: "Tiago Atanasoff", goals: 2 }, { name: "Mauricio", goals: 4 },
-            { name: "Leonardo dos Santos lemos", goals: 0 },
-          ],
-          team_b: [
-            { name: "Richard de souza", goals: 0 }, { name: "Airon", goals: 0 },
-            { name: "Paulo Nascimento dos Santos", goals: 3 }, { name: "Tiago Folle", goals: 2 },
-            { name: "Dudu", goals: 0 }, { name: "Diego de souza", goals: 0 },
-            { name: "Bruno Santos", goals: 3 },
-          ],
-        },
-        {
-          date: "2026-04-25",
-          score_a: 6, score_b: 8,
-          team_a: [
-            { name: "Richard de souza", goals: 0 }, { name: "Cássio", goals: 0 },
-            { name: "Airon", goals: 0 }, { name: "Leonardo Silveira", goals: 1 },
-            { name: "Tiago Folle", goals: 0 }, { name: "Diego de souza", goals: 3 },
-            { name: "Bruno Santos", goals: 2 },
-          ],
-          team_b: [
-            { name: "Vin", goals: 0 }, { name: "Dudu", goals: 0 },
-            { name: "Jonathas pacheco", goals: 1 }, { name: "Tiago Atanasoff", goals: 3 },
-            { name: "Mauricio", goals: 3 }, { name: "Paulo Nascimento dos Santos", goals: 0 },
-            { name: "Leonardo dos Santos lemos", goals: 1 },
-          ],
-        },
+      // 3) Dados das partidas (seed). p = [name, goals, assists]
+      type PL = [string, number, number];
+      const historicoPartidas: Array<{
+        date: string; score_a: number; score_b: number;
+        team_a: PL[]; team_b: PL[];
+      }> = [
+        { date: "2026-01-11", score_a: 14, score_b: 11,
+          team_a: [["Bruno Santos",1,1],["Vin",3,1],["Jonathas pacheco",5,4],["Leonardo dos Santos lemos",2,3],["Thiago Folle",3,2],["David Soares",0,2]],
+          team_b: [["Airon",4,1],["Daniel Selistre",2,0],["Mauricio",3,4],["Paulo Nascimento dos Santos",2,2],["Yang",0,0],["Lucas Quadros",0,2]] },
+        { date: "2026-01-18", score_a: 10, score_b: 10,
+          team_a: [["Bruno Martins",3,3],["Diego de souza",0,0],["Paulo Nascimento dos Santos",2,0],["Thiago Folle",4,0],["Yang",1,3]],
+          team_b: [["Airon",3,0],["Bruno Santos",1,0],["Vin",2,0],["Mauricio",3,1],["Richard de souza",1,0]] },
+        { date: "2026-01-25", score_a: 14, score_b: 8,
+          team_a: [["Airon",4,3],["Daniel Selistre",1,3],["David Soares",1,1],["Gustavo Ribeiro",5,1],["Vin",1,1],["Paulo Nascimento dos Santos",2,4]],
+          team_b: [["Diego de souza",2,0],["Jonathas pacheco",3,1],["Mauricio",1,2],["Thiago Folle",2,2],["Lima",0,2],["Lucas Quadros",0,0]] },
+        { date: "2026-02-01", score_a: 12, score_b: 5,
+          team_a: [["Jonathas pacheco",2,1],["Leonardo dos Santos lemos",3,4],["Mauricio",3,0],["Xandy",7,2]],
+          team_b: [["Airon",2,1],["Bruno Santos",1,0],["Paulo Nascimento dos Santos",0,5],["Vitor (Tota)",2,1]] },
+        { date: "2026-02-08", score_a: 14, score_b: 7,
+          team_a: [["Bruno Santos",0,4],["David Soares",2,2],["Gustavo Ribeiro",1,1],["Vin",4,2],["Leonardo dos Santos lemos",4,1],["Paulo Nascimento dos Santos",3,1]],
+          team_b: [["Airon",1,4],["Diego de souza",1,1],["Jonathas pacheco",1,1],["Mauricio",2,1],["Lima",2,0],["Daniel Selistre",0,0]] },
+        { date: "2026-02-22", score_a: 9, score_b: 5,
+          team_a: [["Bruno Santos",3,0],["Jonathas pacheco",1,2],["Mauricio",1,0],["Paulo Nascimento dos Santos",3,3],["Richard de souza",0,1],["Yang",1,0]],
+          team_b: [["Airon",2,0],["David Soares",0,1],["Vin",0,0],["Leonardo dos Santos lemos",3,1],["Leonardo Silveira",0,2],["Daniel Selistre",0,0]] },
+        { date: "2026-03-15", score_a: 9, score_b: 9,
+          team_a: [["Jonathas pacheco",1,3],["Leonardo dos Santos lemos",2,3],["Leonardo Silveira",3,1],["Paulo Nascimento dos Santos",3,0],["Diego de souza",0,0]],
+          team_b: [["Airon",2,1],["Vin",2,0],["Mauricio",1,2],["Richard de souza",1,0],["Thiago Folle",2,1],["Yang",1,0]] },
+        { date: "2026-03-22", score_a: 13, score_b: 8,
+          team_a: [["Airon",4,2],["Vin",3,3],["Paulo Nascimento dos Santos",3,2],["Thiago Folle",3,1],["Daniel Selistre",0,0]],
+          team_b: [["Diego de souza",1,0],["Jonathas pacheco",3,1],["Mauricio",3,3],["Yang",1,0]] },
+        { date: "2026-04-05", score_a: 7, score_b: 8,
+          team_a: [["Vin",3,1],["Thiago Folle",4,0],["Airon",0,3],["Bruno Santos",0,1],["Daniel Selistre",0,2]],
+          team_b: [["Leonardo Silveira",4,0],["Mauricio",2,3],["Jonathas pacheco",1,4],["Paulo Nascimento dos Santos",1,0],["Yang",1,1]] },
+        { date: "2026-04-12", score_a: 14, score_b: 11,
+          team_a: [["Bruno Santos",2,2],["Derik",1,1],["Vin",2,2],["Jonathas pacheco",1,1],["Leonardo dos Santos lemos",6,2],["Yang",2,0]],
+          team_b: [["Airon",5,0],["Daniel Selistre",1,4],["Diego de souza",1,1],["Mauricio",1,1],["Richard de souza",3,0],["Leonardo Silveira",0,1]] },
+        { date: "2026-04-19", score_a: 13, score_b: 8,
+          team_a: [["Airon",4,0],["Leonardo Silveira",3,4],["Mauricio",5,3],["Richard de souza",1,0],["Tiago Atanasoff",0,0],["Yang",0,2]],
+          team_b: [["Daniel Selistre",2,1],["Diego de souza",0,1],["Vin",3,2],["Leonardo dos Santos lemos",2,0],["Paulo Nascimento dos Santos",1,3],["Jonathas pacheco",0,0]] },
+        { date: "2026-05-03", score_a: 9, score_b: 6,
+          team_a: [["Airon",2,0],["Leonardo dos Santos lemos",3,2],["Leonardo Silveira",3,0],["Richard de souza",1,0],["Vin",0,1]],
+          team_b: [["Jonathas pacheco",3,2],["Mauricio",2,0],["Yang",1,0],["Paulo Nascimento dos Santos",1,0],["Bruno Santos",0,1],["Tiago Atanasoff",0,0]] },
+        { date: "2026-05-10", score_a: 5, score_b: 2,
+          team_a: [["Airon",1,0],["Daniel Selistre",1,0],["Jonathas pacheco",3,1],["Mauricio",0,0],["Paulo Nascimento dos Santos",0,0],["Yang",0,0]],
+          team_b: [["Leonardo dos Santos lemos",2,1],["Diego de souza",0,0],["Thiago Folle",0,0]] },
+        { date: "2026-05-17", score_a: 8, score_b: 5,
+          team_a: [["Leonardo Silveira",2,1],["Thiago Folle",3,2],["Leonardo dos Santos lemos",1,1],["Richard de souza",1,1],["Yang",1,0],["Jonathas pacheco",0,2]],
+          team_b: [["Airon",2,1],["Bruno Santos",1,0],["Daniel Selistre",2,0],["Diego de souza",0,1],["Mauricio",0,2],["Paulo Nascimento dos Santos",0,1]] },
       ];
 
       // 4) Resolver UUIDs por nome (case-insensitive via ilike em full_name e username).
       // Aliases para apelidos que não batem com o full_name no banco.
       const aliasMap: Record<string, string> = {
-        "vin": "Jonas Ribeiro",
-        "tiago": "Tiago Atanasoff",
+        "tiago folle": "Folle",
+        "thiago folle": "Folle",
       };
       const allNames = Array.from(
         new Set(
-          historicoPartidas.flatMap((p) => [...p.team_a, ...p.team_b]).map((pl) => pl.name)
+          historicoPartidas.flatMap((p) => [...p.team_a, ...p.team_b]).map((pl) => pl[0])
         )
       );
       const nameToId = new Map<string, string>();
@@ -286,20 +284,20 @@ function SuperAdminPage() {
         if (gErr || !game) throw gErr ?? new Error("Falha ao criar jogo");
 
         const statsRows: any[] = [];
-        for (const pl of p.team_a) {
-          const uid = nameToId.get(pl.name);
+        for (const [name, goals, assists] of p.team_a) {
+          const uid = nameToId.get(name);
           if (!uid) continue; // sem vínculo: pula (user_id é NOT NULL)
           statsRows.push({
             game_id: game.id, user_id: uid, team: "A",
-            goals: pl.goals, assists: 0, player_name: pl.name,
+            goals, assists, player_name: name,
           });
         }
-        for (const pl of p.team_b) {
-          const uid = nameToId.get(pl.name);
+        for (const [name, goals, assists] of p.team_b) {
+          const uid = nameToId.get(name);
           if (!uid) continue;
           statsRows.push({
             game_id: game.id, user_id: uid, team: "B",
-            goals: pl.goals, assists: 0, player_name: pl.name,
+            goals, assists, player_name: name,
           });
         }
         if (statsRows.length > 0) {
@@ -309,7 +307,7 @@ function SuperAdminPage() {
       }
 
       await queryClient.invalidateQueries();
-      toast.success("Histórico resetado e 3 partidas importadas com sucesso!");
+      toast.success("Histórico resetado e 14 partidas importadas com sucesso!");
       setSeedConfirmOpen(false);
     } catch (e: any) {
       console.error(e);
