@@ -95,7 +95,7 @@ export function AudioFooterPlayer({ peladaId, mode, canEdit, titlePrefix, disabl
       playerRef.current = new Ctor(containerRef.current, {
         videoId,
         playerVars: {
-          autoplay: 0,
+          autoplay: 1,
           controls: 0,
           modestbranding: 1,
           playsinline: 1,
@@ -103,7 +103,12 @@ export function AudioFooterPlayer({ peladaId, mode, canEdit, titlePrefix, disabl
           playlist: videoId,
         },
         events: {
-          onReady: () => { if (!cancelled) setReady(true); },
+          onReady: () => {
+            if (!cancelled) {
+              setReady(true);
+              if (!disabled) playerRef.current?.playVideo();
+            }
+          },
           onStateChange: (e: { data: number }) => {
             // 1 = playing, 2 = paused, 0 = ended
             if (e.data === 1) setPlaying(true);
