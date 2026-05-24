@@ -32,105 +32,123 @@ function ytId(url: string): string | null {
   }
 }
 
-// Carrega o script da YouTube IFrame API uma única vez por página.
-// Usar a API oficial (em vez de postMessage cru) garante que o
-// player.playVideo() rode síncrono dentro do clique do usuário —
-// requisito do iOS/Android para liberar áudio no primeiro toque.
-let ytApiPromise: Promise<unknown> | null = null;
-function loadYouTubeApi(): Promise<unknown> {
-  if (typeof window === "undefined") return Promise.resolve(null);
-  const w = window as unknown as { YT?: { Player: unknown }; onYouTubeIframeAPIReady?: () => void };
-  if (w.YT && w.YT.Player) return Promise.resolve(w.YT);
-  if (ytApiPromise) return ytApiPromise;
-  ytApiPromise = new Promise((resolve) => {
-    const existing = document.querySelector('script[src="https://www.youtube.com/iframe_api"]');
-    const prev = w.onYouTubeIframeAPIReady;
-    w.onYouTubeIframeAPIReady = () => {
-      prev?.();
-      resolve(w.YT);
-    };
-    if (!existing) {
-      const s = document.createElement("script");
-      s.src = "https://www.youtube.com/iframe_api";
-      s.async = true;
-      document.head.appendChild(s);
+// Instâncias públicas da Piped API usadas como fallback.
+// Piped é um frontend alternativo open-source do YouTube que expõe
+// os streams de áudio via API REST — permite usar <audio> nativo
+// em vez da YouTube IFrame API, contornando o bloqueio de autoplay no mobile.
+const PIPED_INSTANCES = [
+  "https://pipedapi.kavin.rocks",
+  "https://pipedapi.leptons.xyz",
+];
+
+async function fetchAudioUrl(videoId: string): Promise<string | null> {
+  for (const base of PIPED_INSTANCES) {
+    try {
+      const res = await fetch(`${base}/streams/${videoId}`);
+      if (!res.ok) continue;
+      const data = await res.json();
+      const streams: { url: string; mimeType: string; bitrate: number }[] =
+        data.audioStreams ?? [];
+      // Prefere audio/mp4 (AAC) para melhor compatibilidade com iOS,
+      // depois o stream de maior bitrate disponível.
+      const best =
+        streams.find((s) => s.mimeType?.includes("audio/mp4")) ??
+        [...streams].sort((a, b) => b.bitrate - a.bitrate)[0];
+      if (best?.url) return best.url;
+    } catch {
+      continue;
     }
-  });
-  return ytApiPromise;
+  }
+  return null;
 }
 
-export function AudioFooterPlayer({ peladaId, mode, canEdit, titlePrefix, disabled, disabledHint, scopeKey }: Props) {
-  const scope = mode === "musica" ? "global" : (scopeKey || "current");
+export function AudioFooterPlayer({
+  peladaId,
+  mode,
+  canEdit,
+  titlePrefix,
+  disabled,
+  disabledHint,
+  scopeKey,
+}: Props) {
+  const scope = mode === "musica" ? "global" : scopeKey || "current";
   const key = storageKey(peladaId, mode, scope);
   const [saved, setSaved] = useState<Saved | null>(null);
   const [playing, setPlaying] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editUrl, setEditUrl] = useState("");
   const [editTitle, setEditTitle] = useState("");
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const playerRef = useRef<{ playVideo: () => void; pauseVideo: () => void; destroy: () => void } | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const [ready, setReady] = useState(false);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [fetchError, setFetchError] = useState(false);
 
+  // Carrega URL salva no localStorage ao montar ou mudar de pelada.
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
       const raw = localStorage.getItem(key);
       setSaved(raw ? JSON.parse(raw) : null);
-    } catch { setSaved(null); }
+    } catch {
+      setSaved(null);
+    }
     setPlaying(false);
   }, [key]);
 
   const videoId = useMemo(() => (saved?.url ? ytId(saved.url) : null), [saved]);
 
-  // Cria/atualiza o player via YouTube IFrame API.
+  // Busca a URL direta de stream de áudio via Piped API quando o videoId muda.
+  // Isso contorna o bloqueio de autoplay do iOS/Android com YouTube IFrame API:
+  // usando <audio> nativo, o play() é chamado no mesmo documento e funciona
+  // com o padrão "first touch anywhere".
   useEffect(() => {
-    if (!videoId || !containerRef.current) return;
-    let cancelled = false;
+    if (!videoId) {
+      setAudioUrl(null);
+      setFetchError(false);
+      setReady(false);
+      return;
+    }
+    setFetchError(false);
     setReady(false);
-    playerRef.current?.destroy?.();
-    playerRef.current = null;
-    loadYouTubeApi().then((YT) => {
-      if (cancelled || !YT || !containerRef.current) return;
-      const Ctor = (YT as { Player: new (el: Element, opts: unknown) => typeof playerRef.current }).Player;
-      playerRef.current = new Ctor(containerRef.current, {
-        videoId,
-        playerVars: {
-          autoplay: 1,
-          controls: 0,
-          modestbranding: 1,
-          playsinline: 1,
-          loop: 1,
-          playlist: videoId,
-        },
-        events: {
-          onReady: () => {
-            if (!cancelled) {
-              setReady(true);
-              if (!disabled) playerRef.current?.playVideo();
-            }
-          },
-          onStateChange: (e: { data: number }) => {
-            // 1 = playing, 2 = paused, 0 = ended
-            if (e.data === 1) setPlaying(true);
-            else if (e.data === 2 || e.data === 0) setPlaying(false);
-          },
-        },
-      });
+    setAudioUrl(null);
+    fetchAudioUrl(videoId).then((url) => {
+      if (url) setAudioUrl(url);
+      else setFetchError(true);
     });
-    return () => {
-      cancelled = true;
-      playerRef.current?.destroy?.();
-      playerRef.current = null;
-    };
   }, [videoId]);
 
+  // Configura o player de áudio e o padrão "first touch anywhere" para mobile.
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !audioUrl || disabled) return;
+
+    audio.src = audioUrl;
+    audio.loop = true;
+
+    const tryPlay = () => {
+      audio.play().catch(() => {});
+    };
+
+    // Desktop: tenta iniciar imediatamente.
+    tryPlay();
+
+    // Mobile: inicia na primeira interação do usuário com qualquer elemento da página.
+    document.addEventListener("touchstart", tryPlay, { once: true });
+    document.addEventListener("click", tryPlay, { once: true });
+
+    return () => {
+      document.removeEventListener("touchstart", tryPlay);
+      document.removeEventListener("click", tryPlay);
+      audio.pause();
+      audio.src = "";
+    };
+  }, [audioUrl, disabled]);
+
   function togglePlay() {
-    const p = playerRef.current;
-    if (!p) return;
-    // Chamada síncrona dentro do clique — necessária para iOS/Android
-    // liberarem o áudio na primeira interação.
-    if (playing) p.pauseVideo();
-    else p.playVideo();
+    const a = audioRef.current;
+    if (!a) return;
+    if (playing) a.pause();
+    else a.play().catch(() => {});
   }
 
   function openEdit() {
@@ -138,12 +156,21 @@ export function AudioFooterPlayer({ peladaId, mode, canEdit, titlePrefix, disabl
     setEditTitle(saved?.title ?? "");
     setEditOpen(true);
   }
+
   function persist() {
     const next = { url: editUrl.trim(), title: editTitle.trim() };
     localStorage.setItem(key, JSON.stringify(next));
     setSaved(next);
     setEditOpen(false);
   }
+
+  const statusText = () => {
+    if (disabled) return disabledHint ?? "Indisponível";
+    if (fetchError) return "Erro ao carregar áudio";
+    if (!videoId) return "Sem música definida";
+    if (!audioUrl) return "Carregando...";
+    return saved?.title || "Reproduzindo";
+  };
 
   return (
     <>
@@ -154,19 +181,23 @@ export function AudioFooterPlayer({ peladaId, mode, canEdit, titlePrefix, disabl
         >
           <button
             type="button"
-            disabled={disabled || !videoId || !ready}
+            disabled={disabled || !audioUrl || !ready || fetchError}
             onClick={togglePlay}
             className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[var(--pelada-accent)] text-black shadow-[0_0_20px_-6px_var(--pelada-accent)] transition active:scale-95 disabled:cursor-not-allowed disabled:bg-zinc-800 disabled:text-zinc-500 disabled:shadow-none"
             aria-label={playing ? "Pausar" : "Tocar"}
           >
-            {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 translate-x-[1px]" fill="currentColor" />}
+            {playing ? (
+              <Pause className="h-4 w-4" />
+            ) : (
+              <Play className="h-4 w-4 translate-x-[1px]" fill="currentColor" />
+            )}
           </button>
           <div className="min-w-0 flex-1">
             <p className="truncate text-[11px] uppercase tracking-wider text-zinc-500">
               {mode === "musica" ? "Música da Pelada" : titlePrefix}
             </p>
             <p className="truncate text-sm font-semibold text-zinc-100">
-              {disabled ? (disabledHint ?? "Indisponível") : saved?.title || (videoId ? "Reproduzindo" : "Sem música definida")}
+              {statusText()}
             </p>
           </div>
           {canEdit && (
@@ -181,13 +212,22 @@ export function AudioFooterPlayer({ peladaId, mode, canEdit, titlePrefix, disabl
             </button>
           )}
         </div>
-        {/* Container montado pela YouTube IFrame API. Permanece invisível. */}
-        <div
-          aria-hidden
-          style={{ position: "absolute", width: 0, height: 0, overflow: "hidden", opacity: 0, pointerEvents: "none" }}
-        >
-          {videoId && <div ref={containerRef} />}
-        </div>
+
+        {/* Player de áudio nativo — invisível, controlado via ref. */}
+        <audio
+          ref={audioRef}
+          onCanPlay={() => setReady(true)}
+          onPlay={() => setPlaying(true)}
+          onPause={() => setPlaying(false)}
+          onEnded={() => setPlaying(false)}
+          style={{
+            position: "absolute",
+            width: 0,
+            height: 0,
+            opacity: 0,
+            pointerEvents: "none",
+          }}
+        />
       </footer>
 
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
@@ -195,16 +235,37 @@ export function AudioFooterPlayer({ peladaId, mode, canEdit, titlePrefix, disabl
           <DialogTitle>Editar áudio</DialogTitle>
           <div className="space-y-3 pt-2">
             <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-zinc-400">Título</label>
-              <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} placeholder="Nome da música" className="mt-1 bg-zinc-900 border-white/10" />
+              <label className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+                Título
+              </label>
+              <Input
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                placeholder="Nome da música"
+                className="mt-1 bg-zinc-900 border-white/10"
+              />
             </div>
             <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-zinc-400">URL do YouTube</label>
-              <Input value={editUrl} onChange={(e) => setEditUrl(e.target.value)} placeholder="https://youtu.be/..." className="mt-1 bg-zinc-900 border-white/10" />
+              <label className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+                URL do YouTube
+              </label>
+              <Input
+                value={editUrl}
+                onChange={(e) => setEditUrl(e.target.value)}
+                placeholder="https://youtu.be/..."
+                className="mt-1 bg-zinc-900 border-white/10"
+              />
             </div>
             <div className="flex justify-end gap-2 pt-2">
-              <Button variant="ghost" onClick={() => setEditOpen(false)}>Cancelar</Button>
-              <Button onClick={persist} className="bg-[var(--pelada-accent)] text-black hover:opacity-90">Salvar</Button>
+              <Button variant="ghost" onClick={() => setEditOpen(false)}>
+                Cancelar
+              </Button>
+              <Button
+                onClick={persist}
+                className="bg-[var(--pelada-accent)] text-black hover:opacity-90"
+              >
+                Salvar
+              </Button>
             </div>
           </div>
         </DialogContent>
