@@ -47,7 +47,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
 import { useQuery } from "@tanstack/react-query";
-import { peladaMatchQuery, viewerQuery, matchAttendanceQuery } from "@/lib/pelada-queries";
+import { peladaMatchQuery, viewerQuery, matchAttendanceQuery, matchRefereesQuery } from "@/lib/pelada-queries";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const Route = createFileRoute("/pelada/$id")({
@@ -82,6 +82,11 @@ function PeladaPage() {
   const { data: match, isLoading: matchLoading } = useQuery(peladaMatchQuery(id));
   const { data: viewer, isLoading: viewerLoading } = useQuery(viewerQuery());
   const { data: attendance } = useQuery(matchAttendanceQuery(id));
+  const { data: refereesData } = useQuery(matchRefereesQuery(id));
+  const refereeIds = useMemo(
+    () => (refereesData ?? []).map((r) => r.user_id),
+    [refereesData],
+  );
   const loading = matchLoading || viewerLoading;
   const viewerId = viewer?.id ?? "";
   const firstName = (viewer?.full_name?.trim() || viewer?.username || "").split(" ")[0] || "";
@@ -219,8 +224,8 @@ function PeladaPage() {
     const allDone = validVoterIds.every((vid) => userHasVoted(votes, vid, voteSettings));
     // Mathematical lock applies to MVP/Pereba (winner-take-all). Apitto is averaged
     // and only closes by full quorum or admin force.
-    const mvpLocked = voteSettings.mvp ? isLeaderMathLocked(votes.mvpVotes, total) : true;
-    const perebaLocked = voteSettings.pereba ? isLeaderMathLocked(votes.perebaVotes, total) : true;
+    const mvpLocked = voteSettings.mvp ? isLeaderMathLocked(votes.mvpVotes, validVoterIds, refereeIds) : true;
+    const perebaLocked = voteSettings.pereba ? isLeaderMathLocked(votes.perebaVotes, validVoterIds, refereeIds) : true;
     const mathLocked =
       (voteSettings.mvp || voteSettings.pereba) &&
       !voteSettings.apitto &&
@@ -239,15 +244,15 @@ function PeladaPage() {
     const patch: { mvp_id?: string | null; pereba_id?: string | null } = {};
     const updated: LatestMatch = { ...latest };
     if (voteSettings.mvp && !updated.mvp) {
-      const w = computeWinner(current.mvpVotes).id;
+      const w = computeWinner(current.mvpVotes, refereeIds).id;
       if (w) { updated.mvp = w; patch.mvp_id = w; }
     }
     if (voteSettings.pereba) {
-      const w = computeWinner(current.perebaVotes).id;
+      const w = computeWinner(current.perebaVotes, refereeIds).id;
       if (w) { (updated as DbHistMatch).pereba = w; patch.pereba_id = w; }
     }
     if (voteSettings.apitto) {
-      const ranked = computeApitto(current.apitto);
+      const ranked = computeApitto(current.apitto, refereeIds);
       if (ranked.length > 0) {
         if (!updated.mvp) { updated.mvp = ranked[0].id; patch.mvp_id = ranked[0].id; }
         if (ranked.length > 1 && !(updated as DbHistMatch).pereba) {
@@ -446,10 +451,10 @@ function PeladaPage() {
               ? all.find((p) => p.id === latest.topAssists[0])?.assists ?? 0
               : 0;
             // MVP: prefer admin-set, fallback to vote winner
-            const voteMvpId = votes ? computeWinner(votes.mvpVotes).id : null;
+            const voteMvpId = votes ? computeWinner(votes.mvpVotes, refereeIds).id : null;
             const mvpPlayer = findPlayer(latest?.mvp ?? voteMvpId);
             // Pereba: from votes
-            const perebaWinner = votes ? computeWinner(votes.perebaVotes) : { id: null as string | null, count: 0 };
+            const perebaWinner = votes ? computeWinner(votes.perebaVotes, refereeIds) : { id: null as string | null, count: 0 };
             const perebaPlayer = findPlayer(perebaWinner.id);
             const apittoMode = voteSettings.apitto;
             const perebaMode = voteSettings.pereba;
@@ -690,6 +695,7 @@ function PeladaPage() {
           voterId={viewerId}
           players={[...latest.teamA.players, ...latest.teamB.players].map((p) => ({ id: p.id, name: p.name }))}
           modes={voteSettings}
+          refereeIds={refereeIds}
         />
       )}
       {latest && (
@@ -700,6 +706,7 @@ function PeladaPage() {
           histId={latest.id}
           players={[...latest.teamA.players, ...latest.teamB.players].map((p) => ({ id: p.id, name: p.name }))}
           votes={votes}
+          refereeIds={refereeIds}
         />
       )}
       {latest && isAdmin && (
