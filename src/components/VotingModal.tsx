@@ -14,6 +14,7 @@ export function VotingModal({
   voterId,
   players,
   modes,
+  refereeIds = [],
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -22,10 +23,14 @@ export function VotingModal({
   voterId: string;
   players: Player[];
   modes: Modes;
+  refereeIds?: string[];
 }) {
   const candidates = useMemo(
-    () => players.filter((p) => p.id !== voterId),
-    [players, voterId],
+    () => {
+      const refSet = new Set(refereeIds);
+      return players.filter((p) => p.id !== voterId && !refSet.has(p.id));
+    },
+    [players, voterId, refereeIds],
   );
   const avatars = useAvatars(candidates.map((p) => p.id));
   const submitVote = useSubmitVote(histId);
