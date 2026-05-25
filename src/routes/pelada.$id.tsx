@@ -706,6 +706,7 @@ function PeladaPage() {
           histId={latest.id}
           players={[...latest.teamA.players, ...latest.teamB.players].map((p) => ({ id: p.id, name: p.name }))}
           votes={votes}
+          refereeIds={refereeIds}
         />
       )}
       {latest && isAdmin && (
