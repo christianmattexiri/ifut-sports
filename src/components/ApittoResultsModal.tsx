@@ -11,6 +11,7 @@ export function ApittoResultsModal({
   peladaId,
   players,
   votes,
+  refereeIds = [],
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -18,14 +19,15 @@ export function ApittoResultsModal({
   histId?: string;
   players: { id: string; name: string }[];
   votes: MatchVotes | null;
+  refereeIds?: string[];
 }) {
   const ranked = useMemo(() => {
     if (!open || !votes) return [];
     const byId = new Map(players.map((p) => [p.id, p]));
-    return computeApitto(votes.apitto)
+    return computeApitto(votes.apitto, refereeIds)
       .filter((r) => byId.has(r.id))
       .map((r) => ({ ...r, name: byId.get(r.id)!.name }));
-  }, [open, votes, players]);
+  }, [open, votes, players, refereeIds]);
   const avatars = useAvatars(ranked.map((r) => r.id));
   const [picked, setPicked] = useState<{ id: string; name: string } | null>(null);
 
