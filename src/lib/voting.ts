@@ -52,9 +52,23 @@ export function userHasVoted(
   return ok;
 }
 
-export function computeWinner(map: Record<string, string>): { id: string | null; count: number } {
+const REFEREE_WEIGHT = 2;
+const PLAYER_WEIGHT = 1;
+
+function weightOf(voterId: string, refereeIds?: string[] | Set<string>): number {
+  if (!refereeIds) return PLAYER_WEIGHT;
+  const set = refereeIds instanceof Set ? refereeIds : new Set(refereeIds);
+  return set.has(voterId) ? REFEREE_WEIGHT : PLAYER_WEIGHT;
+}
+
+export function computeWinner(
+  map: Record<string, string>,
+  refereeIds?: string[] | Set<string>,
+): { id: string | null; count: number } {
   const tally: Record<string, number> = {};
-  for (const cand of Object.values(map)) tally[cand] = (tally[cand] ?? 0) + 1;
+  for (const [voter, cand] of Object.entries(map)) {
+    tally[cand] = (tally[cand] ?? 0) + weightOf(voter, refereeIds);
+  }
   let id: string | null = null;
   let count = 0;
   for (const [k, c] of Object.entries(tally)) {
@@ -63,13 +77,17 @@ export function computeWinner(map: Record<string, string>): { id: string | null;
   return { id, count };
 }
 
-export function computeApitto(v: ApittoMap): { id: string; avg: number; n: number }[] {
+export function computeApitto(
+  v: ApittoMap,
+  refereeIds?: string[] | Set<string>,
+): { id: string; avg: number; n: number }[] {
   const totals: Record<string, { sum: number; n: number }> = {};
-  for (const ratings of Object.values(v)) {
+  for (const [voter, ratings] of Object.entries(v)) {
+    const w = weightOf(voter, refereeIds);
     for (const [pid, val] of Object.entries(ratings)) {
       if (!totals[pid]) totals[pid] = { sum: 0, n: 0 };
-      totals[pid].sum += val;
-      totals[pid].n += 1;
+      totals[pid].sum += val * w;
+      totals[pid].n += w;
     }
   }
   return Object.entries(totals)
@@ -78,19 +96,29 @@ export function computeApitto(v: ApittoMap): { id: string; avg: number; n: numbe
 }
 
 // Returns true if the current leader of a vote map cannot be caught
-// by the runner-up given the remaining (not yet cast) ballots.
-// Formula: leader > runnerUp + remaining
+// by the runner-up given the remaining (not yet cast) weighted ballots.
+// Formula: leader > runnerUp + remainingWeight
 export function isLeaderMathLocked(
   map: Record<string, string>,
-  totalEligibleVoters: number,
+  eligibleVoters: number | string[],
+  refereeIds?: string[] | Set<string>,
 ): boolean {
   const tally: Record<string, number> = {};
-  for (const cand of Object.values(map)) tally[cand] = (tally[cand] ?? 0) + 1;
+  for (const [voter, cand] of Object.entries(map)) {
+    tally[cand] = (tally[cand] ?? 0) + weightOf(voter, refereeIds);
+  }
   const counts = Object.values(tally).sort((a, b) => b - a);
   const leader = counts[0] ?? 0;
   const runner = counts[1] ?? 0;
-  const cast = Object.keys(map).length;
-  const remaining = Math.max(0, totalEligibleVoters - cast);
+  let remaining = 0;
+  if (Array.isArray(eligibleVoters)) {
+    for (const v of eligibleVoters) {
+      if (!map[v]) remaining += weightOf(v, refereeIds);
+    }
+  } else {
+    const cast = Object.keys(map).length;
+    remaining = Math.max(0, eligibleVoters - cast);
+  }
   return leader > 0 && leader > runner + remaining;
 }
 
