@@ -378,6 +378,7 @@ export type AggregatedStat = {
   mvps: number;
   vitorias: number;
   derrotas: number;
+  empates: number;
   perebas: number;
   jogos: number;
 };
@@ -422,7 +423,7 @@ export async function fetchAggregatedStats(peladaId: string): Promise<Aggregated
   const ensure = (id: string, name: string) => {
     let p = map.get(id);
     if (!p) {
-      p = { id, name, gols: 0, assistencias: 0, mvps: 0, vitorias: 0, derrotas: 0, perebas: 0, jogos: 0 };
+      p = { id, name, gols: 0, assistencias: 0, mvps: 0, vitorias: 0, derrotas: 0, empates: 0, perebas: 0, jogos: 0 };
       map.set(id, p);
     } else if (!p.name && name) {
       p.name = name;
@@ -443,6 +444,7 @@ export async function fetchAggregatedStats(peladaId: string): Promise<Aggregated
     const opp = inA ? sb : sa;
     if (my > opp) row.vitorias += 1;
     else if (my < opp) row.derrotas += 1;
+    else row.empates += 1;
   }
   // MVP counts
   for (const g of gamesWithWinners) {
@@ -460,9 +462,9 @@ export async function fetchAggregatedStats(peladaId: string): Promise<Aggregated
   if (ids.length > 0) {
     const { data: profs } = await supabase
       .from("profiles")
-      .select("id, total_matches, total_assists, total_perebas, total_mvps, total_goals, total_wins")
+      .select("id, total_matches, total_assists, total_perebas, total_mvps, total_goals, total_wins, total_losses, total_draws")
       .in("id", ids);
-    for (const p of (profs ?? []) as Array<{ id: string; total_matches: number | null; total_assists: number | null; total_perebas: number | null; total_mvps: number | null; total_goals: number | null; total_wins: number | null }>) {
+    for (const p of (profs ?? []) as Array<{ id: string; total_matches: number | null; total_assists: number | null; total_perebas: number | null; total_mvps: number | null; total_goals: number | null; total_wins: number | null; total_losses: number | null; total_draws: number | null }>) {
       const entry = map.get(p.id);
       if (!entry) continue;
       if (p.total_matches != null) entry.jogos = p.total_matches;
@@ -471,6 +473,8 @@ export async function fetchAggregatedStats(peladaId: string): Promise<Aggregated
       if (p.total_mvps != null) entry.mvps = p.total_mvps;
       if (p.total_goals != null) entry.gols = p.total_goals;
       if (p.total_wins != null) entry.vitorias = p.total_wins;
+      if (p.total_losses != null) entry.derrotas = p.total_losses;
+      if (p.total_draws != null) entry.empates = p.total_draws;
     }
   }
   return Array.from(map.values());
