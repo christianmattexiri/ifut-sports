@@ -26,6 +26,13 @@ export const Route = createFileRoute("/pelada/$id_/campeonato")({
 
 type Match = { id: string; name: string; logo_url: string | null; admin_id?: string | null };
 
+function formatShortName(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length <= 1) return parts[0] ?? "";
+  const last = parts[parts.length - 1];
+  return `${parts[0]} ${last[0]?.toUpperCase() ?? ""}.`;
+}
+
 function CampeonatoPage() {
   const navigate = useNavigate();
   const { id } = useParams({ from: "/pelada/$id_/campeonato" });
