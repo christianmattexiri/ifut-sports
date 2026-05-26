@@ -13,6 +13,8 @@ type Props = {
   disabledHint?: string;
   /** When mode is somMvp, scope the saved song by MVP user id */
   scopeKey?: string;
+  /** Cloud-stored audio (set by admin via Admin panel). Takes precedence over localStorage. */
+  cloudAudio?: { url: string; title: string } | null;
 };
 
 type Saved = { url: string; title: string };
@@ -70,6 +72,7 @@ export function AudioFooterPlayer({
   disabled,
   disabledHint,
   scopeKey,
+  cloudAudio,
 }: Props) {
   const scope = mode === "musica" ? "global" : scopeKey || "current";
   const key = storageKey(peladaId, mode, scope);
@@ -86,6 +89,12 @@ export function AudioFooterPlayer({
   // Carrega URL salva no localStorage ao montar ou mudar de pelada.
   useEffect(() => {
     if (typeof window === "undefined") return;
+    // Cloud-stored URL (definido pelo admin) tem prioridade sobre o localStorage.
+    if (cloudAudio && cloudAudio.url) {
+      setSaved({ url: cloudAudio.url, title: cloudAudio.title || "" });
+      setPlaying(false);
+      return;
+    }
     try {
       const raw = localStorage.getItem(key);
       setSaved(raw ? JSON.parse(raw) : null);
@@ -93,7 +102,7 @@ export function AudioFooterPlayer({
       setSaved(null);
     }
     setPlaying(false);
-  }, [key]);
+  }, [key, cloudAudio?.url, cloudAudio?.title]);
 
   const videoId = useMemo(() => (saved?.url ? ytId(saved.url) : null), [saved]);
 
