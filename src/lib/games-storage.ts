@@ -378,6 +378,7 @@ export type AggregatedStat = {
   mvps: number;
   vitorias: number;
   derrotas: number;
+  empates: number;
   perebas: number;
   jogos: number;
 };
@@ -422,7 +423,7 @@ export async function fetchAggregatedStats(peladaId: string): Promise<Aggregated
   const ensure = (id: string, name: string) => {
     let p = map.get(id);
     if (!p) {
-      p = { id, name, gols: 0, assistencias: 0, mvps: 0, vitorias: 0, derrotas: 0, perebas: 0, jogos: 0 };
+      p = { id, name, gols: 0, assistencias: 0, mvps: 0, vitorias: 0, derrotas: 0, empates: 0, perebas: 0, jogos: 0 };
       map.set(id, p);
     } else if (!p.name && name) {
       p.name = name;
@@ -443,6 +444,7 @@ export async function fetchAggregatedStats(peladaId: string): Promise<Aggregated
     const opp = inA ? sb : sa;
     if (my > opp) row.vitorias += 1;
     else if (my < opp) row.derrotas += 1;
+    else row.empates += 1;
   }
   // MVP counts
   for (const g of gamesWithWinners) {
@@ -460,9 +462,9 @@ export async function fetchAggregatedStats(peladaId: string): Promise<Aggregated
   if (ids.length > 0) {
     const { data: profs } = await supabase
       .from("profiles")
-      .select("id, total_matches, total_assists, total_perebas, total_mvps, total_goals, total_wins")
+      .select("id, total_matches, total_assists, total_perebas, total_mvps, total_goals, total_wins, total_losses, total_draws")
       .in("id", ids);
-    for (const p of (profs ?? []) as Array<{ id: string; total_matches: number | null; total_assists: number | null; total_perebas: number | null; total_mvps: number | null; total_goals: number | null; total_wins: number | null }>) {
+    for (const p of (profs ?? []) as Array<{ id: string; total_matches: number | null; total_assists: number | null; total_perebas: number | null; total_mvps: number | null; total_goals: number | null; total_wins: number | null; total_losses: number | null; total_draws: number | null }>) {
       const entry = map.get(p.id);
       if (!entry) continue;
       if (p.total_matches != null) entry.jogos = p.total_matches;
@@ -471,6 +473,8 @@ export async function fetchAggregatedStats(peladaId: string): Promise<Aggregated
       if (p.total_mvps != null) entry.mvps = p.total_mvps;
       if (p.total_goals != null) entry.gols = p.total_goals;
       if (p.total_wins != null) entry.vitorias = p.total_wins;
+      if (p.total_losses != null) entry.derrotas = p.total_losses;
+      if (p.total_draws != null) entry.empates = p.total_draws;
     }
   }
   return Array.from(map.values());
@@ -487,4 +491,83 @@ export async function fetchPlayerMvpSummary(
     total: wins.length,
     recent: wins.slice(0, limit).map((m) => ({ id: m.id, date: m.date, name: m.name })),
   };
+}
+
+/* ------------------------------------------------------------------ */
+/* CAMPEONATO (PRO) — tabela estilo Brasileirão, escopo POR PELADA.    */
+/* Não usa overrides de profile.total_* (que são globais cross-pelada).*/
+/* ------------------------------------------------------------------ */
+
+export type CampeonatoRow = {
+  id: string;
+  name: string;
+  pontos: number;
+  jogos: number;
+  vitorias: number;
+  empates: number;
+  derrotas: number;
+  golsPro: number;
+  presencaPct: number;
+};
+
+export async function fetchCampeonato(peladaId: string): Promise<CampeonatoRow[]> {
+  const { data: games } = await supabase
+    .from("games")
+    .select("id, score_a, score_b")
+    .eq("match_id", peladaId);
+  if (!games || games.length === 0) return [];
+  const totalGames = games.length;
+  const gameById = new Map(games.map((g) => [g.id, g]));
+
+  const { data: stats } = await supabase
+    .from("game_player_stats")
+    .select("game_id, user_id, player_name, team, goals")
+    .in("game_id", games.map((g) => g.id));
+
+  type Acc = {
+    id: string; name: string; jogos: number;
+    vitorias: number; empates: number; derrotas: number; golsPro: number;
+  };
+  const map = new Map<string, Acc>();
+  for (const s of stats ?? []) {
+    const g = gameById.get(s.game_id);
+    if (!g) continue;
+    let row = map.get(s.user_id);
+    if (!row) {
+      row = { id: s.user_id, name: s.player_name || "Jogador", jogos: 0, vitorias: 0, empates: 0, derrotas: 0, golsPro: 0 };
+      map.set(s.user_id, row);
+    } else if (!row.name && s.player_name) {
+      row.name = s.player_name;
+    }
+    row.jogos += 1;
+    row.golsPro += s.goals ?? 0;
+    const sa = g.score_a ?? 0;
+    const sb = g.score_b ?? 0;
+    const inA = s.team === "A";
+    const my = inA ? sa : sb;
+    const opp = inA ? sb : sa;
+    if (my > opp) row.vitorias += 1;
+    else if (my < opp) row.derrotas += 1;
+    else row.empates += 1;
+  }
+
+  const rows: CampeonatoRow[] = Array.from(map.values()).map((r) => ({
+    id: r.id,
+    name: r.name,
+    pontos: r.vitorias * 3 + r.empates,
+    jogos: r.jogos,
+    vitorias: r.vitorias,
+    empates: r.empates,
+    derrotas: r.derrotas,
+    golsPro: r.golsPro,
+    presencaPct: totalGames > 0 ? Math.round((r.jogos / totalGames) * 1000) / 10 : 0,
+  }));
+
+  rows.sort((a, b) => {
+    if (b.pontos !== a.pontos) return b.pontos - a.pontos;
+    if (b.vitorias !== a.vitorias) return b.vitorias - a.vitorias;
+    return b.golsPro - a.golsPro;
+  });
+
+  return rows;
 }

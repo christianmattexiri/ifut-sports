@@ -3,7 +3,7 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   Menu, LogOut, UserCircle2, Home, Mail, ShieldCheck,
-  ClipboardList, Trophy, History as HistoryIcon, BarChart3, UserCog, ArrowLeft, User as UserIcon,
+  ClipboardList, Trophy, History as HistoryIcon, BarChart3, UserCog, ArrowLeft, User as UserIcon, Award,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import {
@@ -159,6 +159,7 @@ function MobileMenuContent({
   const { data: match } = useQuery(peladaMatchQuery(peladaId ?? undefined));
   const { data: settings } = useQuery(peladaSettingsQuery(peladaId ?? undefined));
   const modulesRankings = settings ? !!settings.modules.rankings : true;
+  const modulesCampeonato = settings ? !!settings.modules.campeonato : false;
 
   const isPeladaAdmin = !!match && match.admin_id === viewerId;
 
@@ -181,6 +182,9 @@ function MobileMenuContent({
           <DrawerLink onClick={onClose} to="/pelada/$id/historico" params={{ id: peladaId }} icon={<HistoryIcon className="h-4 w-4" />} label="Histórico" />
           {modulesRankings && (
             <DrawerLink onClick={onClose} to="/pelada/$id/rankings" params={{ id: peladaId }} icon={<BarChart3 className="h-4 w-4" />} label="Rankings" />
+          )}
+          {modulesCampeonato && (
+            <DrawerLink onClick={onClose} to="/pelada/$id/campeonato" params={{ id: peladaId }} icon={<Award className="h-4 w-4" />} label="Campeonato" />
           )}
           <DrawerLink onClick={onClose} to="/pelada/$id/perfil" params={{ id: peladaId }} icon={<UserCircle2 className="h-4 w-4" />} label="Meu perfil na pelada" />
         </nav>

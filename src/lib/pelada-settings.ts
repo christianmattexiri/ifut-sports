@@ -2,7 +2,7 @@ import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/r
 import { supabase } from "@/integrations/supabase/client";
 
 export type Modules = {
-  rankings: boolean; somMvp: boolean; financas: boolean; votacoes: boolean; musica: boolean;
+  rankings: boolean; somMvp: boolean; financas: boolean; votacoes: boolean; musica: boolean; campeonato: boolean;
 };
 export type VoteModes = { mvp: boolean; pereba: boolean; apitto: boolean };
 export type PodiumDisplay = {
@@ -22,7 +22,7 @@ export type AdminSettings = {
 
 export const DEFAULT_SETTINGS: AdminSettings = {
   accent: "#00FF00",
-  modules: { rankings: true, somMvp: false, financas: true, votacoes: true, musica: false },
+  modules: { rankings: true, somMvp: false, financas: true, votacoes: true, musica: false, campeonato: false },
   voteModes: { mvp: true, pereba: false, apitto: false },
   podium: { matador: true, maestro: true, mvp: true, pereba: true, apitto: true },
   audio: { url: "", title: "" },

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import {
   ArrowLeft, Home, ClipboardList, History as HistoryIcon, BarChart3,
   UserCircle2, ShieldCheck, Trophy, UserCog, Upload, Trash2, Save,
-  BarChart, Headphones, DollarSign, Vote, Music, Crown, Skull, Star, Target, Sparkles, Lock, Youtube,
+  BarChart, Headphones, DollarSign, Vote, Music, Crown, Skull, Star, Target, Sparkles, Lock, Youtube, Award,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
@@ -304,6 +304,8 @@ function AdminPage() {
                   value={settings.modules.votacoes} onChange={(v) => setModule("votacoes", v)} />
                 <ModuleRow icon={<Music className="h-4 w-4" />} title="Música" desc="Música do site, escolhida pelo adm." pro locked={!isPro}
                   value={settings.modules.musica} onChange={(v) => setModule("musica", v)} />
+                <ModuleRow icon={<Award className="h-4 w-4" />} title="🏆 Modo Campeonato" desc="Tabela estilo Brasileirão: pontos, V/E/D, gols pró, % presença" pro locked={!isPro}
+                  value={settings.modules.campeonato} onChange={(v) => setModule("campeonato", v)} />
               </div>
             </Section>
 
