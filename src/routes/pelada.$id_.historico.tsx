@@ -27,6 +27,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { peladaMatchQuery, viewerQuery, matchRefereesQuery } from "@/lib/pelada-queries";
+import { peladaSettingsQuery, DEFAULT_SETTINGS } from "@/lib/pelada-settings";
 import {
   fetchHistory,
   saveMatch as saveGameMatch,
