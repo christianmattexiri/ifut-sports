@@ -25,12 +25,14 @@ import {
   X,
   Save,
   UserCog,
+  Award,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { peladaMatchQuery, viewerQuery, matchAttendanceQuery } from "@/lib/pelada-queries";
 import { matchRefereesQuery } from "@/lib/pelada-queries";
+import { peladaSettingsQuery } from "@/lib/pelada-settings";
 import { useAvatars } from "@/lib/avatars";
 import {
   Dialog,
@@ -97,6 +99,8 @@ function ListaPresencaPage() {
   const { data: matchData } = useQuery(peladaMatchQuery(id));
   const match = (matchData ?? null) as Match | null;
   const { data: viewer, isLoading: viewerLoading } = useQuery(viewerQuery());
+  const { data: peladaCloudSettings } = useQuery(peladaSettingsQuery(id));
+  const campeonatoEnabled = !!peladaCloudSettings?.modules.campeonato;
   const me = viewer
     ? { id: viewer.id, fullName: viewer.full_name?.trim() || viewer.username || "Você" }
     : null;
