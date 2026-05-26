@@ -633,13 +633,13 @@ function PeladaPage() {
                     ) : (
                       <span className="text-zinc-500">Votação aberta</span>
                     )}
-                    {isAdmin && !votes?.closed && (
+                    {isAdmin && (
                       <button
                         type="button"
                         onClick={() => setAuditOpen(true)}
                         className="inline-flex items-center gap-1.5 rounded-lg border border-amber-400/40 bg-amber-400/10 px-3 py-1.5 font-bold uppercase tracking-wider text-amber-300 transition hover:bg-amber-400/20"
                       >
-                        <Eye className="h-3.5 w-3.5" /> Auditoria (Admin)
+                        <Eye className="h-3.5 w-3.5" /> {votes?.closed ? "Visualizar Votos" : "Auditoria (Admin)"}
                       </button>
                     )}
                     {isAdmin && !votes?.closed && (
