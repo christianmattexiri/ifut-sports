@@ -567,6 +567,20 @@ export async function fetchCampeonato(peladaId: string): Promise<CampeonatoRow[]
     else row.empates += 1;
   }
 
+  /* Ajustes manuais (jogos fora do sistema / peladas externas) */
+  const MANUAL_ADJUSTMENTS: Record<string, { vitorias?: number; empates?: number; derrotas?: number; jogos?: number }> = {
+    "a3bc1af7-571f-4b15-92b4-b5399c2663f9": { empates: 1, jogos: 1 }, // Tiago Atanasoff
+  };
+  for (const [userId, adj] of Object.entries(MANUAL_ADJUSTMENTS)) {
+    const row = map.get(userId);
+    if (row) {
+      if (adj.vitorias) row.vitorias += adj.vitorias;
+      if (adj.empates) row.empates += adj.empates;
+      if (adj.derrotas) row.derrotas += adj.derrotas;
+      if (adj.jogos) row.jogos += adj.jogos;
+    }
+  }
+
   const rows: CampeonatoRow[] = Array.from(map.values()).map((r) => ({
     id: r.id,
     name: r.name,
