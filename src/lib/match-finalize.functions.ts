@@ -27,7 +27,7 @@ export const applyMatchToProfiles = createServerFn({ method: "POST" })
 
     const { data: stats, error: sErr } = await supabaseAdmin
       .from("game_player_stats")
-      .select("user_id, team, goals, assists")
+      .select("user_id, team, goals, assists, own_goals")
       .eq("game_id", gameId);
     if (sErr) throw new Error(sErr.message);
     if (!stats || stats.length === 0) {
@@ -43,7 +43,7 @@ export const applyMatchToProfiles = createServerFn({ method: "POST" })
     const { data: profs, error: pErr } = await supabaseAdmin
       .from("profiles")
       .select(
-        "id, total_goals, total_assists, total_matches, total_wins, total_losses, total_draws",
+        "id, total_goals, total_assists, total_matches, total_wins, total_losses, total_draws, total_own_goals",
       )
       .in("id", ids);
     if (pErr) throw new Error(pErr.message);
@@ -67,6 +67,7 @@ export const applyMatchToProfiles = createServerFn({ method: "POST" })
           total_wins: (p.total_wins ?? 0) + (isWin ? 1 : 0),
           total_losses: (p.total_losses ?? 0) + (isLoss ? 1 : 0),
           total_draws: (p.total_draws ?? 0) + (draw ? 1 : 0),
+          total_own_goals: (p.total_own_goals ?? 0) + (s.own_goals ?? 0),
         })
         .eq("id", p.id);
       if (uErr) throw new Error(uErr.message);
