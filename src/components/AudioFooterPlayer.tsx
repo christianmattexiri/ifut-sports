@@ -34,34 +34,26 @@ function ytId(url: string): string | null {
   }
 }
 
-// Instâncias públicas da Piped API usadas como fallback.
-// Piped é um frontend alternativo open-source do YouTube que expõe
-// os streams de áudio via API REST — permite usar <audio> nativo
-// em vez da YouTube IFrame API, contornando o bloqueio de autoplay no mobile.
-const PIPED_INSTANCES = [
-  "https://pipedapi.kavin.rocks",
-  "https://pipedapi.leptons.xyz",
-];
-
-async function fetchAudioUrl(videoId: string): Promise<string | null> {
-  for (const base of PIPED_INSTANCES) {
-    try {
-      const res = await fetch(`${base}/streams/${videoId}`);
-      if (!res.ok) continue;
-      const data = await res.json();
-      const streams: { url: string; mimeType: string; bitrate: number }[] =
-        data.audioStreams ?? [];
-      // Prefere audio/mp4 (AAC) para melhor compatibilidade com iOS,
-      // depois o stream de maior bitrate disponível.
-      const best =
-        streams.find((s) => s.mimeType?.includes("audio/mp4")) ??
-        [...streams].sort((a, b) => b.bitrate - a.bitrate)[0];
-      if (best?.url) return best.url;
-    } catch {
-      continue;
-    }
-  }
-  return null;
+// Carrega a YouTube IFrame API uma única vez por sessão.
+let ytApiPromise: Promise<void> | null = null;
+function loadYouTubeApi(): Promise<void> {
+  if (typeof window === "undefined") return Promise.resolve();
+  // @ts-expect-error YT global
+  if (window.YT && window.YT.Player) return Promise.resolve();
+  if (ytApiPromise) return ytApiPromise;
+  ytApiPromise = new Promise<void>((resolve) => {
+    const tag = document.createElement("script");
+    tag.src = "https://www.youtube.com/iframe_api";
+    document.head.appendChild(tag);
+    // @ts-expect-error YT global
+    const prev = window.onYouTubeIframeAPIReady;
+    // @ts-expect-error YT global
+    window.onYouTubeIframeAPIReady = () => {
+      if (typeof prev === "function") try { prev(); } catch {}
+      resolve();
+    };
+  });
+  return ytApiPromise;
 }
 
 export function AudioFooterPlayer({
@@ -81,10 +73,10 @@ export function AudioFooterPlayer({
   const [editOpen, setEditOpen] = useState(false);
   const [editUrl, setEditUrl] = useState("");
   const [editTitle, setEditTitle] = useState("");
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const playerRef = useRef<any>(null);
   const [ready, setReady] = useState(false);
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const [fetchError, setFetchError] = useState(false);
 
   // Carrega URL salva no localStorage ao montar ou mudar de pelada.
   useEffect(() => {
@@ -106,58 +98,85 @@ export function AudioFooterPlayer({
 
   const videoId = useMemo(() => (saved?.url ? ytId(saved.url) : null), [saved]);
 
-  // Busca a URL direta de stream de áudio via Piped API quando o videoId muda.
-  // Isso contorna o bloqueio de autoplay do iOS/Android com YouTube IFrame API:
-  // usando <audio> nativo, o play() é chamado no mesmo documento e funciona
-  // com o padrão "first touch anywhere".
+  // Inicializa / atualiza o YouTube Player quando o videoId muda.
   useEffect(() => {
-    if (!videoId) {
-      setAudioUrl(null);
-      setFetchError(false);
+    if (typeof window === "undefined") return;
+    if (!videoId || disabled) {
+      // Destrói player existente se não houver vídeo.
+      if (playerRef.current) {
+        try { playerRef.current.destroy(); } catch {}
+        playerRef.current = null;
+      }
       setReady(false);
       return;
     }
-    setFetchError(false);
-    setReady(false);
-    setAudioUrl(null);
-    fetchAudioUrl(videoId).then((url) => {
-      if (url) setAudioUrl(url);
-      else setFetchError(true);
+
+    let cancelled = false;
+    loadYouTubeApi().then(() => {
+      if (cancelled) return;
+      // @ts-expect-error YT global
+      const YT = window.YT;
+      if (!YT || !containerRef.current) return;
+
+      // Se já existe player, troca o vídeo em vez de recriar.
+      if (playerRef.current && typeof playerRef.current.loadVideoById === "function") {
+        try {
+          playerRef.current.cueVideoById(videoId);
+          return;
+        } catch {
+          try { playerRef.current.destroy(); } catch {}
+          playerRef.current = null;
+        }
+      }
+
+      playerRef.current = new YT.Player(containerRef.current, {
+        videoId,
+        playerVars: {
+          playsinline: 1,
+          controls: 0,
+          modestbranding: 1,
+          rel: 0,
+        },
+        events: {
+          onReady: () => {
+            setReady(true);
+          },
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          onStateChange: (e: any) => {
+            // 1 = PLAYING, 2 = PAUSED, 0 = ENDED
+            if (e.data === 1) setPlaying(true);
+            else if (e.data === 2) setPlaying(false);
+            else if (e.data === 0) {
+              // Loop manual
+              try { playerRef.current?.playVideo(); } catch {}
+            }
+          },
+        },
+      });
     });
-  }, [videoId]);
-
-  // Configura o player de áudio e o padrão "first touch anywhere" para mobile.
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio || !audioUrl || disabled) return;
-
-    audio.src = audioUrl;
-    audio.loop = true;
-
-    const tryPlay = () => {
-      audio.play().catch(() => {});
-    };
-
-    // Desktop: tenta iniciar imediatamente.
-    tryPlay();
-
-    // Mobile: inicia na primeira interação do usuário com qualquer elemento da página.
-    document.addEventListener("touchstart", tryPlay, { once: true });
-    document.addEventListener("click", tryPlay, { once: true });
 
     return () => {
-      document.removeEventListener("touchstart", tryPlay);
-      document.removeEventListener("click", tryPlay);
-      audio.pause();
-      audio.src = "";
+      cancelled = true;
     };
-  }, [audioUrl, disabled]);
+  }, [videoId, disabled]);
+
+  // Limpa ao desmontar componente inteiro.
+  useEffect(() => {
+    return () => {
+      if (playerRef.current) {
+        try { playerRef.current.destroy(); } catch {}
+        playerRef.current = null;
+      }
+    };
+  }, []);
 
   function togglePlay() {
-    const a = audioRef.current;
-    if (!a) return;
-    if (playing) a.pause();
-    else a.play().catch(() => {});
+    const p = playerRef.current;
+    if (!p) return;
+    try {
+      if (playing) p.pauseVideo();
+      else p.playVideo();
+    } catch {}
   }
 
   function openEdit() {
@@ -175,9 +194,8 @@ export function AudioFooterPlayer({
 
   const statusText = () => {
     if (disabled) return disabledHint ?? "Indisponível";
-    if (fetchError) return "Erro ao carregar áudio";
     if (!videoId) return "Sem música definida";
-    if (!audioUrl) return "Carregando...";
+    if (!ready) return "Carregando...";
     return saved?.title || "Reproduzindo";
   };
 
@@ -190,7 +208,7 @@ export function AudioFooterPlayer({
         >
           <button
             type="button"
-            disabled={disabled || !audioUrl || !ready || fetchError}
+            disabled={disabled || !videoId || !ready}
             onClick={togglePlay}
             className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[var(--pelada-accent)] text-black shadow-[0_0_20px_-6px_var(--pelada-accent)] transition active:scale-95 disabled:cursor-not-allowed disabled:bg-zinc-800 disabled:text-zinc-500 disabled:shadow-none"
             aria-label={playing ? "Pausar" : "Tocar"}
@@ -222,21 +240,19 @@ export function AudioFooterPlayer({
           )}
         </div>
 
-        {/* Player de áudio nativo — invisível, controlado via ref. */}
-        <audio
-          ref={audioRef}
-          onCanPlay={() => setReady(true)}
-          onPlay={() => setPlaying(true)}
-          onPause={() => setPlaying(false)}
-          onEnded={() => setPlaying(false)}
+        {/* YouTube IFrame Player — invisível mas presente no DOM (necessário p/ áudio). */}
+        <div
           style={{
             position: "absolute",
-            width: 0,
-            height: 0,
+            width: 1,
+            height: 1,
             opacity: 0,
             pointerEvents: "none",
+            overflow: "hidden",
           }}
-        />
+        >
+          <div ref={containerRef} />
+        </div>
       </footer>
 
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
