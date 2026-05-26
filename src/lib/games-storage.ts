@@ -597,7 +597,7 @@ export async function fetchCampeonato(peladaId: string): Promise<CampeonatoRow[]
     empates: r.empates,
     derrotas: r.derrotas,
     golsPro: r.golsPro,
-    presencaPct: totalGames > 0 ? Math.round((r.jogos / totalGames) * 1000) / 10 : 0,
+    presencaPct: totalGames > 0 ? Math.min(100, Math.round((r.jogos / totalGames) * 1000) / 10) : 0,
   }));
 
   rows.sort((a, b) => {
