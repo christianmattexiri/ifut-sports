@@ -95,6 +95,7 @@ export function PeladaGlobalShell() {
       disabled={!latestMvp}
       disabledHint="Aguardando o primeiro MVP"
       scopeKey={latestMvp?.id ?? "none"}
+      cloudAudio={settings.audio?.url ? settings.audio : null}
     />
   );
 }
@@ -102,6 +103,7 @@ export function PeladaGlobalShell() {
 function AdminAwareMusicPlayer({ peladaId, viewerId }: { peladaId: string; viewerId: string }) {
   const { data: match } = useQuery(peladaMatchQuery(peladaId));
   const { data: viewer } = useQuery(viewerQuery());
+  const { data: settings } = useQuery(peladaSettingsQuery(peladaId));
   const isOwner = !!match && match.admin_id === viewerId;
   const isSuper = isSuperAdminUsername(viewer?.username);
   const canEdit = isOwner || isSuper;
@@ -111,6 +113,7 @@ function AdminAwareMusicPlayer({ peladaId, viewerId }: { peladaId: string; viewe
       mode="musica"
       canEdit={canEdit}
       titlePrefix="Música da Pelada"
+      cloudAudio={settings?.audio?.url ? settings.audio : null}
     />
   );
 }

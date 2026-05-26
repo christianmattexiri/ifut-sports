@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import {
   ArrowLeft, Home, ClipboardList, History as HistoryIcon, BarChart3,
   UserCircle2, ShieldCheck, Trophy, UserCog, Upload, Trash2, Save,
-  BarChart, Headphones, DollarSign, Vote, Music, Crown, Skull, Star, Target, Sparkles, Lock,
+  BarChart, Headphones, DollarSign, Vote, Music, Crown, Skull, Star, Target, Sparkles, Lock, Youtube,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
@@ -315,6 +315,54 @@ function AdminPage() {
                 <CheckRow label="Estilo Apitto (notas 0,5–5)" checked={settings.voteModes.apitto} onChange={(v) => setVoteMode("apitto", v)} />
               </div>
             </Section>
+
+            {/* Som do MVP / Música */}
+            {(settings.modules.somMvp || settings.modules.musica) && (
+              <Section
+                title={settings.modules.musica ? "Som da Pelada" : "Som do MVP"}
+                subtitle="Cole um link do YouTube para tocar no rodapé (funciona no celular e no PC)."
+              >
+                <div className="space-y-3">
+                  <Field label="Título (opcional)">
+                    <Input
+                      value={settings.audio.title}
+                      onChange={(e) =>
+                        setSettings((s) => ({ ...s, audio: { ...s.audio, title: e.target.value } }))
+                      }
+                      placeholder="Ex.: Hino da galera"
+                      className="bg-zinc-900 border-white/10"
+                    />
+                  </Field>
+                  <Field label="URL do YouTube">
+                    <div className="flex items-center gap-2">
+                      <Youtube className="h-4 w-4 text-red-500 shrink-0" />
+                      <Input
+                        value={settings.audio.url}
+                        onChange={(e) =>
+                          setSettings((s) => ({ ...s, audio: { ...s.audio, url: e.target.value } }))
+                        }
+                        placeholder="https://youtu.be/..."
+                        className="bg-zinc-900 border-white/10"
+                      />
+                    </div>
+                  </Field>
+                  <p className="text-xs text-zinc-500">
+                    Salvo no servidor — todos os jogadores ouvem o mesmo som, em qualquer dispositivo.
+                  </p>
+                  {settings.audio.url && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSettings((s) => ({ ...s, audio: { url: "", title: "" } }))
+                      }
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-zinc-900 px-3 py-1.5 text-xs font-bold text-zinc-300 hover:bg-zinc-800"
+                    >
+                      <Trash2 className="h-3 w-3" /> Limpar
+                    </button>
+                  )}
+                </div>
+              </Section>
+            )}
 
             {/* Exibição do Pódio */}
             <Section title="Exibição do Pódio" subtitle="Escolha quais cards aparecem no pódio da Home.">

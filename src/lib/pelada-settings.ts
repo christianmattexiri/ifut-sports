@@ -8,11 +8,16 @@ export type VoteModes = { mvp: boolean; pereba: boolean; apitto: boolean };
 export type PodiumDisplay = {
   matador: boolean; maestro: boolean; mvp: boolean; pereba: boolean; apitto: boolean;
 };
+export type AudioConfig = {
+  url: string;
+  title: string;
+};
 export type AdminSettings = {
   accent: string;
   modules: Modules;
   voteModes: VoteModes;
   podium: PodiumDisplay;
+  audio: AudioConfig;
 };
 
 export const DEFAULT_SETTINGS: AdminSettings = {
@@ -20,6 +25,7 @@ export const DEFAULT_SETTINGS: AdminSettings = {
   modules: { rankings: true, somMvp: false, financas: true, votacoes: true, musica: false },
   voteModes: { mvp: true, pereba: false, apitto: false },
   podium: { matador: true, maestro: true, mvp: true, pereba: true, apitto: true },
+  audio: { url: "", title: "" },
 };
 
 export function mergeAdminSettings(raw: unknown): AdminSettings {
@@ -29,6 +35,7 @@ export function mergeAdminSettings(raw: unknown): AdminSettings {
     modules: { ...DEFAULT_SETTINGS.modules, ...(parsed.modules ?? {}) },
     voteModes: { ...DEFAULT_SETTINGS.voteModes, ...(parsed.voteModes ?? {}) },
     podium: { ...DEFAULT_SETTINGS.podium, ...(parsed.podium ?? {}) },
+    audio: { ...DEFAULT_SETTINGS.audio, ...(parsed.audio ?? {}) },
   };
 }
 
