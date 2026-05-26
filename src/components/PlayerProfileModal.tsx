@@ -25,6 +25,14 @@ export function PlayerProfileModal({
   const [avatar, setAvatar] = useState<string | null>(null);
   const [history, setHistory] = useState<HistMatch[]>([]);
   const [mvpSummary, setMvpSummary] = useState<PlayerMvpSummary>({ total: 0, recent: [] });
+  const [profileTotals, setProfileTotals] = useState<{
+    goals: number | null;
+    assists: number | null;
+    wins: number | null;
+    draws: number | null;
+    losses: number | null;
+    matches: number | null;
+  } | null>(null);
 
   useEffect(() => {
     if (!open || !userId) return;
@@ -38,17 +46,28 @@ export function PlayerProfileModal({
     (async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("full_name, username, avatar_url")
+        .select(
+          "full_name, username, avatar_url, total_goals, total_assists, total_wins, total_draws, total_losses, total_matches",
+        )
         .eq("id", userId)
         .maybeSingle();
       if (data) {
         setName(data.full_name || data.username || fallbackName || "Jogador");
         setUsername(data.username || "");
         setAvatar(data.avatar_url ?? null);
+        setProfileTotals({
+          goals: data.total_goals,
+          assists: data.total_assists,
+          wins: data.total_wins,
+          draws: data.total_draws,
+          losses: data.total_losses,
+          matches: data.total_matches,
+        });
       } else {
         setName(fallbackName ?? "Jogador");
         setUsername("");
         setAvatar(null);
+        setProfileTotals(null);
       }
     })();
     return () => {
@@ -97,7 +116,15 @@ export function PlayerProfileModal({
       else if (myS === opp) draws++;
       else losses++;
     }
-    const games = my.length;
+    let games = my.length;
+    if (profileTotals) {
+      if (profileTotals.goals != null) goals = profileTotals.goals;
+      if (profileTotals.assists != null) assists = profileTotals.assists;
+      if (profileTotals.wins != null) wins = profileTotals.wins;
+      if (profileTotals.draws != null) draws = profileTotals.draws;
+      if (profileTotals.losses != null) losses = profileTotals.losses;
+      if (profileTotals.matches != null) games = profileTotals.matches;
+    }
     return {
       goals,
       assists,
@@ -108,7 +135,7 @@ export function PlayerProfileModal({
       losses,
       winRate: games ? Math.round((wins / games) * 100) : 0,
     };
-  }, [history, userId, mvpSummary.total]);
+  }, [history, userId, mvpSummary.total, profileTotals]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

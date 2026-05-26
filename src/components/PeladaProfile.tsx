@@ -55,6 +55,14 @@ export function PeladaProfile({
   const [mvpSummary, setMvpSummary] = useState<PlayerMvpSummary>({ total: 0, recent: [] });
   const [openId, setOpenId] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
+  const [profileTotals, setProfileTotals] = useState<{
+    goals: number | null;
+    assists: number | null;
+    wins: number | null;
+    draws: number | null;
+    losses: number | null;
+    matches: number | null;
+  } | null>(null);
 
   const isSelf = !!viewerId && viewerId === targetUserId;
 
@@ -128,6 +136,23 @@ export function PeladaProfile({
         setUsername("");
         setAvatarUrl(null);
       }
+      const { data: totals } = await supabase
+        .from("profiles")
+        .select(
+          "total_goals, total_assists, total_wins, total_draws, total_losses, total_matches",
+        )
+        .eq("id", targetUserId)
+        .maybeSingle();
+      if (totals) {
+        setProfileTotals({
+          goals: totals.total_goals,
+          assists: totals.total_assists,
+          wins: totals.total_wins,
+          draws: totals.total_draws,
+          losses: totals.total_losses,
+          matches: totals.total_matches,
+        });
+      }
     })();
   }, [navigate, matchId, targetUserId]);
 
@@ -171,10 +196,18 @@ export function PeladaProfile({
       else if (myScore === oppScore) draws += 1;
       else losses += 1;
     }
-    const games = myMatches.length;
+    let games = myMatches.length;
+    if (profileTotals) {
+      if (profileTotals.goals != null) goals = profileTotals.goals;
+      if (profileTotals.assists != null) assists = profileTotals.assists;
+      if (profileTotals.wins != null) wins = profileTotals.wins;
+      if (profileTotals.draws != null) draws = profileTotals.draws;
+      if (profileTotals.losses != null) losses = profileTotals.losses;
+      if (profileTotals.matches != null) games = profileTotals.matches;
+    }
     const winRate = games > 0 ? Math.round((wins / games) * 100) : 0;
     return { goals, assists, mvp: mvpSummary.total || mvp, wins, draws, losses, games, winRate };
-  }, [myMatches, targetUserId, mvpSummary.total]);
+  }, [myMatches, targetUserId, mvpSummary.total, profileTotals]);
 
   const peladaName = match?.name ?? "Minha Pelada";
   const peladaLogo = match?.logo_url ?? null;
