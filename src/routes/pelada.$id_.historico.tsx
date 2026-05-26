@@ -183,11 +183,11 @@ function HistoricoPage() {
       name: `${match?.name ?? "iFut"} ${formatDate(today)}`,
       teamA: {
         label: "Time Preto",
-        players: a.map((p) => ({ ...p, goals: 0, assists: 0 })),
+        players: a.map((p) => ({ ...p, goals: 0, assists: 0, own_goals: 0 })),
       },
       teamB: {
         label: "Time Branco",
-        players: b.map((p) => ({ ...p, goals: 0, assists: 0 })),
+        players: b.map((p) => ({ ...p, goals: 0, assists: 0, own_goals: 0 })),
       },
       mvp: null,
       topScorers: [],
