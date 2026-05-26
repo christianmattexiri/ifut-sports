@@ -63,7 +63,7 @@ export const Route = createFileRoute("/pelada/$id_/historico")({
   },
 });
 
-type HistPlayer = { id: string; name: string; goals: number; assists: number };
+type HistPlayer = { id: string; name: string; goals: number; assists: number; own_goals: number };
 type HistTeam = { label: string; players: HistPlayer[] };
 export type HistMatch = {
   id: string;
@@ -110,8 +110,12 @@ export async function deleteMatchFromDb(gameId: string): Promise<void> {
   await deleteGameMatch(gameId);
 }
 
-function teamScore(t: HistTeam) {
-  return t.players.reduce((a, p) => a + (Number(p.goals) || 0), 0);
+function teamScore(t: HistTeam, opponent?: HistTeam) {
+  const own = t.players.reduce((a, p) => a + (Number(p.goals) || 0), 0);
+  const oppOG = opponent
+    ? opponent.players.reduce((a, p) => a + (Number(p.own_goals) || 0), 0)
+    : 0;
+  return own + oppOG;
 }
 
 function formatDate(iso: string) {
