@@ -86,16 +86,26 @@ export function PeladaGlobalShell() {
     return <AdminAwareMusicPlayer peladaId={peladaId} viewerId={viewerId} />;
   }
   // Som do MVP
+  const adminAudio = settings.audio?.url ? settings.audio : null;
+  // Se o admin definiu um som no painel, ele tem prioridade total e libera o player
+  // independentemente de haver MVP eleito.
+  const hasAdminAudio = !!adminAudio;
   return (
     <AudioFooterPlayer
       peladaId={peladaId}
       mode="somMvp"
-      canEdit={!!latestMvp && viewerId === latestMvp.id}
-      titlePrefix={latestMvp ? `Som do MVP: ${latestMvp.name}` : "Som do MVP"}
-      disabled={!latestMvp}
+      canEdit={hasAdminAudio ? false : !!latestMvp && viewerId === latestMvp.id}
+      titlePrefix={
+        hasAdminAudio
+          ? "Som do MVP"
+          : latestMvp
+          ? `Som do MVP: ${latestMvp.name}`
+          : "Som do MVP"
+      }
+      disabled={!hasAdminAudio && !latestMvp}
       disabledHint="Aguardando o primeiro MVP"
       scopeKey={latestMvp?.id ?? "none"}
-      cloudAudio={settings.audio?.url ? settings.audio : null}
+      cloudAudio={adminAudio}
     />
   );
 }
