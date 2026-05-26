@@ -675,7 +675,7 @@ export function EditMatchDialog({
                           className="flex flex-wrap items-center justify-between gap-1 rounded-lg border border-white/5 bg-zinc-900/60 p-2 sm:flex-nowrap sm:gap-3 sm:px-3"
                         >
                           <span className="min-w-[80px] flex-1 truncate text-sm text-zinc-200">{p.name}</span>
-                          <div className="flex items-center gap-2 sm:gap-3">
+                          <div className="flex flex-wrap items-center justify-end gap-1.5 sm:flex-nowrap sm:gap-3">
                             <StatStepper
                               label="G"
                               labelClass="text-amber-400"
@@ -689,6 +689,13 @@ export function EditMatchDialog({
                               value={p.assists}
                               onChange={(v) => setPlayerValue(tk, p.id, "assists", v)}
                               onDelta={(d) => updatePlayer(tk, p.id, "assists", d)}
+                            />
+                            <StatStepper
+                              label="GC"
+                              labelClass="text-red-400"
+                              value={p.own_goals ?? 0}
+                              onChange={(v) => setPlayerValue(tk, p.id, "own_goals", v)}
+                              onDelta={(d) => updatePlayer(tk, p.id, "own_goals", d)}
                             />
                           </div>
                         </li>
