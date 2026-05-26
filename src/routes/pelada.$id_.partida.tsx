@@ -596,6 +596,11 @@ function LiveTeamColumn({
             <span className="shrink-0 rounded-md bg-sky-500/15 px-1.5 py-0.5 text-[10px] font-black tabular-nums text-sky-400">
               👟{p.assists}
             </span>
+            {p.own_goals > 0 && (
+              <span className="shrink-0 rounded-md bg-red-500/15 px-1.5 py-0.5 text-[10px] font-black tabular-nums text-red-400">
+                ❌{p.own_goals}
+              </span>
+            )}
           </button>
         ))
       )}
