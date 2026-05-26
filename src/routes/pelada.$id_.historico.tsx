@@ -534,7 +534,7 @@ export function EditMatchDialog({
   function updatePlayer(
     teamKey: "teamA" | "teamB",
     playerId: string,
-    field: "goals" | "assists",
+    field: "goals" | "assists" | "own_goals",
     delta: number,
   ) {
     setDraft((d) => ({
@@ -542,7 +542,7 @@ export function EditMatchDialog({
       [teamKey]: {
         ...d[teamKey],
         players: d[teamKey].players.map((p) =>
-          p.id === playerId ? { ...p, [field]: Math.max(0, p[field] + delta) } : p,
+          p.id === playerId ? { ...p, [field]: Math.max(0, (p[field] ?? 0) + delta) } : p,
         ),
       },
     }));
@@ -551,7 +551,7 @@ export function EditMatchDialog({
   function setPlayerValue(
     teamKey: "teamA" | "teamB",
     playerId: string,
-    field: "goals" | "assists",
+    field: "goals" | "assists" | "own_goals",
     value: number,
   ) {
     setDraft((d) => ({
