@@ -17,12 +17,14 @@ import {
   Clock,
   ChevronDown,
 } from "lucide-react";
+import { Award } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
 import { ProfileDialog } from "@/components/ProfileDialog";
 import { onProfileUpdate, onStatsUpdated } from "@/lib/profile-sync";
 import { loadHistoryAsync, type HistMatch } from "@/routes/pelada.$id_.historico";
 import { fetchPlayerMvpSummary, type PlayerMvpSummary } from "@/lib/games-storage";
+import { usePeladaSettings } from "@/lib/pelada-settings";
 
 type Match = {
   id: string;
@@ -65,6 +67,7 @@ export function PeladaProfile({
   } | null>(null);
 
   const isSelf = !!viewerId && viewerId === targetUserId;
+  const settings = usePeladaSettings(matchId);
 
   useEffect(() => {
     let cancelled = false;
@@ -258,6 +261,11 @@ export function PeladaProfile({
             <Link to="/pelada/$id/rankings" params={{ id: matchId }} className="block">
               <NavItem icon={<BarChart3 className="h-4 w-4" />} label="Rankings" />
             </Link>
+            {settings.modules.campeonato && (
+              <Link to="/pelada/$id/campeonato" params={{ id: matchId }} className="block">
+                <NavItem icon={<Award className="h-4 w-4" />} label="Campeonato" />
+              </Link>
+            )}
             <NavItem
               icon={<UserCircle2 className="h-4 w-4" />}
               label={isSelf ? "Meu perfil na pelada" : "Perfil do jogador"}
