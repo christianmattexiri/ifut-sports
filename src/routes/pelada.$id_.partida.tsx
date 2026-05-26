@@ -528,7 +528,7 @@ function NavItem({ icon, label, active, gold }: { icon: React.ReactNode; label: 
   );
 }
 
-type LivePlayer = { id: string; name: string; goals: number; assists: number };
+type LivePlayer = { id: string; name: string; goals: number; assists: number; own_goals: number };
 function LiveVersusView({
   teamA,
   teamB,
@@ -538,8 +538,12 @@ function LiveVersusView({
   teamB: LivePlayer[];
   onTap: (p: LivePlayer, team: "A" | "B") => void;
 }) {
-  const scoreA = teamA.reduce((s, p) => s + (p.goals || 0), 0);
-  const scoreB = teamB.reduce((s, p) => s + (p.goals || 0), 0);
+  const scoreA =
+    teamA.reduce((s, p) => s + (p.goals || 0), 0) +
+    teamB.reduce((s, p) => s + (p.own_goals || 0), 0);
+  const scoreB =
+    teamB.reduce((s, p) => s + (p.goals || 0), 0) +
+    teamA.reduce((s, p) => s + (p.own_goals || 0), 0);
   return (
     <div className="relative flex w-full items-start justify-between gap-2 rounded-2xl border border-red-500/30 bg-zinc-900/50 p-3 backdrop-blur-xl sm:gap-4 sm:p-5">
       <LiveTeamColumn title="Time A" players={teamA} accent="var(--pelada-accent)" align="left" onTap={(p) => onTap(p, "A")} />
