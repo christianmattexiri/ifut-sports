@@ -488,9 +488,9 @@ export async function fetchAggregatedStats(peladaId: string): Promise<Aggregated
       if (p.total_perebas != null) entry.perebas = p.total_perebas;
       if (p.total_mvps != null) entry.mvps = p.total_mvps;
       if (p.total_goals != null) entry.gols = p.total_goals;
-      if (p.total_wins != null) entry.vitorias = p.total_wins;
-      if (p.total_losses != null) entry.derrotas = p.total_losses;
-      if (p.total_draws != null) entry.empates = p.total_draws;
+      // Derrotas/empates/vitórias devem refletir TODOS os jogos desta pelada,
+      // não os totais globais do perfil (que podem estar dessincronizados).
+      // Mantemos o cálculo somado de game_player_stats acima.
     }
   }
   return Array.from(map.values());
