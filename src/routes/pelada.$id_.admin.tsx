@@ -197,6 +197,9 @@ function AdminPage() {
             <Link to="/pelada/$id/partida" params={{ id }}><NavItem icon={<Trophy className="h-4 w-4" />} label="Partida" gold /></Link>
             <Link to="/pelada/$id/historico" params={{ id }}><NavItem icon={<HistoryIcon className="h-4 w-4" />} label="Histórico" /></Link>
             <Link to="/pelada/$id/rankings" params={{ id }}><NavItem icon={<BarChart3 className="h-4 w-4" />} label="Rankings" /></Link>
+            {settings.modules.campeonato && (
+              <Link to="/pelada/$id/campeonato" params={{ id }}><NavItem icon={<Award className="h-4 w-4" />} label="Campeonato" /></Link>
+            )}
             <Link to="/pelada/$id/perfil" params={{ id }}><NavItem icon={<UserCircle2 className="h-4 w-4" />} label="Meu perfil" /></Link>
           </nav>
           <div className="mt-auto pt-6">

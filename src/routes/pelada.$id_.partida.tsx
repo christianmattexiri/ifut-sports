@@ -4,6 +4,7 @@ import {
   ArrowLeft, Home, ClipboardList, History, BarChart3, UserCircle2,
   ShieldCheck, Trophy, UserCog, Save, RefreshCw, ClipboardCopy,
   MousePointerClick, Scale, Dices, Radio, OctagonAlert,
+  Award,
 } from "lucide-react";
 import { isSuperAdminUsername } from "@/lib/admin";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -349,6 +350,9 @@ function PartidaPage() {
             <NavItem icon={<Trophy className="h-4 w-4" />} label="Partida" gold active />
             <Link to="/pelada/$id/historico" params={{ id }} className="block"><NavItem icon={<History className="h-4 w-4" />} label="Histórico" /></Link>
             <Link to="/pelada/$id/rankings" params={{ id }} className="block"><NavItem icon={<BarChart3 className="h-4 w-4" />} label="Rankings" /></Link>
+            {settings.modules.campeonato && (
+              <Link to="/pelada/$id/campeonato" params={{ id }} className="block"><NavItem icon={<Award className="h-4 w-4" />} label="Campeonato" /></Link>
+            )}
             <Link to="/pelada/$id/perfil" params={{ id }} className="block"><NavItem icon={<UserCircle2 className="h-4 w-4" />} label="Meu perfil na pelada" /></Link>
           </nav>
           <div className="mt-auto pt-6">

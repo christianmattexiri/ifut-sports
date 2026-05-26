@@ -22,10 +22,12 @@ import {
   Sparkles,
   Minus,
   Video,
+  Award,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { peladaMatchQuery, viewerQuery, matchRefereesQuery } from "@/lib/pelada-queries";
+import { peladaSettingsQuery, DEFAULT_SETTINGS } from "@/lib/pelada-settings";
 import {
   fetchHistory,
   saveMatch as saveGameMatch,
@@ -132,6 +134,8 @@ function HistoricoPage() {
   const { data: viewer, isLoading: viewerLoading } = useQuery(viewerQuery());
   const isAdmin = !!viewer && !!match && match.admin_id === viewer.id;
   const { data: refereesData } = useQuery(matchRefereesQuery(id));
+  const { data: cloudSettings } = useQuery(peladaSettingsQuery(id));
+  const settings = cloudSettings ?? DEFAULT_SETTINGS;
   const isReferee =
     !!viewer && (refereesData ?? []).some((r) => r.user_id === viewer.id);
   const canEdit = isAdmin || isReferee;
@@ -269,6 +273,9 @@ function HistoricoPage() {
             </Link>
             <NavItem icon={<HistoryIcon className="h-4 w-4" />} label="Histórico" active />
             <Link to="/pelada/$id/rankings" params={{ id }} className="block"><NavItem icon={<BarChart3 className="h-4 w-4" />} label="Rankings" /></Link>
+            {settings.modules.campeonato && (
+              <Link to="/pelada/$id/campeonato" params={{ id }} className="block"><NavItem icon={<Award className="h-4 w-4" />} label="Campeonato" /></Link>
+            )}
             <Link to="/pelada/$id/perfil" params={{ id }} className="block"><NavItem icon={<UserCircle2 className="h-4 w-4" />} label="Meu perfil na pelada" /></Link>
           </nav>
 
