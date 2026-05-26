@@ -247,7 +247,7 @@ function PartidaPage() {
     }
   }
 
-  async function registerLiveStat(field: "goals" | "assists") {
+  async function registerLiveStat(field: "goals" | "assists" | "own_goals") {
     if (!liveMatch || !liveTarget) return;
     const { playerId, team, name } = liveTarget;
     setLiveTarget(null);
@@ -266,7 +266,8 @@ function PartidaPage() {
     });
     try {
       await incrementPlayerStat(liveMatch.id, playerId, field, 1);
-      toast.success(`${field === "goals" ? "Gol" : "Assistência"} de ${name} salvo!`);
+      const label = field === "goals" ? "Gol" : field === "assists" ? "Assistência" : "Gol contra";
+      toast.success(`${label} de ${name} salvo!`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Falha ao salvar");
     }
@@ -501,6 +502,14 @@ function PartidaPage() {
             >
               <span className="text-4xl">👟</span>
               Assistência
+            </button>
+            <button
+              type="button"
+              onClick={() => registerLiveStat("own_goals")}
+              className="flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-red-600 bg-red-600/10 px-6 py-8 text-2xl font-black uppercase tracking-wider text-red-400 transition hover:bg-red-600/20 sm:col-span-2"
+            >
+              <span className="text-4xl">❌</span>
+              Gol Contra
             </button>
           </div>
         </DialogContent>
