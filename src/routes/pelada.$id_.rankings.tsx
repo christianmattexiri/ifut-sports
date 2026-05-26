@@ -14,11 +14,13 @@ import {
   ArrowDown,
   Minus,
   Crown,
+  Award,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
 import { useQuery } from "@tanstack/react-query";
 import { peladaMatchQuery, viewerQuery } from "@/lib/pelada-queries";
+import { peladaSettingsQuery, DEFAULT_SETTINGS } from "@/lib/pelada-settings";
 import { type HistMatch } from "./pelada.$id_.historico";
 import { fetchAggregatedStats } from "@/lib/games-storage";
 import { onProfileUpdate, onStatsUpdated } from "@/lib/profile-sync";
@@ -72,6 +74,8 @@ function RankingsPage() {
   const { data: matchData } = useQuery(peladaMatchQuery(id));
   const match = (matchData ?? null) as Match | null;
   const { data: viewer, isLoading: viewerLoading } = useQuery(viewerQuery());
+  const { data: cloudSettings } = useQuery(peladaSettingsQuery(id));
+  const settings = cloudSettings ?? DEFAULT_SETTINGS;
   const isAdmin =
     !!viewer && !!match &&
     (match.admin_id === viewer.id || isSuperAdminUsername(viewer.username));
@@ -150,6 +154,9 @@ function RankingsPage() {
               <NavItem icon={<HistoryIcon className="h-4 w-4" />} label="Histórico" />
             </Link>
             <NavItem icon={<BarChart3 className="h-4 w-4" />} label="Rankings" active />
+            {settings.modules.campeonato && (
+              <Link to="/pelada/$id/campeonato" params={{ id }} className="block"><NavItem icon={<Award className="h-4 w-4" />} label="Campeonato" /></Link>
+            )}
             <Link to="/pelada/$id/perfil" params={{ id }} className="block"><NavItem icon={<UserCircle2 className="h-4 w-4" />} label="Meu perfil na pelada" /></Link>
           </nav>
           <div className="mt-auto pt-6">
