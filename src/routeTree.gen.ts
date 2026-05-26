@@ -20,6 +20,7 @@ import { Route as PeladaIdPerfilRouteImport } from './routes/pelada.$id_.perfil'
 import { Route as PeladaIdPartidaRouteImport } from './routes/pelada.$id_.partida'
 import { Route as PeladaIdListaRouteImport } from './routes/pelada.$id_.lista'
 import { Route as PeladaIdHistoricoRouteImport } from './routes/pelada.$id_.historico'
+import { Route as PeladaIdCampeonatoRouteImport } from './routes/pelada.$id_.campeonato'
 import { Route as PeladaIdAdminRouteImport } from './routes/pelada.$id_.admin'
 import { Route as PeladaIdJogadorUserIdRouteImport } from './routes/pelada.$id_.jogador.$userId'
 
@@ -78,6 +79,11 @@ const PeladaIdHistoricoRoute = PeladaIdHistoricoRouteImport.update({
   path: '/pelada/$id/historico',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PeladaIdCampeonatoRoute = PeladaIdCampeonatoRouteImport.update({
+  id: '/pelada/$id_/campeonato',
+  path: '/pelada/$id/campeonato',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PeladaIdAdminRoute = PeladaIdAdminRouteImport.update({
   id: '/pelada/$id_/admin',
   path: '/pelada/$id/admin',
@@ -96,6 +102,7 @@ export interface FileRoutesByFullPath {
   '/super-admin': typeof SuperAdminRoute
   '/pelada/$id': typeof PeladaIdRoute
   '/pelada/$id/admin': typeof PeladaIdAdminRoute
+  '/pelada/$id/campeonato': typeof PeladaIdCampeonatoRoute
   '/pelada/$id/historico': typeof PeladaIdHistoricoRoute
   '/pelada/$id/lista': typeof PeladaIdListaRoute
   '/pelada/$id/partida': typeof PeladaIdPartidaRoute
@@ -111,6 +118,7 @@ export interface FileRoutesByTo {
   '/super-admin': typeof SuperAdminRoute
   '/pelada/$id': typeof PeladaIdRoute
   '/pelada/$id/admin': typeof PeladaIdAdminRoute
+  '/pelada/$id/campeonato': typeof PeladaIdCampeonatoRoute
   '/pelada/$id/historico': typeof PeladaIdHistoricoRoute
   '/pelada/$id/lista': typeof PeladaIdListaRoute
   '/pelada/$id/partida': typeof PeladaIdPartidaRoute
@@ -127,6 +135,7 @@ export interface FileRoutesById {
   '/super-admin': typeof SuperAdminRoute
   '/pelada/$id': typeof PeladaIdRoute
   '/pelada/$id_/admin': typeof PeladaIdAdminRoute
+  '/pelada/$id_/campeonato': typeof PeladaIdCampeonatoRoute
   '/pelada/$id_/historico': typeof PeladaIdHistoricoRoute
   '/pelada/$id_/lista': typeof PeladaIdListaRoute
   '/pelada/$id_/partida': typeof PeladaIdPartidaRoute
@@ -144,6 +153,7 @@ export interface FileRouteTypes {
     | '/super-admin'
     | '/pelada/$id'
     | '/pelada/$id/admin'
+    | '/pelada/$id/campeonato'
     | '/pelada/$id/historico'
     | '/pelada/$id/lista'
     | '/pelada/$id/partida'
@@ -159,6 +169,7 @@ export interface FileRouteTypes {
     | '/super-admin'
     | '/pelada/$id'
     | '/pelada/$id/admin'
+    | '/pelada/$id/campeonato'
     | '/pelada/$id/historico'
     | '/pelada/$id/lista'
     | '/pelada/$id/partida'
@@ -174,6 +185,7 @@ export interface FileRouteTypes {
     | '/super-admin'
     | '/pelada/$id'
     | '/pelada/$id_/admin'
+    | '/pelada/$id_/campeonato'
     | '/pelada/$id_/historico'
     | '/pelada/$id_/lista'
     | '/pelada/$id_/partida'
@@ -190,6 +202,7 @@ export interface RootRouteChildren {
   SuperAdminRoute: typeof SuperAdminRoute
   PeladaIdRoute: typeof PeladaIdRoute
   PeladaIdAdminRoute: typeof PeladaIdAdminRoute
+  PeladaIdCampeonatoRoute: typeof PeladaIdCampeonatoRoute
   PeladaIdHistoricoRoute: typeof PeladaIdHistoricoRoute
   PeladaIdListaRoute: typeof PeladaIdListaRoute
   PeladaIdPartidaRoute: typeof PeladaIdPartidaRoute
@@ -278,6 +291,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PeladaIdHistoricoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pelada/$id_/campeonato': {
+      id: '/pelada/$id_/campeonato'
+      path: '/pelada/$id/campeonato'
+      fullPath: '/pelada/$id/campeonato'
+      preLoaderRoute: typeof PeladaIdCampeonatoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pelada/$id_/admin': {
       id: '/pelada/$id_/admin'
       path: '/pelada/$id/admin'
@@ -302,6 +322,7 @@ const rootRouteChildren: RootRouteChildren = {
   SuperAdminRoute: SuperAdminRoute,
   PeladaIdRoute: PeladaIdRoute,
   PeladaIdAdminRoute: PeladaIdAdminRoute,
+  PeladaIdCampeonatoRoute: PeladaIdCampeonatoRoute,
   PeladaIdHistoricoRoute: PeladaIdHistoricoRoute,
   PeladaIdListaRoute: PeladaIdListaRoute,
   PeladaIdPartidaRoute: PeladaIdPartidaRoute,
