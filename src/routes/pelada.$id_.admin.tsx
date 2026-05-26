@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import {
   ArrowLeft, Home, ClipboardList, History as HistoryIcon, BarChart3,
   UserCircle2, ShieldCheck, Trophy, UserCog, Upload, Trash2, Save,
-  BarChart, Headphones, DollarSign, Vote, Music, Crown, Skull, Star, Target, Sparkles, Lock,
+  BarChart, Headphones, DollarSign, Vote, Music, Crown, Skull, Star, Target, Sparkles, Lock, Youtube,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
