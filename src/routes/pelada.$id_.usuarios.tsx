@@ -14,6 +14,7 @@ import {
   Search,
   UserCog,
   User as UserIcon,
+  Award,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isSuperAdminUsername } from "@/lib/admin";
@@ -23,7 +24,8 @@ import {
   setMemberRating,
   inviteRefereeToMatch,
 } from "@/lib/admin-users.functions";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { peladaSettingsQuery } from "@/lib/pelada-settings";
 import {
   Dialog,
   DialogContent,
@@ -65,6 +67,8 @@ function initials(name: string) {
 function UsuariosPage() {
   const navigate = useNavigate();
   const { id } = useParams({ from: "/pelada/$id_/usuarios" });
+  const { data: peladaCloudSettings } = useQuery(peladaSettingsQuery(id));
+  const campeonatoEnabled = !!peladaCloudSettings?.modules.campeonato;
   const fetchMembers = useServerFn(listMatchMembers);
   const saveRating = useServerFn(setMemberRating);
   const callReferee = useServerFn(inviteRefereeToMatch);
