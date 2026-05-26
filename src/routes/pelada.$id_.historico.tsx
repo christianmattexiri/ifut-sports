@@ -606,6 +606,17 @@ export function EditMatchDialog({
         </DialogHeader>
 
         <div className="space-y-6">
+          {/* Live score header (gols normais + gols contra do adversário) */}
+          <div className="flex items-center justify-center gap-4 rounded-2xl border border-white/10 bg-zinc-900/60 px-4 py-3">
+            <span className="text-xs font-bold uppercase tracking-wider text-[var(--pelada-accent)]">Time A</span>
+            <span className="text-3xl font-black tabular-nums text-zinc-100">
+              {teamScore(draft.teamA, draft.teamB)}
+              <span className="px-2 text-zinc-500">×</span>
+              {teamScore(draft.teamB, draft.teamA)}
+            </span>
+            <span className="text-xs font-bold uppercase tracking-wider text-red-400">Time B</span>
+          </div>
+
           {/* Header info */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label className="text-xs">
