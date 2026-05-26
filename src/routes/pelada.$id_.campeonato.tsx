@@ -26,6 +26,13 @@ export const Route = createFileRoute("/pelada/$id_/campeonato")({
 
 type Match = { id: string; name: string; logo_url: string | null; admin_id?: string | null };
 
+function formatShortName(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length <= 1) return parts[0] ?? "";
+  const last = parts[parts.length - 1];
+  return `${parts[0]} ${last[0]?.toUpperCase() ?? ""}.`;
+}
+
 function CampeonatoPage() {
   const navigate = useNavigate();
   const { id } = useParams({ from: "/pelada/$id_/campeonato" });
@@ -141,24 +148,25 @@ function CampeonatoPage() {
           ) : (
             <div className="mt-8 overflow-hidden rounded-3xl border-2 border-[var(--pelada-accent)]/60 bg-zinc-950/80 shadow-[0_0_50px_-15px_color-mix(in_oklab,var(--pelada-accent)_50%,transparent)]">
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[640px] text-sm">
+                <table className="w-full text-xs sm:text-sm">
                   <thead className="bg-zinc-900/70 text-[10px] uppercase tracking-wider text-zinc-400">
                     <tr>
-                      <th className="px-2 py-3 text-center md:px-3">#</th>
-                      <th className="px-2 py-3 text-left md:px-3">Jogador</th>
-                      <th className="px-2 py-3 text-center md:px-3" title="Pontos">P</th>
-                      <th className="px-2 py-3 text-center md:px-3" title="Partidas">J</th>
-                      <th className="px-2 py-3 text-center md:px-3" title="Vitórias">V</th>
-                      <th className="px-2 py-3 text-center md:px-3" title="Empates">E</th>
-                      <th className="px-2 py-3 text-center md:px-3" title="Derrotas">D</th>
-                      <th className="px-2 py-3 text-center md:px-3" title="Gols Pró">GP</th>
-                      <th className="px-2 py-3 text-center md:px-3" title="% Presença">% Pres.</th>
+                      <th className="px-1 py-3 text-center sm:px-3">#</th>
+                      <th className="px-1 py-3 text-left sm:px-3">Jogador</th>
+                      <th className="px-1 py-3 text-center sm:px-3" title="Pontos">P</th>
+                      <th className="px-1 py-3 text-center sm:px-3" title="Partidas">J</th>
+                      <th className="px-1 py-3 text-center sm:px-3" title="Vitórias">V</th>
+                      <th className="hidden px-1 py-3 text-center sm:table-cell sm:px-3" title="Empates">E</th>
+                      <th className="hidden px-1 py-3 text-center sm:table-cell sm:px-3" title="Derrotas">D</th>
+                      <th className="hidden px-1 py-3 text-center sm:table-cell sm:px-3" title="Gols Pró">GP</th>
+                      <th className="hidden px-1 py-3 text-center sm:table-cell sm:px-3" title="% Presença">% Pres.</th>
                     </tr>
                   </thead>
                   <tbody>
                     {rows.map((r, idx) => {
                       const pos = idx + 1;
                       const av = avMap[r.id]?.avatar_url ?? null;
+                      const shortName = formatShortName(r.name);
                       return (
                         <tr
                           key={r.id}
@@ -167,7 +175,7 @@ function CampeonatoPage() {
                             pos === 1 ? "bg-[var(--pelada-accent)]/[0.06]" : ""
                           }`}
                         >
-                          <td className="px-2 py-3 text-center md:px-3">
+                          <td className="px-1 py-3 text-center sm:px-3">
                             <span
                               className={`inline-grid h-6 w-6 place-items-center rounded-md text-[11px] font-black tabular-nums ${
                                 pos === 1
@@ -180,29 +188,32 @@ function CampeonatoPage() {
                               {pos}
                             </span>
                           </td>
-                          <td className="px-2 py-3 md:px-3">
-                            <div className="flex items-center gap-2.5">
-                              <div className="grid h-8 w-8 place-items-center overflow-hidden rounded-full border border-white/10 bg-zinc-800">
+                          <td className="min-w-[100px] px-1 py-3 sm:px-3">
+                            <div className="flex items-center gap-2 sm:gap-2.5">
+                              <div className="grid h-7 w-7 shrink-0 place-items-center overflow-hidden rounded-full border border-white/10 bg-zinc-800 sm:h-8 sm:w-8">
                                 {av ? (
                                   <img src={av} alt={r.name} className="h-full w-full object-cover" />
                                 ) : (
                                   <span className="text-xs font-bold text-zinc-300">{r.name[0]?.toUpperCase()}</span>
                                 )}
                               </div>
-                              <span className="truncate font-semibold text-zinc-100">{r.name}</span>
+                              <span className="truncate font-semibold text-zinc-100">
+                                <span className="sm:hidden">{shortName}</span>
+                                <span className="hidden sm:inline">{r.name}</span>
+                              </span>
                             </div>
                           </td>
-                          <td className="px-2 py-3 text-center md:px-3">
+                          <td className="px-1 py-3 text-center sm:px-3">
                             <span className="font-black tabular-nums text-[var(--pelada-accent)] drop-shadow-[0_0_6px_color-mix(in_oklab,var(--pelada-accent)_60%,transparent)]">
                               {r.pontos}
                             </span>
                           </td>
-                          <td className="px-2 py-3 text-center font-semibold tabular-nums text-zinc-300 md:px-3">{r.jogos}</td>
-                          <td className="px-2 py-3 text-center font-semibold tabular-nums text-emerald-400 md:px-3">{r.vitorias}</td>
-                          <td className="px-2 py-3 text-center font-semibold tabular-nums text-zinc-400 md:px-3">{r.empates}</td>
-                          <td className="px-2 py-3 text-center font-semibold tabular-nums text-red-400 md:px-3">{r.derrotas}</td>
-                          <td className="px-2 py-3 text-center font-semibold tabular-nums text-zinc-200 md:px-3">{r.golsPro}</td>
-                          <td className="px-2 py-3 text-center font-semibold tabular-nums text-zinc-300 md:px-3">{r.presencaPct}%</td>
+                          <td className="px-1 py-3 text-center font-semibold tabular-nums text-zinc-300 sm:px-3">{r.jogos}</td>
+                          <td className="px-1 py-3 text-center font-semibold tabular-nums text-emerald-400 sm:px-3">{r.vitorias}</td>
+                          <td className="hidden px-1 py-3 text-center font-semibold tabular-nums text-zinc-400 sm:table-cell sm:px-3">{r.empates}</td>
+                          <td className="hidden px-1 py-3 text-center font-semibold tabular-nums text-red-400 sm:table-cell sm:px-3">{r.derrotas}</td>
+                          <td className="hidden px-1 py-3 text-center font-semibold tabular-nums text-zinc-200 sm:table-cell sm:px-3">{r.golsPro}</td>
+                          <td className="hidden px-1 py-3 text-center font-semibold tabular-nums text-zinc-300 sm:table-cell sm:px-3">{r.presencaPct}%</td>
                         </tr>
                       );
                     })}
