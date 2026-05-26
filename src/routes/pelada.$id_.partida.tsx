@@ -220,8 +220,8 @@ function PartidaPage() {
       id: crypto.randomUUID(),
       date: today,
       name: `${match?.name ?? "iFut"} ${today.split("-").reverse().join("/")}`,
-      teamA: { label: "Time A", players: saved.teamA.map((p) => ({ id: p.id, name: p.name, goals: 0, assists: 0 })) },
-      teamB: { label: "Time B", players: saved.teamB.map((p) => ({ id: p.id, name: p.name, goals: 0, assists: 0 })) },
+      teamA: { label: "Time A", players: saved.teamA.map((p) => ({ id: p.id, name: p.name, goals: 0, assists: 0, own_goals: 0 })) },
+      teamB: { label: "Time B", players: saved.teamB.map((p) => ({ id: p.id, name: p.name, goals: 0, assists: 0, own_goals: 0 })) },
       mvp: null, topScorers: [], topAssists: [],
     };
     setEditing(m);
@@ -234,8 +234,8 @@ function PartidaPage() {
       id: crypto.randomUUID(),
       date: today,
       name: `${match?.name ?? "iFut"} ${today.split("-").reverse().join("/")}`,
-      teamA: { label: "Time A", players: saved.teamA.map((p) => ({ id: p.id, name: p.name, goals: 0, assists: 0 })) },
-      teamB: { label: "Time B", players: saved.teamB.map((p) => ({ id: p.id, name: p.name, goals: 0, assists: 0 })) },
+      teamA: { label: "Time A", players: saved.teamA.map((p) => ({ id: p.id, name: p.name, goals: 0, assists: 0, own_goals: 0 })) },
+      teamB: { label: "Time B", players: saved.teamB.map((p) => ({ id: p.id, name: p.name, goals: 0, assists: 0, own_goals: 0 })) },
       mvp: null, topScorers: [], topAssists: [],
     };
     try {
@@ -247,7 +247,7 @@ function PartidaPage() {
     }
   }
 
-  async function registerLiveStat(field: "goals" | "assists") {
+  async function registerLiveStat(field: "goals" | "assists" | "own_goals") {
     if (!liveMatch || !liveTarget) return;
     const { playerId, team, name } = liveTarget;
     setLiveTarget(null);
@@ -266,7 +266,8 @@ function PartidaPage() {
     });
     try {
       await incrementPlayerStat(liveMatch.id, playerId, field, 1);
-      toast.success(`${field === "goals" ? "Gol" : "Assistência"} de ${name} salvo!`);
+      const label = field === "goals" ? "Gol" : field === "assists" ? "Assistência" : "Gol contra";
+      toast.success(`${label} de ${name} salvo!`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Falha ao salvar");
     }
@@ -502,6 +503,14 @@ function PartidaPage() {
               <span className="text-4xl">👟</span>
               Assistência
             </button>
+            <button
+              type="button"
+              onClick={() => registerLiveStat("own_goals")}
+              className="flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-red-600 bg-red-600/10 px-6 py-8 text-2xl font-black uppercase tracking-wider text-red-400 transition hover:bg-red-600/20 sm:col-span-2"
+            >
+              <span className="text-4xl">❌</span>
+              Gol Contra
+            </button>
           </div>
         </DialogContent>
       </Dialog>
@@ -519,7 +528,7 @@ function NavItem({ icon, label, active, gold }: { icon: React.ReactNode; label: 
   );
 }
 
-type LivePlayer = { id: string; name: string; goals: number; assists: number };
+type LivePlayer = { id: string; name: string; goals: number; assists: number; own_goals: number };
 function LiveVersusView({
   teamA,
   teamB,
@@ -529,8 +538,12 @@ function LiveVersusView({
   teamB: LivePlayer[];
   onTap: (p: LivePlayer, team: "A" | "B") => void;
 }) {
-  const scoreA = teamA.reduce((s, p) => s + (p.goals || 0), 0);
-  const scoreB = teamB.reduce((s, p) => s + (p.goals || 0), 0);
+  const scoreA =
+    teamA.reduce((s, p) => s + (p.goals || 0), 0) +
+    teamB.reduce((s, p) => s + (p.own_goals || 0), 0);
+  const scoreB =
+    teamB.reduce((s, p) => s + (p.goals || 0), 0) +
+    teamA.reduce((s, p) => s + (p.own_goals || 0), 0);
   return (
     <div className="relative flex w-full items-start justify-between gap-2 rounded-2xl border border-red-500/30 bg-zinc-900/50 p-3 backdrop-blur-xl sm:gap-4 sm:p-5">
       <LiveTeamColumn title="Time A" players={teamA} accent="var(--pelada-accent)" align="left" onTap={(p) => onTap(p, "A")} />
@@ -583,6 +596,11 @@ function LiveTeamColumn({
             <span className="shrink-0 rounded-md bg-sky-500/15 px-1.5 py-0.5 text-[10px] font-black tabular-nums text-sky-400">
               👟{p.assists}
             </span>
+            {p.own_goals > 0 && (
+              <span className="shrink-0 rounded-md bg-red-500/15 px-1.5 py-0.5 text-[10px] font-black tabular-nums text-red-400">
+                ❌{p.own_goals}
+              </span>
+            )}
           </button>
         ))
       )}

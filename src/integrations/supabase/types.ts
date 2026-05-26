@@ -22,6 +22,7 @@ export type Database = {
           game_id: string
           goals: number | null
           id: string
+          own_goals: number
           player_name: string | null
           team: string
           user_id: string
@@ -33,6 +34,7 @@ export type Database = {
           game_id: string
           goals?: number | null
           id?: string
+          own_goals?: number
           player_name?: string | null
           team: string
           user_id: string
@@ -44,6 +46,7 @@ export type Database = {
           game_id?: string
           goals?: number | null
           id?: string
+          own_goals?: number
           player_name?: string | null
           team?: string
           user_id?: string
@@ -325,6 +328,7 @@ export type Database = {
           total_losses: number
           total_matches: number | null
           total_mvps: number | null
+          total_own_goals: number
           total_perebas: number | null
           total_wins: number | null
           updated_at: string
@@ -342,6 +346,7 @@ export type Database = {
           total_losses?: number
           total_matches?: number | null
           total_mvps?: number | null
+          total_own_goals?: number
           total_perebas?: number | null
           total_wins?: number | null
           updated_at?: string
@@ -359,6 +364,7 @@ export type Database = {
           total_losses?: number
           total_matches?: number | null
           total_mvps?: number | null
+          total_own_goals?: number
           total_perebas?: number | null
           total_wins?: number | null
           updated_at?: string

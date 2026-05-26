@@ -63,7 +63,7 @@ export const Route = createFileRoute("/pelada/$id_/historico")({
   },
 });
 
-type HistPlayer = { id: string; name: string; goals: number; assists: number };
+type HistPlayer = { id: string; name: string; goals: number; assists: number; own_goals: number };
 type HistTeam = { label: string; players: HistPlayer[] };
 export type HistMatch = {
   id: string;
@@ -110,8 +110,12 @@ export async function deleteMatchFromDb(gameId: string): Promise<void> {
   await deleteGameMatch(gameId);
 }
 
-function teamScore(t: HistTeam) {
-  return t.players.reduce((a, p) => a + (Number(p.goals) || 0), 0);
+function teamScore(t: HistTeam, opponent?: HistTeam) {
+  const own = t.players.reduce((a, p) => a + (Number(p.goals) || 0), 0);
+  const oppOG = opponent
+    ? opponent.players.reduce((a, p) => a + (Number(p.own_goals) || 0), 0)
+    : 0;
+  return own + oppOG;
 }
 
 function formatDate(iso: string) {
@@ -179,11 +183,11 @@ function HistoricoPage() {
       name: `${match?.name ?? "iFut"} ${formatDate(today)}`,
       teamA: {
         label: "Time Preto",
-        players: a.map((p) => ({ ...p, goals: 0, assists: 0 })),
+        players: a.map((p) => ({ ...p, goals: 0, assists: 0, own_goals: 0 })),
       },
       teamB: {
         label: "Time Branco",
-        players: b.map((p) => ({ ...p, goals: 0, assists: 0 })),
+        players: b.map((p) => ({ ...p, goals: 0, assists: 0, own_goals: 0 })),
       },
       mvp: null,
       topScorers: [],
@@ -530,7 +534,7 @@ export function EditMatchDialog({
   function updatePlayer(
     teamKey: "teamA" | "teamB",
     playerId: string,
-    field: "goals" | "assists",
+    field: "goals" | "assists" | "own_goals",
     delta: number,
   ) {
     setDraft((d) => ({
@@ -538,7 +542,7 @@ export function EditMatchDialog({
       [teamKey]: {
         ...d[teamKey],
         players: d[teamKey].players.map((p) =>
-          p.id === playerId ? { ...p, [field]: Math.max(0, p[field] + delta) } : p,
+          p.id === playerId ? { ...p, [field]: Math.max(0, (p[field] ?? 0) + delta) } : p,
         ),
       },
     }));
@@ -547,7 +551,7 @@ export function EditMatchDialog({
   function setPlayerValue(
     teamKey: "teamA" | "teamB",
     playerId: string,
-    field: "goals" | "assists",
+    field: "goals" | "assists" | "own_goals",
     value: number,
   ) {
     setDraft((d) => ({
@@ -602,6 +606,17 @@ export function EditMatchDialog({
         </DialogHeader>
 
         <div className="space-y-6">
+          {/* Live score header (gols normais + gols contra do adversário) */}
+          <div className="flex items-center justify-center gap-4 rounded-2xl border border-white/10 bg-zinc-900/60 px-4 py-3">
+            <span className="text-xs font-bold uppercase tracking-wider text-[var(--pelada-accent)]">Time A</span>
+            <span className="text-3xl font-black tabular-nums text-zinc-100">
+              {teamScore(draft.teamA, draft.teamB)}
+              <span className="px-2 text-zinc-500">×</span>
+              {teamScore(draft.teamB, draft.teamA)}
+            </span>
+            <span className="text-xs font-bold uppercase tracking-wider text-red-400">Time B</span>
+          </div>
+
           {/* Header info */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label className="text-xs">
@@ -660,7 +675,7 @@ export function EditMatchDialog({
                           className="flex flex-wrap items-center justify-between gap-1 rounded-lg border border-white/5 bg-zinc-900/60 p-2 sm:flex-nowrap sm:gap-3 sm:px-3"
                         >
                           <span className="min-w-[80px] flex-1 truncate text-sm text-zinc-200">{p.name}</span>
-                          <div className="flex items-center gap-2 sm:gap-3">
+                          <div className="flex flex-wrap items-center justify-end gap-1.5 sm:flex-nowrap sm:gap-3">
                             <StatStepper
                               label="G"
                               labelClass="text-amber-400"
@@ -674,6 +689,13 @@ export function EditMatchDialog({
                               value={p.assists}
                               onChange={(v) => setPlayerValue(tk, p.id, "assists", v)}
                               onDelta={(d) => updatePlayer(tk, p.id, "assists", d)}
+                            />
+                            <StatStepper
+                              label="GC"
+                              labelClass="text-red-400"
+                              value={p.own_goals ?? 0}
+                              onChange={(v) => setPlayerValue(tk, p.id, "own_goals", v)}
+                              onDelta={(d) => updatePlayer(tk, p.id, "own_goals", d)}
                             />
                           </div>
                         </li>

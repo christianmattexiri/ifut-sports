@@ -16,6 +16,7 @@ export type HistPlayer = {
   name: string;
   goals: number;
   assists: number;
+  own_goals: number;
 };
 export type HistTeam = { label: string; players: HistPlayer[] };
 export type HistMatch = {
@@ -104,6 +105,7 @@ function buildHistMatch(
     team: string;
     goals: number | null;
     assists: number | null;
+    own_goals?: number | null;
   }>,
   peladaName: string,
 ): HistMatch {
@@ -115,6 +117,7 @@ function buildHistMatch(
       name: s.player_name || "Jogador",
       goals: s.goals ?? 0,
       assists: s.assists ?? 0,
+      own_goals: s.own_goals ?? 0,
     };
     (s.team === "B" ? b : a).push(p);
   }
@@ -150,7 +153,7 @@ export async function fetchHistory(peladaId: string, peladaName = "Pelada"): Pro
   const ids = games.map((g) => g.id);
   const { data: stats } = await supabase
     .from("game_player_stats")
-    .select("game_id, user_id, player_name, team, goals, assists")
+    .select("game_id, user_id, player_name, team, goals, assists, own_goals")
     .in("game_id", ids);
   const byGame = new Map<string, typeof stats>();
   for (const s of stats ?? []) {
@@ -198,7 +201,7 @@ export async function fetchLatest(
 
   const { data: stats } = await supabase
     .from("game_player_stats")
-    .select("game_id, user_id, player_name, team, goals, assists")
+    .select("game_id, user_id, player_name, team, goals, assists, own_goals")
     .eq("game_id", game.id);
 
   let mvp_id = game.mvp_id ?? null;
@@ -225,8 +228,13 @@ export async function saveMatch(
   m: HistMatch,
   opts?: { votingOpen?: boolean },
 ): Promise<void> {
-  const score_a = m.teamA.players.reduce((s, p) => s + (p.goals || 0), 0);
-  const score_b = m.teamB.players.reduce((s, p) => s + (p.goals || 0), 0);
+  const goalsA = m.teamA.players.reduce((s, p) => s + (p.goals || 0), 0);
+  const goalsB = m.teamB.players.reduce((s, p) => s + (p.goals || 0), 0);
+  const ogA = m.teamA.players.reduce((s, p) => s + (p.own_goals || 0), 0);
+  const ogB = m.teamB.players.reduce((s, p) => s + (p.own_goals || 0), 0);
+  // Gol contra conta para o time adversário.
+  const score_a = goalsA + ogB;
+  const score_b = goalsB + ogA;
 
   const baseRow: {
     id: string;
@@ -265,6 +273,7 @@ export async function saveMatch(
     team: string;
     goals: number;
     assists: number;
+    own_goals: number;
   }> = [];
   for (const p of m.teamA.players) {
     rows.push({
@@ -274,6 +283,7 @@ export async function saveMatch(
       team: "A",
       goals: p.goals || 0,
       assists: p.assists || 0,
+      own_goals: p.own_goals || 0,
     });
   }
   for (const p of m.teamB.players) {
@@ -284,6 +294,7 @@ export async function saveMatch(
       team: "B",
       goals: p.goals || 0,
       assists: p.assists || 0,
+      own_goals: p.own_goals || 0,
     });
   }
   if (rows.length > 0) {
@@ -319,37 +330,42 @@ export async function saveCurrentDraw(
 export async function incrementPlayerStat(
   gameId: string,
   userId: string,
-  field: "goals" | "assists",
+  field: "goals" | "assists" | "own_goals",
   delta = 1,
 ): Promise<number> {
   const { data: cur, error: selErr } = await supabase
     .from("game_player_stats")
-    .select("id, goals, assists")
+    .select("id, goals, assists, own_goals")
     .eq("game_id", gameId)
     .eq("user_id", userId)
     .maybeSingle();
   if (selErr) throw new Error(selErr.message);
   if (!cur) throw new Error("Jogador não encontrado nessa partida");
-  const next = Math.max(0, (cur[field] ?? 0) + delta);
+  const next = Math.max(0, ((cur[field] as number | null) ?? 0) + delta);
   const patch =
-    field === "goals" ? { goals: next } : { assists: next };
+    field === "goals"
+      ? { goals: next }
+      : field === "assists"
+      ? { assists: next }
+      : { own_goals: next };
   const { error: updErr } = await supabase
     .from("game_player_stats")
     .update(patch)
     .eq("id", cur.id);
   if (updErr) throw new Error(updErr.message);
-  // Recompute score for the side this stat affects (goals only).
-  if (field === "goals") {
+  // Recompute score whenever goals or own-goals change.
+  if (field === "goals" || field === "own_goals") {
     const { data: stats } = await supabase
       .from("game_player_stats")
-      .select("team, goals")
+      .select("team, goals, own_goals")
       .eq("game_id", gameId);
-    const score_a = (stats ?? [])
-      .filter((s) => s.team === "A")
-      .reduce((s, r) => s + (r.goals ?? 0), 0);
-    const score_b = (stats ?? [])
-      .filter((s) => s.team === "B")
-      .reduce((s, r) => s + (r.goals ?? 0), 0);
+    const rows = stats ?? [];
+    const goalsA = rows.filter((s) => s.team === "A").reduce((s, r) => s + (r.goals ?? 0), 0);
+    const goalsB = rows.filter((s) => s.team === "B").reduce((s, r) => s + (r.goals ?? 0), 0);
+    const ogA = rows.filter((s) => s.team === "A").reduce((s, r) => s + (r.own_goals ?? 0), 0);
+    const ogB = rows.filter((s) => s.team === "B").reduce((s, r) => s + (r.own_goals ?? 0), 0);
+    const score_a = goalsA + ogB;
+    const score_b = goalsB + ogA;
     await supabase.from("games").update({ score_a, score_b }).eq("id", gameId);
   }
   return next;

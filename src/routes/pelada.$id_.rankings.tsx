@@ -38,7 +38,7 @@ export const Route = createFileRoute("/pelada/$id_/rankings")({
 
 type Match = { id: string; name: string; logo_url: string | null; admin_id?: string | null };
 
-type Stat = "gols" | "assistencias" | "mvps" | "vitorias" | "perebas";
+type Stat = "gols" | "assistencias" | "mvps" | "vitorias" | "derrotas" | "perebas";
 
 type PlayerStats = {
   id: string;
@@ -58,6 +58,7 @@ const TABS: { key: Stat; label: string; emoji: string }[] = [
   { key: "assistencias", label: "Maestros", emoji: "👟" },
   { key: "mvps", label: "MVP", emoji: "👑" },
   { key: "vitorias", label: "Vitórias", emoji: "🤝" },
+  { key: "derrotas", label: "Derrotas", emoji: "💔" },
   { key: "perebas", label: "Perebas", emoji: "😖" },
 ];
 
@@ -399,6 +400,8 @@ function statLabel(s: Stat) {
       return "MVP";
     case "vitorias":
       return "Vitórias";
+    case "derrotas":
+      return "Derrotas";
     case "perebas":
       return "Perebas";
   }
