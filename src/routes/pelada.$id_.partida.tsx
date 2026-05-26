@@ -220,8 +220,8 @@ function PartidaPage() {
       id: crypto.randomUUID(),
       date: today,
       name: `${match?.name ?? "iFut"} ${today.split("-").reverse().join("/")}`,
-      teamA: { label: "Time A", players: saved.teamA.map((p) => ({ id: p.id, name: p.name, goals: 0, assists: 0 })) },
-      teamB: { label: "Time B", players: saved.teamB.map((p) => ({ id: p.id, name: p.name, goals: 0, assists: 0 })) },
+      teamA: { label: "Time A", players: saved.teamA.map((p) => ({ id: p.id, name: p.name, goals: 0, assists: 0, own_goals: 0 })) },
+      teamB: { label: "Time B", players: saved.teamB.map((p) => ({ id: p.id, name: p.name, goals: 0, assists: 0, own_goals: 0 })) },
       mvp: null, topScorers: [], topAssists: [],
     };
     setEditing(m);
@@ -234,8 +234,8 @@ function PartidaPage() {
       id: crypto.randomUUID(),
       date: today,
       name: `${match?.name ?? "iFut"} ${today.split("-").reverse().join("/")}`,
-      teamA: { label: "Time A", players: saved.teamA.map((p) => ({ id: p.id, name: p.name, goals: 0, assists: 0 })) },
-      teamB: { label: "Time B", players: saved.teamB.map((p) => ({ id: p.id, name: p.name, goals: 0, assists: 0 })) },
+      teamA: { label: "Time A", players: saved.teamA.map((p) => ({ id: p.id, name: p.name, goals: 0, assists: 0, own_goals: 0 })) },
+      teamB: { label: "Time B", players: saved.teamB.map((p) => ({ id: p.id, name: p.name, goals: 0, assists: 0, own_goals: 0 })) },
       mvp: null, topScorers: [], topAssists: [],
     };
     try {
