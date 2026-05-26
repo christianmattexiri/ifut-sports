@@ -568,16 +568,23 @@ export async function fetchCampeonato(peladaId: string): Promise<CampeonatoRow[]
   }
 
   /* Ajustes manuais (jogos fora do sistema / peladas externas) */
-  const MANUAL_ADJUSTMENTS: Record<string, { vitorias?: number; empates?: number; derrotas?: number; jogos?: number }> = {
-    "a3bc1af7-571f-4b15-92b4-b5399c2663f9": { empates: 1, jogos: 1 }, // Tiago Atanasoff
-  };
-  for (const [userId, adj] of Object.entries(MANUAL_ADJUSTMENTS)) {
-    const row = map.get(userId);
-    if (row) {
-      if (adj.vitorias) row.vitorias += adj.vitorias;
-      if (adj.empates) row.empates += adj.empates;
-      if (adj.derrotas) row.derrotas += adj.derrotas;
-      if (adj.jogos) row.jogos += adj.jogos;
+  /* Source of truth: profile totals (V/E/D e total_matches).
+     Os agregados das partidas podem divergir do histórico real;
+     o perfil é o que vale para o Modo Campeonato e Rankings. */
+  const userIds = Array.from(map.keys());
+  if (userIds.length > 0) {
+    const { data: profs } = await supabase
+      .from("profiles")
+      .select("id, full_name, total_wins, total_losses, total_draws, total_matches")
+      .in("id", userIds);
+    for (const p of (profs ?? []) as Array<{ id: string; full_name: string | null; total_wins: number | null; total_losses: number | null; total_draws: number | null; total_matches: number | null }>) {
+      const row = map.get(p.id);
+      if (!row) continue;
+      if (p.full_name) row.name = p.full_name;
+      if (p.total_wins != null) row.vitorias = p.total_wins;
+      if (p.total_losses != null) row.derrotas = p.total_losses;
+      if (p.total_draws != null) row.empates = p.total_draws;
+      if (p.total_matches != null) row.jogos = p.total_matches;
     }
   }
 
