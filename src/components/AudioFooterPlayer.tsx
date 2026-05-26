@@ -27,7 +27,7 @@ function ytId(url: string): string | null {
     const u = new URL(url);
     if (u.hostname.includes("youtu.be")) return u.pathname.slice(1) || null;
     if (u.searchParams.get("v")) return u.searchParams.get("v");
-    const m = u.pathname.match(/\/(embed|shorts)\/([^/?]+)/);
+    const m = u.pathname.match(/\/(embed|shorts|v|live)\/([^/?]+)/);
     return m?.[2] ?? null;
   } catch {
     return null;
@@ -77,6 +77,8 @@ export function AudioFooterPlayer({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const playerRef = useRef<any>(null);
   const [ready, setReady] = useState(false);
+  // Mantemos a refer última do videoId para o setup assíncrono.
+  const pendingPlayRef = useRef(false);
 
   // Carrega URL salva no localStorage ao montar ou mudar de pelada.
   useEffect(() => {
@@ -136,10 +138,15 @@ export function AudioFooterPlayer({
           controls: 0,
           modestbranding: 1,
           rel: 0,
+          origin: typeof window !== "undefined" ? window.location.origin : undefined,
         },
         events: {
           onReady: () => {
             setReady(true);
+            if (pendingPlayRef.current) {
+              pendingPlayRef.current = false;
+              try { playerRef.current?.playVideo(); } catch {}
+            }
           },
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           onStateChange: (e: any) => {
@@ -172,7 +179,12 @@ export function AudioFooterPlayer({
 
   function togglePlay() {
     const p = playerRef.current;
-    if (!p) return;
+    // CRÍTICO p/ iOS/Android: chamar playVideo() SÍNCRONO dentro do gesto.
+    if (!p || typeof p.playVideo !== "function") {
+      // Player ainda não inicializado: marca intenção, onReady toca.
+      pendingPlayRef.current = true;
+      return;
+    }
     try {
       if (playing) p.pauseVideo();
       else p.playVideo();
@@ -195,7 +207,7 @@ export function AudioFooterPlayer({
   const statusText = () => {
     if (disabled) return disabledHint ?? "Indisponível";
     if (!videoId) return "Sem música definida";
-    if (!ready) return "Carregando...";
+    if (!ready) return saved?.title ? `${saved.title} (toque para tocar)` : "Toque para tocar";
     return saved?.title || "Reproduzindo";
   };
 
@@ -208,7 +220,7 @@ export function AudioFooterPlayer({
         >
           <button
             type="button"
-            disabled={disabled || !videoId || !ready}
+            disabled={disabled || !videoId}
             onClick={togglePlay}
             className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[var(--pelada-accent)] text-black shadow-[0_0_20px_-6px_var(--pelada-accent)] transition active:scale-95 disabled:cursor-not-allowed disabled:bg-zinc-800 disabled:text-zinc-500 disabled:shadow-none"
             aria-label={playing ? "Pausar" : "Tocar"}
@@ -242,13 +254,17 @@ export function AudioFooterPlayer({
 
         {/* YouTube IFrame Player — invisível mas presente no DOM (necessário p/ áudio). */}
         <div
+          aria-hidden="true"
           style={{
             position: "absolute",
+            left: 0,
+            top: 0,
             width: 1,
             height: 1,
             opacity: 0,
             pointerEvents: "none",
             overflow: "hidden",
+            zIndex: -1,
           }}
         >
           <div ref={containerRef} />
