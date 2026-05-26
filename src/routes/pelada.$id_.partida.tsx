@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { EditMatchDialog, saveMatchToDb, type HistMatch } from "./pelada.$id_.historico";
 import { saveCurrentDraw, incrementPlayerStat } from "@/lib/games-storage";
 import { emitStatsUpdated } from "@/lib/profile-sync";
+import { applyMatchToProfiles } from "@/lib/match-finalize.functions";
 
 export const Route = createFileRoute("/pelada/$id_/partida")({
   component: PartidaPage,
@@ -295,6 +296,13 @@ function PartidaPage() {
       const manualWinners = !!normalized.mvp || !!normalized.pereba;
       const votingOpen = !!voteOn && !manualWinners;
       await saveMatchToDb(id, normalized, { votingOpen });
+      // Increment global profile totals (gols, assists, vitorias, derrotas,
+      // empates, partidas). Idempotente via games.profiles_synced.
+      try {
+        await applyMatchToProfiles({ data: { gameId: normalized.id } });
+      } catch (err) {
+        console.error("applyMatchToProfiles falhou", err);
+      }
       // Força Pódio e telas iniciais a relerem o estado fresco do banco.
       queryClient.invalidateQueries({ queryKey: ["match-votes", normalized.id] });
       queryClient.invalidateQueries();

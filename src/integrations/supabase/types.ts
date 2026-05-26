@@ -99,6 +99,7 @@ export type Database = {
           match_id: string
           mvp_id: string | null
           pereba_id: string | null
+          profiles_synced: boolean
           score_a: number | null
           score_b: number | null
           video_url: string | null
@@ -111,6 +112,7 @@ export type Database = {
           match_id: string
           mvp_id?: string | null
           pereba_id?: string | null
+          profiles_synced?: boolean
           score_a?: number | null
           score_b?: number | null
           video_url?: string | null
@@ -123,6 +125,7 @@ export type Database = {
           match_id?: string
           mvp_id?: string | null
           pereba_id?: string | null
+          profiles_synced?: boolean
           score_a?: number | null
           score_b?: number | null
           video_url?: string | null
@@ -317,7 +320,9 @@ export type Database = {
           full_name: string | null
           id: string
           total_assists: number | null
+          total_draws: number
           total_goals: number | null
+          total_losses: number
           total_matches: number | null
           total_mvps: number | null
           total_perebas: number | null
@@ -332,7 +337,9 @@ export type Database = {
           full_name?: string | null
           id: string
           total_assists?: number | null
+          total_draws?: number
           total_goals?: number | null
+          total_losses?: number
           total_matches?: number | null
           total_mvps?: number | null
           total_perebas?: number | null
@@ -347,7 +354,9 @@ export type Database = {
           full_name?: string | null
           id?: string
           total_assists?: number | null
+          total_draws?: number
           total_goals?: number | null
+          total_losses?: number
           total_matches?: number | null
           total_mvps?: number | null
           total_perebas?: number | null
