@@ -970,6 +970,8 @@ Bora pro jogo! 🔥
                       onToggleGK={() => toggleGK(p.rowId)}
                       onTogglePaid={() => togglePaid(p.rowId)}
                       onRemove={() => removePlayer(p.rowId)}
+                      canToggleScorekeeper={isAdmin}
+                      onToggleScorekeeper={() => toggleScorekeeper(p.rowId)}
                     />
                   );
                 })
