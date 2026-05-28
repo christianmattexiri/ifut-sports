@@ -1262,6 +1262,8 @@ function PlayerRow({
   onToggleGK,
   onTogglePaid,
   onRemove,
+  canToggleScorekeeper,
+  onToggleScorekeeper,
 }: {
   position: number;
   player: Player;
@@ -1270,6 +1272,8 @@ function PlayerRow({
   onToggleGK?: () => void;
   onTogglePaid: () => void;
   onRemove: () => void;
+  canToggleScorekeeper?: boolean;
+  onToggleScorekeeper?: () => void;
 }) {
   const initial = player.name.charAt(0).toUpperCase();
   const accent = isSub ? "border-l-orange-400" : player.isGoalkeeper ? "border-l-blue-400" : "border-l-[var(--pelada-accent)]";
@@ -1309,6 +1313,21 @@ function PlayerRow({
           }`}
         >
           <Hand className="h-4 w-4" />
+        </button>
+      )}
+      {canToggleScorekeeper && (
+        <button
+          type="button"
+          onClick={onToggleScorekeeper}
+          aria-label={player.isScorekeeper ? "Remover permissão de registrar partida" : "Permitir registrar partida"}
+          title={player.isScorekeeper ? "Remover permissão de registrar partida" : "Permitir registrar partida (ao vivo e final)"}
+          className={`rounded-md p-1.5 transition ${
+            player.isScorekeeper
+              ? "bg-amber-500/20 text-amber-300 hover:bg-amber-500/30"
+              : "text-zinc-500 hover:bg-amber-500/10 hover:text-amber-300"
+          }`}
+        >
+          <ClipboardList className="h-4 w-4" />
         </button>
       )}
       <button
