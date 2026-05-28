@@ -180,7 +180,7 @@ function ListaPresencaPage() {
   const players = useMemo<Player[]>(() => {
     const rows = attendanceQuery.data ?? [];
     return rows
-      .filter((r) => !r.is_referee && !(r.player_id && refereeUserIds.has(r.player_id)))
+      .filter((r) => !r.is_referee)
       .map((r) => {
       const userId = (r.player_id as string | null) ?? null;
       const rowId = r.id as string;
@@ -203,7 +203,7 @@ function ListaPresencaPage() {
   const attendingReferees = useMemo(() => {
     const rows = attendanceQuery.data ?? [];
     return rows
-      .filter((r) => r.is_referee || (r.player_id && refereeUserIds.has(r.player_id)))
+      .filter((r) => r.is_referee)
       .map((r) => {
         const userId = (r.player_id as string | null) ?? null;
         const prof = userId ? referees.find((rf) => rf.user_id === userId) : null;
@@ -411,6 +411,23 @@ function ListaPresencaPage() {
       return;
     }
     await invalidateAttendance();
+  };
+
+  // Converte um juiz da lista em jogador goleiro (temporariamente).
+  // Mantém o vínculo de juiz na pelada (match_members.role='juiz'),
+  // mas para esta partida ele entra como goleiro, vota com peso normal
+  // e pode ser votado/escalado/aparece em rankings.
+  const convertRefereeToGK = async (rowId: string) => {
+    const { error } = await supabase
+      .from("match_attendance")
+      .update({ is_referee: false, is_goalkeeper: true })
+      .eq("id", rowId);
+    if (error) {
+      toast.error("Não foi possível tornar goleiro");
+      return;
+    }
+    await invalidateAttendance();
+    toast.success("Juiz agora joga como goleiro nesta partida");
   };
 
   const toggleMyName = async () => {
@@ -876,6 +893,17 @@ Bora pro jogo! 🔥
                         <span className="shrink-0 rounded-md border border-yellow-400/60 bg-yellow-400/15 px-2 py-1 text-[10px] font-black uppercase tracking-wider text-yellow-300">
                           🏁 Juiz
                         </span>
+                        {canRemove && (
+                          <button
+                            type="button"
+                            onClick={() => convertRefereeToGK(r.rowId)}
+                            aria-label="Tornar goleiro nesta partida"
+                            title="Tornar goleiro nesta partida"
+                            className="shrink-0 rounded-md border border-emerald-500/50 bg-emerald-500/10 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-300 transition hover:bg-emerald-500/20"
+                          >
+                            🧤 Goleiro
+                          </button>
+                        )}
                         {canRemove && (
                           <button
                             type="button"

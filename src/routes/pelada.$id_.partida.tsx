@@ -97,7 +97,7 @@ function PartidaPage() {
     const rows = attendanceQuery.data ?? [];
     const presentRefereeIds = new Set(
       rows
-        .filter((r) => r.is_referee || (r.player_id && refereeUserIds.has(r.player_id)))
+        .filter((r) => r.is_referee)
         .map((r) => r.player_id)
         .filter((x): x is string => !!x),
     );
@@ -107,7 +107,7 @@ function PartidaPage() {
   const confirmed = useMemo<Player[]>(() => {
     const rows = attendanceQuery.data ?? [];
     return rows
-      .filter((r) => !r.is_referee && !(r.player_id && refereeUserIds.has(r.player_id)))
+      .filter((r) => !r.is_referee)
       .map((r) => {
       const userId = (r.player_id as string | null) ?? null;
       const rowId = r.id as string;

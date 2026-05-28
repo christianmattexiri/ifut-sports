@@ -84,10 +84,19 @@ function PeladaPage() {
   const { data: viewer, isLoading: viewerLoading } = useQuery(viewerQuery());
   const { data: attendance } = useQuery(matchAttendanceQuery(id));
   const { data: refereesData } = useQuery(matchRefereesQuery(id));
-  const refereeIds = useMemo(
-    () => (refereesData ?? []).map((r) => r.user_id),
-    [refereesData],
-  );
+  // Apenas os juízes que estão atuando como árbitros NESTA partida (presença
+  // com is_referee=true) contam para o peso 2x de voto e ficam fora da lista
+  // de candidatos. Se um juiz foi convertido para goleiro (Tornar Goleiro),
+  // ele vota com peso normal e pode ser votado.
+  const refereeIds = useMemo(() => {
+    const globalIds = new Set((refereesData ?? []).map((r) => r.user_id));
+    const actingIds: string[] = [];
+    for (const r of attendance ?? []) {
+      const pid = r.player_id as string | null;
+      if (r.is_referee && pid && globalIds.has(pid)) actingIds.push(pid);
+    }
+    return actingIds;
+  }, [refereesData, attendance]);
   const loading = matchLoading || viewerLoading;
   const viewerId = viewer?.id ?? "";
   const firstName = (viewer?.full_name?.trim() || viewer?.username || "").split(" ")[0] || "";
