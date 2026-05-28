@@ -415,6 +415,24 @@ function ListaPresencaPage() {
     await invalidateAttendance();
   };
 
+  // Concede/revoga ao jogador a permissão de registrar partida (ao vivo e
+  // pós-jogo) pelo menu Partida, sem precisar ser admin ou juiz.
+  const toggleScorekeeper = async (rowId: string) => {
+    const cur = players.find((p) => p.rowId === rowId);
+    if (!cur) return;
+    const next = !cur.isScorekeeper;
+    const { error } = await supabase
+      .from("match_attendance")
+      .update({ is_scorekeeper: next } as never)
+      .eq("id", rowId);
+    if (error) {
+      toast.error("Não foi possível atualizar permissão");
+      return;
+    }
+    await invalidateAttendance();
+    toast.success(next ? "Jogador agora pode registrar a partida" : "Permissão removida");
+  };
+
   // Converte um juiz da lista em jogador goleiro (temporariamente).
   // Mantém o vínculo de juiz na pelada (match_members.role='juiz'),
   // mas para esta partida ele entra como goleiro, vota com peso normal
