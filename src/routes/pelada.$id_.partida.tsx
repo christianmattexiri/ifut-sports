@@ -60,7 +60,6 @@ function PartidaPage() {
   const refereesQuery = useQuery(matchRefereesQuery(id));
   const allReferees = refereesQuery.data ?? [];
   const isReferee = !!viewer && allReferees.some((r) => r.user_id === viewer.id);
-  const canRegister = isAdmin || isReferee;
   const refereeUserIds = useMemo(
     () => new Set(allReferees.map((r) => r.user_id)),
     [allReferees],
@@ -90,6 +89,16 @@ function PartidaPage() {
 
   // Lista de presença: query compartilhada (cacheada pelo loader pai).
   const attendanceQuery = useQuery(matchAttendanceQuery(id));
+
+  // Jogadores marcados pelo admin como "anotadores" desta partida também
+  // podem registrar/editar (ao vivo e final), mesmo sem ser admin ou juiz.
+  const isScorekeeper = useMemo(() => {
+    if (!viewer) return false;
+    return (attendanceQuery.data ?? []).some(
+      (r) => r.player_id === viewer.id && (r as { is_scorekeeper?: boolean }).is_scorekeeper,
+    );
+  }, [attendanceQuery.data, viewer]);
+  const canRegister = isAdmin || isReferee || isScorekeeper;
 
   // Apenas juízes que realmente foram colocados na lista de presença
   // aparecem como "Juiz da partida".

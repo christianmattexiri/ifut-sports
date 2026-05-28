@@ -151,6 +151,7 @@ export type Database = {
           id: string
           is_goalkeeper: boolean | null
           is_referee: boolean
+          is_scorekeeper: boolean
           match_id: string
           player_id: string | null
           player_name: string
@@ -162,6 +163,7 @@ export type Database = {
           id?: string
           is_goalkeeper?: boolean | null
           is_referee?: boolean
+          is_scorekeeper?: boolean
           match_id: string
           player_id?: string | null
           player_name: string
@@ -173,6 +175,7 @@ export type Database = {
           id?: string
           is_goalkeeper?: boolean | null
           is_referee?: boolean
+          is_scorekeeper?: boolean
           match_id?: string
           player_id?: string | null
           player_name?: string

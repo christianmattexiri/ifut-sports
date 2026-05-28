@@ -78,6 +78,7 @@ type Player = {
   paid: boolean;
   rating?: number;
   avatarUrl?: string | null;
+  isScorekeeper?: boolean;
 };
 
 type Settings = {
@@ -193,6 +194,7 @@ function ListaPresencaPage() {
         isGoalkeeper: !!r.is_goalkeeper,
         paid: !!r.has_paid,
         rating: Number(r.rating ?? 5),
+        isScorekeeper: !!r.is_scorekeeper,
       };
     });
   }, [attendanceQuery.data, refereeUserIds]);
@@ -411,6 +413,24 @@ function ListaPresencaPage() {
       return;
     }
     await invalidateAttendance();
+  };
+
+  // Concede/revoga ao jogador a permissão de registrar partida (ao vivo e
+  // pós-jogo) pelo menu Partida, sem precisar ser admin ou juiz.
+  const toggleScorekeeper = async (rowId: string) => {
+    const cur = players.find((p) => p.rowId === rowId);
+    if (!cur) return;
+    const next = !cur.isScorekeeper;
+    const { error } = await supabase
+      .from("match_attendance")
+      .update({ is_scorekeeper: next } as never)
+      .eq("id", rowId);
+    if (error) {
+      toast.error("Não foi possível atualizar permissão");
+      return;
+    }
+    await invalidateAttendance();
+    toast.success(next ? "Jogador agora pode registrar a partida" : "Permissão removida");
   };
 
   // Converte um juiz da lista em jogador goleiro (temporariamente).
@@ -950,6 +970,8 @@ Bora pro jogo! 🔥
                       onToggleGK={() => toggleGK(p.rowId)}
                       onTogglePaid={() => togglePaid(p.rowId)}
                       onRemove={() => removePlayer(p.rowId)}
+                      canToggleScorekeeper={isAdmin}
+                      onToggleScorekeeper={() => toggleScorekeeper(p.rowId)}
                     />
                   );
                 })
@@ -1240,6 +1262,8 @@ function PlayerRow({
   onToggleGK,
   onTogglePaid,
   onRemove,
+  canToggleScorekeeper,
+  onToggleScorekeeper,
 }: {
   position: number;
   player: Player;
@@ -1248,6 +1272,8 @@ function PlayerRow({
   onToggleGK?: () => void;
   onTogglePaid: () => void;
   onRemove: () => void;
+  canToggleScorekeeper?: boolean;
+  onToggleScorekeeper?: () => void;
 }) {
   const initial = player.name.charAt(0).toUpperCase();
   const accent = isSub ? "border-l-orange-400" : player.isGoalkeeper ? "border-l-blue-400" : "border-l-[var(--pelada-accent)]";
@@ -1287,6 +1313,21 @@ function PlayerRow({
           }`}
         >
           <Hand className="h-4 w-4" />
+        </button>
+      )}
+      {canToggleScorekeeper && (
+        <button
+          type="button"
+          onClick={onToggleScorekeeper}
+          aria-label={player.isScorekeeper ? "Remover permissão de registrar partida" : "Permitir registrar partida"}
+          title={player.isScorekeeper ? "Remover permissão de registrar partida" : "Permitir registrar partida (ao vivo e final)"}
+          className={`rounded-md p-1.5 transition ${
+            player.isScorekeeper
+              ? "bg-amber-500/20 text-amber-300 hover:bg-amber-500/30"
+              : "text-zinc-500 hover:bg-amber-500/10 hover:text-amber-300"
+          }`}
+        >
+          <ClipboardList className="h-4 w-4" />
         </button>
       )}
       <button
