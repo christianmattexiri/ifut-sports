@@ -413,6 +413,23 @@ function ListaPresencaPage() {
     await invalidateAttendance();
   };
 
+  // Converte um juiz da lista em jogador goleiro (temporariamente).
+  // Mantém o vínculo de juiz na pelada (match_members.role='juiz'),
+  // mas para esta partida ele entra como goleiro, vota com peso normal
+  // e pode ser votado/escalado/aparece em rankings.
+  const convertRefereeToGK = async (rowId: string) => {
+    const { error } = await supabase
+      .from("match_attendance")
+      .update({ is_referee: false, is_goalkeeper: true })
+      .eq("id", rowId);
+    if (error) {
+      toast.error("Não foi possível tornar goleiro");
+      return;
+    }
+    await invalidateAttendance();
+    toast.success("Juiz agora joga como goleiro nesta partida");
+  };
+
   const toggleMyName = async () => {
     if (!me) return;
     if (meInList) {
