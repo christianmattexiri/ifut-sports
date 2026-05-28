@@ -896,6 +896,17 @@ Bora pro jogo! 🔥
                         {canRemove && (
                           <button
                             type="button"
+                            onClick={() => convertRefereeToGK(r.rowId)}
+                            aria-label="Tornar goleiro nesta partida"
+                            title="Tornar goleiro nesta partida"
+                            className="shrink-0 rounded-md border border-emerald-500/50 bg-emerald-500/10 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-300 transition hover:bg-emerald-500/20"
+                          >
+                            🧤 Goleiro
+                          </button>
+                        )}
+                        {canRemove && (
+                          <button
+                            type="button"
                             onClick={() => removePlayer(r.rowId)}
                             aria-label="Remover juiz da lista"
                             title="Remover juiz da lista"
