@@ -138,7 +138,15 @@ function HistoricoPage() {
   const settings = cloudSettings ?? DEFAULT_SETTINGS;
   const isReferee =
     !!viewer && (refereesData ?? []).some((r) => r.user_id === viewer.id);
-  const canEdit = isAdmin || isReferee;
+  const { data: attendance } = useQuery(matchAttendanceQuery(id));
+  const isScorekeeper =
+    !!viewer &&
+    (attendance ?? []).some(
+      (r) =>
+        r.player_id === viewer.id &&
+        (r as { is_scorekeeper?: boolean }).is_scorekeeper,
+    );
+  const canEdit = isAdmin || isReferee || isScorekeeper;
   useEffect(() => {
     if (!viewerLoading && viewer === null) navigate({ to: "/" });
   }, [viewer, viewerLoading, navigate]);
