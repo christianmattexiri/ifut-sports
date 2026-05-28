@@ -78,6 +78,7 @@ type Player = {
   paid: boolean;
   rating?: number;
   avatarUrl?: string | null;
+  isScorekeeper?: boolean;
 };
 
 type Settings = {
