@@ -76,6 +76,7 @@ export type AttendanceRow = {
   rating: number | null;
   created_at: string | null;
   is_referee: boolean | null;
+  is_scorekeeper?: boolean | null;
 };
 
 export const matchAttendanceQuery = (id: string | undefined) =>
@@ -87,7 +88,7 @@ export const matchAttendanceQuery = (id: string | undefined) =>
     queryFn: async () => {
       const { data, error } = await supabase
         .from("match_attendance")
-        .select("id, match_id, player_id, player_name, is_goalkeeper, has_paid, rating, created_at, is_referee")
+        .select("id, match_id, player_id, player_name, is_goalkeeper, has_paid, rating, created_at, is_referee, is_scorekeeper")
         .eq("match_id", id!)
         .order("created_at", { ascending: true });
       if (error) throw error;
