@@ -1,0 +1,1 @@
+ALTER TABLE public.match_attendance ADD COLUMN IF NOT EXISTS is_scorekeeper boolean NOT NULL DEFAULT false;
