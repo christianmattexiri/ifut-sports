@@ -194,6 +194,7 @@ function ListaPresencaPage() {
         isGoalkeeper: !!r.is_goalkeeper,
         paid: !!r.has_paid,
         rating: Number(r.rating ?? 5),
+        isScorekeeper: !!r.is_scorekeeper,
       };
     });
   }, [attendanceQuery.data, refereeUserIds]);
