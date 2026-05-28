@@ -60,7 +60,6 @@ function PartidaPage() {
   const refereesQuery = useQuery(matchRefereesQuery(id));
   const allReferees = refereesQuery.data ?? [];
   const isReferee = !!viewer && allReferees.some((r) => r.user_id === viewer.id);
-  const canRegister = isAdmin || isReferee;
   const refereeUserIds = useMemo(
     () => new Set(allReferees.map((r) => r.user_id)),
     [allReferees],
