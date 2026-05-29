@@ -24,6 +24,7 @@ import { Route as PeladaIdHistoricoRouteImport } from './routes/pelada.$id_.hist
 import { Route as PeladaIdCampeonatoRouteImport } from './routes/pelada.$id_.campeonato'
 import { Route as PeladaIdAdminRouteImport } from './routes/pelada.$id_.admin'
 import { Route as FutevoleiInstrutorCadastroRouteImport } from './routes/futevolei.instrutor.cadastro'
+import { Route as FutevoleiAlunoCadastroRouteImport } from './routes/futevolei.aluno.cadastro'
 import { Route as PeladaIdJogadorUserIdRouteImport } from './routes/pelada.$id_.jogador.$userId'
 
 const SuperAdminRoute = SuperAdminRouteImport.update({
@@ -102,6 +103,11 @@ const FutevoleiInstrutorCadastroRoute =
     path: '/futevolei/instrutor/cadastro',
     getParentRoute: () => rootRouteImport,
   } as any)
+const FutevoleiAlunoCadastroRoute = FutevoleiAlunoCadastroRouteImport.update({
+  id: '/futevolei/aluno/cadastro',
+  path: '/futevolei/aluno/cadastro',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PeladaIdJogadorUserIdRoute = PeladaIdJogadorUserIdRouteImport.update({
   id: '/pelada/$id_/jogador/$userId',
   path: '/pelada/$id/jogador/$userId',
@@ -115,6 +121,7 @@ export interface FileRoutesByFullPath {
   '/super-admin': typeof SuperAdminRoute
   '/futevolei/onboarding': typeof FutevoleiOnboardingRoute
   '/pelada/$id': typeof PeladaIdRoute
+  '/futevolei/aluno/cadastro': typeof FutevoleiAlunoCadastroRoute
   '/futevolei/instrutor/cadastro': typeof FutevoleiInstrutorCadastroRoute
   '/pelada/$id/admin': typeof PeladaIdAdminRoute
   '/pelada/$id/campeonato': typeof PeladaIdCampeonatoRoute
@@ -133,6 +140,7 @@ export interface FileRoutesByTo {
   '/super-admin': typeof SuperAdminRoute
   '/futevolei/onboarding': typeof FutevoleiOnboardingRoute
   '/pelada/$id': typeof PeladaIdRoute
+  '/futevolei/aluno/cadastro': typeof FutevoleiAlunoCadastroRoute
   '/futevolei/instrutor/cadastro': typeof FutevoleiInstrutorCadastroRoute
   '/pelada/$id/admin': typeof PeladaIdAdminRoute
   '/pelada/$id/campeonato': typeof PeladaIdCampeonatoRoute
@@ -152,6 +160,7 @@ export interface FileRoutesById {
   '/super-admin': typeof SuperAdminRoute
   '/futevolei/onboarding': typeof FutevoleiOnboardingRoute
   '/pelada/$id': typeof PeladaIdRoute
+  '/futevolei/aluno/cadastro': typeof FutevoleiAlunoCadastroRoute
   '/futevolei/instrutor/cadastro': typeof FutevoleiInstrutorCadastroRoute
   '/pelada/$id_/admin': typeof PeladaIdAdminRoute
   '/pelada/$id_/campeonato': typeof PeladaIdCampeonatoRoute
@@ -172,6 +181,7 @@ export interface FileRouteTypes {
     | '/super-admin'
     | '/futevolei/onboarding'
     | '/pelada/$id'
+    | '/futevolei/aluno/cadastro'
     | '/futevolei/instrutor/cadastro'
     | '/pelada/$id/admin'
     | '/pelada/$id/campeonato'
@@ -190,6 +200,7 @@ export interface FileRouteTypes {
     | '/super-admin'
     | '/futevolei/onboarding'
     | '/pelada/$id'
+    | '/futevolei/aluno/cadastro'
     | '/futevolei/instrutor/cadastro'
     | '/pelada/$id/admin'
     | '/pelada/$id/campeonato'
@@ -208,6 +219,7 @@ export interface FileRouteTypes {
     | '/super-admin'
     | '/futevolei/onboarding'
     | '/pelada/$id'
+    | '/futevolei/aluno/cadastro'
     | '/futevolei/instrutor/cadastro'
     | '/pelada/$id_/admin'
     | '/pelada/$id_/campeonato'
@@ -227,6 +239,7 @@ export interface RootRouteChildren {
   SuperAdminRoute: typeof SuperAdminRoute
   FutevoleiOnboardingRoute: typeof FutevoleiOnboardingRoute
   PeladaIdRoute: typeof PeladaIdRoute
+  FutevoleiAlunoCadastroRoute: typeof FutevoleiAlunoCadastroRoute
   FutevoleiInstrutorCadastroRoute: typeof FutevoleiInstrutorCadastroRoute
   PeladaIdAdminRoute: typeof PeladaIdAdminRoute
   PeladaIdCampeonatoRoute: typeof PeladaIdCampeonatoRoute
@@ -346,6 +359,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FutevoleiInstrutorCadastroRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/futevolei/aluno/cadastro': {
+      id: '/futevolei/aluno/cadastro'
+      path: '/futevolei/aluno/cadastro'
+      fullPath: '/futevolei/aluno/cadastro'
+      preLoaderRoute: typeof FutevoleiAlunoCadastroRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pelada/$id_/jogador/$userId': {
       id: '/pelada/$id_/jogador/$userId'
       path: '/pelada/$id/jogador/$userId'
@@ -363,6 +383,7 @@ const rootRouteChildren: RootRouteChildren = {
   SuperAdminRoute: SuperAdminRoute,
   FutevoleiOnboardingRoute: FutevoleiOnboardingRoute,
   PeladaIdRoute: PeladaIdRoute,
+  FutevoleiAlunoCadastroRoute: FutevoleiAlunoCadastroRoute,
   FutevoleiInstrutorCadastroRoute: FutevoleiInstrutorCadastroRoute,
   PeladaIdAdminRoute: PeladaIdAdminRoute,
   PeladaIdCampeonatoRoute: PeladaIdCampeonatoRoute,
