@@ -14,6 +14,7 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ConvitesRouteImport } from './routes/convites'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PeladaIdRouteImport } from './routes/pelada.$id'
+import { Route as FutevoleiOnboardingRouteImport } from './routes/futevolei.onboarding'
 import { Route as PeladaIdUsuariosRouteImport } from './routes/pelada.$id_.usuarios'
 import { Route as PeladaIdRankingsRouteImport } from './routes/pelada.$id_.rankings'
 import { Route as PeladaIdPerfilRouteImport } from './routes/pelada.$id_.perfil'
@@ -47,6 +48,11 @@ const IndexRoute = IndexRouteImport.update({
 const PeladaIdRoute = PeladaIdRouteImport.update({
   id: '/pelada/$id',
   path: '/pelada/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FutevoleiOnboardingRoute = FutevoleiOnboardingRouteImport.update({
+  id: '/futevolei/onboarding',
+  path: '/futevolei/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PeladaIdUsuariosRoute = PeladaIdUsuariosRouteImport.update({
@@ -100,6 +106,7 @@ export interface FileRoutesByFullPath {
   '/convites': typeof ConvitesRoute
   '/dashboard': typeof DashboardRoute
   '/super-admin': typeof SuperAdminRoute
+  '/futevolei/onboarding': typeof FutevoleiOnboardingRoute
   '/pelada/$id': typeof PeladaIdRoute
   '/pelada/$id/admin': typeof PeladaIdAdminRoute
   '/pelada/$id/campeonato': typeof PeladaIdCampeonatoRoute
@@ -116,6 +123,7 @@ export interface FileRoutesByTo {
   '/convites': typeof ConvitesRoute
   '/dashboard': typeof DashboardRoute
   '/super-admin': typeof SuperAdminRoute
+  '/futevolei/onboarding': typeof FutevoleiOnboardingRoute
   '/pelada/$id': typeof PeladaIdRoute
   '/pelada/$id/admin': typeof PeladaIdAdminRoute
   '/pelada/$id/campeonato': typeof PeladaIdCampeonatoRoute
@@ -133,6 +141,7 @@ export interface FileRoutesById {
   '/convites': typeof ConvitesRoute
   '/dashboard': typeof DashboardRoute
   '/super-admin': typeof SuperAdminRoute
+  '/futevolei/onboarding': typeof FutevoleiOnboardingRoute
   '/pelada/$id': typeof PeladaIdRoute
   '/pelada/$id_/admin': typeof PeladaIdAdminRoute
   '/pelada/$id_/campeonato': typeof PeladaIdCampeonatoRoute
@@ -151,6 +160,7 @@ export interface FileRouteTypes {
     | '/convites'
     | '/dashboard'
     | '/super-admin'
+    | '/futevolei/onboarding'
     | '/pelada/$id'
     | '/pelada/$id/admin'
     | '/pelada/$id/campeonato'
@@ -167,6 +177,7 @@ export interface FileRouteTypes {
     | '/convites'
     | '/dashboard'
     | '/super-admin'
+    | '/futevolei/onboarding'
     | '/pelada/$id'
     | '/pelada/$id/admin'
     | '/pelada/$id/campeonato'
@@ -183,6 +194,7 @@ export interface FileRouteTypes {
     | '/convites'
     | '/dashboard'
     | '/super-admin'
+    | '/futevolei/onboarding'
     | '/pelada/$id'
     | '/pelada/$id_/admin'
     | '/pelada/$id_/campeonato'
@@ -200,6 +212,7 @@ export interface RootRouteChildren {
   ConvitesRoute: typeof ConvitesRoute
   DashboardRoute: typeof DashboardRoute
   SuperAdminRoute: typeof SuperAdminRoute
+  FutevoleiOnboardingRoute: typeof FutevoleiOnboardingRoute
   PeladaIdRoute: typeof PeladaIdRoute
   PeladaIdAdminRoute: typeof PeladaIdAdminRoute
   PeladaIdCampeonatoRoute: typeof PeladaIdCampeonatoRoute
@@ -247,6 +260,13 @@ declare module '@tanstack/react-router' {
       path: '/pelada/$id'
       fullPath: '/pelada/$id'
       preLoaderRoute: typeof PeladaIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/futevolei/onboarding': {
+      id: '/futevolei/onboarding'
+      path: '/futevolei/onboarding'
+      fullPath: '/futevolei/onboarding'
+      preLoaderRoute: typeof FutevoleiOnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pelada/$id_/usuarios': {
@@ -320,6 +340,7 @@ const rootRouteChildren: RootRouteChildren = {
   ConvitesRoute: ConvitesRoute,
   DashboardRoute: DashboardRoute,
   SuperAdminRoute: SuperAdminRoute,
+  FutevoleiOnboardingRoute: FutevoleiOnboardingRoute,
   PeladaIdRoute: PeladaIdRoute,
   PeladaIdAdminRoute: PeladaIdAdminRoute,
   PeladaIdCampeonatoRoute: PeladaIdCampeonatoRoute,
@@ -334,3 +355,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
