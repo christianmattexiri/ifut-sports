@@ -1,16 +1,26 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
-import { createStudent, getMyStudent, joinByInviteCode, getMyMembership } from "@/lib/futevolei";
+import { FutevoleiRouteLoader } from "@/components/futevolei/FutevoleiRouteLoader";
+import { createStudent, formatFutevoleiError, joinByInviteCode } from "@/lib/futevolei";
+import { myMembershipQuery, myStudentQuery } from "@/lib/futevolei-queries";
 
 export const Route = createFileRoute("/futevolei/cadastro-aluno")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    novoCodigo: search.novoCodigo === true || search.novoCodigo === "true" || search.novoCodigo === "1",
+  }),
   component: AlunoCadastroPage,
   head: () => ({ meta: [{ title: "Futevôlei — Cadastro Aluno" }] }),
 });
 
 function AlunoCadastroPage() {
   const navigate = useNavigate();
+  const { novoCodigo } = Route.useSearch();
+  const { data: student, isLoading: studentLoading } = useQuery(myStudentQuery());
+  const { data: membership, isLoading: membershipLoading } = useQuery(myMembershipQuery());
+
   const [step, setStep] = useState<1 | 2>(1);
   const [nome, setNome] = useState("");
   const [apelido, setApelido] = useState("");
@@ -18,24 +28,28 @@ function AlunoCadastroPage() {
   const [perna, setPerna] = useState("");
   const [code, setCode] = useState("");
   const [saving, setSaving] = useState(false);
+  const [bootstrapped, setBootstrapped] = useState(false);
+
+  const isLoading = studentLoading || membershipLoading;
 
   useEffect(() => {
-    (async () => {
-      const student = await getMyStudent();
-      if (student) {
-        const m = await getMyMembership();
-        if (m) {
-          navigate({ to: "/futevolei/aluno", replace: true });
-        } else {
-          setNome(student.nome);
-          setApelido(student.apelido ?? "");
-          setIdade(student.idade ? String(student.idade) : "");
-          setPerna(student.perna_dominante ?? "");
-          setStep(2);
-        }
+    if (isLoading || bootstrapped) return;
+
+    if (student) {
+      if (membership?.status === "approved" || membership?.status === "pending") {
+        navigate({ to: "/futevolei/aluno", replace: true });
+        return;
       }
-    })();
-  }, [navigate]);
+      setNome(student.nome);
+      setApelido(student.apelido ?? "");
+      setIdade(student.idade ? String(student.idade) : "");
+      setPerna(student.perna_dominante ?? "");
+      setStep(2);
+      setCode("");
+    }
+
+    setBootstrapped(true);
+  }, [isLoading, student, membership, navigate, novoCodigo, bootstrapped]);
 
   async function onSubmitStep1(e: React.FormEvent) {
     e.preventDefault();
@@ -45,8 +59,7 @@ function AlunoCadastroPage() {
     }
     setSaving(true);
     try {
-      const existing = await getMyStudent();
-      if (!existing) {
+      if (!student) {
         await createStudent({
           nome: nome.trim(),
           apelido: apelido.trim() || undefined,
@@ -55,8 +68,8 @@ function AlunoCadastroPage() {
         });
       }
       setStep(2);
-    } catch (err: any) {
-      toast.error(err?.message ?? "Erro ao salvar");
+    } catch (err: unknown) {
+      toast.error(formatFutevoleiError(err));
     } finally {
       setSaving(false);
     }
@@ -73,25 +86,44 @@ function AlunoCadastroPage() {
       await joinByInviteCode(code);
       toast.success("Solicitação enviada!");
       navigate({ to: "/futevolei/aluno" });
-    } catch (err: any) {
-      toast.error(err?.message ?? "Erro ao vincular");
+    } catch (err: unknown) {
+      toast.error(formatFutevoleiError(err));
     } finally {
       setSaving(false);
     }
   }
 
+  if (isLoading || !bootstrapped) {
+    return <FutevoleiRouteLoader />;
+  }
+
+  if (
+    student &&
+    (membership?.status === "approved" || membership?.status === "pending")
+  ) {
+    return <FutevoleiRouteLoader />;
+  }
+
+  const showCodeOnly = !!student && (novoCodigo || membership?.status === "rejected");
+
   return (
-    <main className="min-h-screen bg-zinc-950 text-white">
+    <main className="min-h-screen bg-zinc-950 pt-14 text-white">
       <div className="mx-auto max-w-xl px-4 py-10">
-        <Link to="/futevolei/onboarding" className="inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-white">
+        <Link
+          to={showCodeOnly ? "/futevolei/aluno" : "/dashboard"}
+          search={showCodeOnly ? undefined : { openFutevolei: true }}
+          className="inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-white"
+        >
           <ArrowLeft className="h-4 w-4" /> Voltar
         </Link>
         <h1 className="mt-6 text-2xl font-bold">
-          {step === 1 ? "Cadastro de Aluno" : "Código do Professor"}
+          {showCodeOnly || step === 2 ? "Código do Professor" : "Cadastro de Aluno"}
         </h1>
-        <p className="mt-1 text-sm text-zinc-400">Etapa {step} de 2</p>
+        <p className="mt-1 text-sm text-zinc-400">
+          {showCodeOnly ? "Nova solicitação de vínculo" : `Etapa ${step} de 2`}
+        </p>
 
-        {step === 1 ? (
+        {!showCodeOnly && step === 1 ? (
           <form onSubmit={onSubmitStep1} className="mt-6 space-y-4">
             <Field label="Nome *">
               <input value={nome} onChange={(e) => setNome(e.target.value)} className={inputCls} required />
@@ -100,7 +132,14 @@ function AlunoCadastroPage() {
               <input value={apelido} onChange={(e) => setApelido(e.target.value)} className={inputCls} />
             </Field>
             <Field label="Idade">
-              <input type="number" min={5} max={99} value={idade} onChange={(e) => setIdade(e.target.value)} className={inputCls} />
+              <input
+                type="number"
+                min={5}
+                max={99}
+                value={idade}
+                onChange={(e) => setIdade(e.target.value)}
+                className={inputCls}
+              />
             </Field>
             <Field label="Perna dominante">
               <select value={perna} onChange={(e) => setPerna(e.target.value)} className={inputCls}>

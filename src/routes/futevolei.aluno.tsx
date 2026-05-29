@@ -1,13 +1,21 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Clock, Activity, Calendar, Target } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, Clock } from "lucide-react";
+import { toast } from "sonner";
+import { EliteAcademyDashboard } from "@/components/futevolei/EliteAcademyDashboard";
+import { FutevoleiRouteLoader } from "@/components/futevolei/FutevoleiRouteLoader";
 import {
+  formatFutevoleiError,
   getInstructorById,
-  getMyMembership,
   getMyStudent,
-  type Membership,
-  type StudentProfile,
+  joinByInviteCode,
 } from "@/lib/futevolei";
+import {
+  futevoleiQueryKeys,
+  myMembershipQuery,
+  myStudentQuery,
+} from "@/lib/futevolei-queries";
 
 export const Route = createFileRoute("/futevolei/aluno")({
   component: AlunoDashboard,
@@ -16,75 +24,180 @@ export const Route = createFileRoute("/futevolei/aluno")({
 
 function AlunoDashboard() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [student, setStudent] = useState<StudentProfile | null>(null);
-  const [membership, setMembership] = useState<Membership | null>(null);
-  const [instructorName, setInstructorName] = useState<string>("");
+  const queryClient = useQueryClient();
+  const [retryingInvite, setRetryingInvite] = useState(false);
+  const [code, setCode] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const { data: student, isLoading: studentLoading, isFetched: studentFetched } = useQuery({
+    ...myStudentQuery(),
+    queryFn: getMyStudent,
+  });
 
   useEffect(() => {
-    (async () => {
-      const s = await getMyStudent();
-      if (!s) {
-        navigate({ to: "/futevolei/cadastro-aluno", replace: true });
-        return;
-      }
-      setStudent(s);
-      const m = await getMyMembership();
-      setMembership(m);
-      if (m) {
-        const inst = await getInstructorById(m.instructor_id);
-        setInstructorName(inst?.nome ?? "");
-      }
-      setLoading(false);
-    })();
-  }, [navigate]);
+    if (!studentFetched || studentLoading) return;
+    if (!student) navigate({ to: "/futevolei/cadastro-aluno", replace: true });
+  }, [student, studentFetched, studentLoading, navigate]);
 
-  if (loading || !student) {
-    return <div className="grid min-h-screen place-items-center bg-zinc-950 text-zinc-400">Carregando…</div>;
+  const { data: membership, isLoading: membershipLoading } = useQuery(myMembershipQuery());
+
+  const { data: instructor, isLoading: instructorLoading } = useQuery({
+    queryKey: ["futevolei", "instructor-profile", membership?.instructor_id ?? ""],
+    enabled: membership?.status === "approved" && !!membership.instructor_id,
+    queryFn: () => getInstructorById(membership!.instructor_id),
+  });
+
+  const isLoading = studentLoading || membershipLoading;
+
+  async function submitNewCode(e: React.FormEvent) {
+    e.preventDefault();
+    if (!code.trim()) {
+      toast.error("Informe o código do professor");
+      return;
+    }
+    setSaving(true);
+    try {
+      await joinByInviteCode(code);
+      await queryClient.invalidateQueries({ queryKey: futevoleiQueryKeys.membership });
+      await queryClient.invalidateQueries({ queryKey: futevoleiQueryKeys.roles });
+      toast.success("Nova solicitação enviada!");
+      setRetryingInvite(false);
+      setCode("");
+    } catch (err: unknown) {
+      toast.error(formatFutevoleiError(err));
+    } finally {
+      setSaving(false);
+    }
   }
 
+  if (isLoading || !studentFetched || !student) {
+    return <FutevoleiRouteLoader />;
+  }
+
+  const showRejected = membership?.status === "rejected" && !retryingInvite;
+  const showPending = !membership || membership.status === "pending";
+  const showApproved = membership?.status === "approved";
+
   return (
-    <div className="min-h-screen bg-zinc-950 text-white">
-      <header className="border-b border-white/10 bg-zinc-900/60 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-          <Link to="/dashboard" className="inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-white">
-            <ArrowLeft className="h-4 w-4" /> Sair do Futevôlei
+    <div className="min-h-screen bg-zinc-950 pt-14 text-white">
+      <header className="sticky top-14 z-20 border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 md:px-8">
+          <Link
+            to="/dashboard"
+            className="inline-flex items-center gap-2 text-sm text-zinc-500 transition hover:text-zinc-200"
+          >
+            <ArrowLeft className="h-4 w-4" strokeWidth={1.5} />
+            Voltar à Home
           </Link>
-          <div className="text-sm text-zinc-300">
-            <span className="text-zinc-500">Aluno:</span> <span className="font-semibold">{student.nome}</span>
+          <div className="text-right text-sm">
+            <span className="text-zinc-600">Aluno · </span>
+            <span className="font-semibold text-zinc-200">{student.nome}</span>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 py-6">
-        {!membership || membership.status === "pending" ? (
-          <BlockedScreen status={membership?.status ?? "pending"} />
-        ) : membership.status === "rejected" ? (
-          <RejectedScreen onRetry={() => navigate({ to: "/futevolei/cadastro-aluno" })} />
+      <main className="mx-auto max-w-7xl px-4 py-6 md:px-8 md:py-8">
+        {showRejected ? (
+          <RejectedScreen
+            onRetry={() => {
+              setCode("");
+              setRetryingInvite(true);
+            }}
+          />
+        ) : retryingInvite ? (
+          <InviteCodePanel
+            code={code}
+            saving={saving}
+            onCodeChange={setCode}
+            onSubmit={submitNewCode}
+            onCancel={() => {
+              setRetryingInvite(false);
+              setCode("");
+            }}
+          />
+        ) : showPending ? (
+          <BlockedScreen status={membership?.status ?? "sem vínculo"} />
+        ) : showApproved ? (
+          instructorLoading ? (
+            <FutevoleiRouteLoader variant="inline" />
+          ) : (
+            <EliteAcademyDashboard
+              student={student}
+              instructorId={membership.instructor_id}
+              instructorName={instructor?.nome ?? ""}
+            />
+          )
         ) : (
-          <ApprovedDashboard student={student} instructorName={instructorName} />
+          <BlockedScreen status="pendente" />
         )}
       </main>
     </div>
   );
 }
 
+function InviteCodePanel({
+  code,
+  saving,
+  onCodeChange,
+  onSubmit,
+  onCancel,
+}: {
+  code: string;
+  saving: boolean;
+  onCodeChange: (v: string) => void;
+  onSubmit: (e: React.FormEvent) => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div className="mx-auto max-w-md rounded-2xl border border-sky-400/30 bg-zinc-900/80 p-6 shadow-[0_0_40px_-12px_rgba(56,189,248,0.35)]">
+      <h2 className="text-xl font-bold text-white">Novo código do professor</h2>
+      <p className="mt-2 text-sm text-zinc-400">
+        Informe o código de 6 caracteres do instrutor com quem deseja treinar.
+      </p>
+      <form onSubmit={onSubmit} className="mt-6 space-y-4">
+        <input
+          value={code}
+          onChange={(e) => onCodeChange(e.target.value.toUpperCase())}
+          maxLength={6}
+          className="w-full rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-3 text-center font-mono text-2xl tracking-[0.4em] text-white focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-400/30"
+          placeholder="ABC123"
+          required
+        />
+        <button
+          type="submit"
+          disabled={saving}
+          className="w-full rounded-xl bg-sky-400 px-4 py-3 font-bold text-zinc-950 hover:bg-sky-300 disabled:opacity-60"
+        >
+          {saving ? "Enviando..." : "Solicitar vínculo"}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="w-full text-sm text-zinc-500 hover:text-zinc-300"
+        >
+          Cancelar
+        </button>
+      </form>
+    </div>
+  );
+}
+
 function BlockedScreen({ status }: { status: string }) {
   return (
-    <div className="grid place-items-center rounded-2xl border border-dashed border-white/10 bg-zinc-900/30 px-6 py-20 text-center">
-      <Clock className="h-12 w-12 text-amber-400" />
+    <div className="grid place-items-center rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/30 px-6 py-24 text-center">
+      <Clock className="h-12 w-12 text-amber-400" strokeWidth={1.5} />
       <h2 className="mt-4 text-xl font-bold">Aguardando o professor aprovar sua entrada…</h2>
       <p className="mt-2 max-w-md text-sm text-zinc-400">
-        Assim que seu instrutor aceitar sua solicitação, o painel será liberado automaticamente.
+        Assim que seu instrutor aceitar sua solicitação, o painel Elite Academy será liberado.
       </p>
-      <p className="mt-4 text-xs uppercase tracking-wider text-zinc-500">Status: {status}</p>
+      <p className="mt-4 text-xs uppercase tracking-wider text-zinc-600">Status: {status}</p>
     </div>
   );
 }
 
 function RejectedScreen({ onRetry }: { onRetry: () => void }) {
   return (
-    <div className="grid place-items-center rounded-2xl border border-red-500/30 bg-red-500/5 px-6 py-20 text-center">
+    <div className="grid place-items-center rounded-2xl border border-red-500/30 bg-red-500/5 px-6 py-24 text-center">
       <h2 className="text-xl font-bold">Solicitação recusada</h2>
       <p className="mt-2 max-w-md text-sm text-zinc-400">
         Você pode tentar com outro código de professor.
@@ -96,66 +209,6 @@ function RejectedScreen({ onRetry }: { onRetry: () => void }) {
       >
         Inserir outro código
       </button>
-    </div>
-  );
-}
-
-function ApprovedDashboard({ student, instructorName }: { student: StudentProfile; instructorName: string }) {
-  return (
-    <div className="space-y-6">
-      {instructorName && (
-        <p className="text-sm text-zinc-400">
-          Instrutor: <span className="font-semibold text-white">{instructorName}</span>
-        </p>
-      )}
-
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div className="rounded-2xl border border-sky-400/40 bg-gradient-to-br from-sky-400/10 to-zinc-900 p-6">
-          <div className="flex items-center gap-3">
-            <Activity className="h-5 w-5 text-sky-300" />
-            <p className="text-sm uppercase tracking-wider text-sky-300/80">Nível Atual</p>
-          </div>
-          <div className="mt-3 text-3xl font-bold capitalize">{student.nivel_atual}</div>
-        </div>
-
-        <div className="rounded-2xl border border-white/10 bg-zinc-900 p-6">
-          <div className="flex items-center gap-3">
-            <Target className="h-5 w-5 text-zinc-300" />
-            <p className="text-sm uppercase tracking-wider text-zinc-400">Radar de Habilidades</p>
-          </div>
-          <div className="mt-6 grid h-32 place-items-center rounded-lg border border-dashed border-white/10 text-xs text-zinc-500">
-            Em breve
-          </div>
-        </div>
-      </div>
-
-      <Section icon={Calendar} title="Próximos Treinos">
-        <Empty msg="Nenhum treino agendado." />
-      </Section>
-
-      <Section icon={Clock} title="Treinos Passados">
-        <Empty msg="Sem histórico ainda." />
-      </Section>
-    </div>
-  );
-}
-
-function Section({ icon: Icon, title, children }: { icon: any; title: string; children: React.ReactNode }) {
-  return (
-    <section className="rounded-2xl border border-white/10 bg-zinc-900 p-5">
-      <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-zinc-200">
-        <Icon className="h-4 w-4" />
-        {title}
-      </div>
-      {children}
-    </section>
-  );
-}
-
-function Empty({ msg }: { msg: string }) {
-  return (
-    <div className="rounded-lg border border-dashed border-white/10 bg-zinc-900/40 p-6 text-center text-sm text-zinc-500">
-      {msg}
     </div>
   );
 }

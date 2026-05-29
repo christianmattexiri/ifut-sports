@@ -1,8 +1,11 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
-import { createInstructor, getMyInstructor } from "@/lib/futevolei";
+import { FutevoleiRouteLoader } from "@/components/futevolei/FutevoleiRouteLoader";
+import { createInstructor } from "@/lib/futevolei";
+import { myInstructorQuery } from "@/lib/futevolei-queries";
 
 export const Route = createFileRoute("/futevolei/cadastro-instrutor")({
   component: InstrutorCadastroPage,
@@ -11,6 +14,7 @@ export const Route = createFileRoute("/futevolei/cadastro-instrutor")({
 
 function InstrutorCadastroPage() {
   const navigate = useNavigate();
+  const { data: instructor, isLoading } = useQuery(myInstructorQuery());
   const [nome, setNome] = useState("");
   const [apelido, setApelido] = useState("");
   const [idade, setIdade] = useState<string>("");
@@ -18,10 +22,9 @@ function InstrutorCadastroPage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    getMyInstructor().then((p) => {
-      if (p) navigate({ to: "/futevolei/instrutor", replace: true });
-    });
-  }, [navigate]);
+    if (isLoading) return;
+    if (instructor) navigate({ to: "/futevolei/instrutor", replace: true });
+  }, [isLoading, instructor, navigate]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -39,17 +42,26 @@ function InstrutorCadastroPage() {
       });
       toast.success("Cadastro criado!");
       navigate({ to: "/futevolei/instrutor" });
-    } catch (err: any) {
-      toast.error(err?.message ?? "Erro ao cadastrar");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Erro ao cadastrar";
+      toast.error(message);
     } finally {
       setSaving(false);
     }
   }
 
+  if (isLoading || instructor) {
+    return <FutevoleiRouteLoader />;
+  }
+
   return (
-    <main className="min-h-screen bg-zinc-950 text-white">
+    <main className="min-h-screen bg-zinc-950 pt-14 text-white">
       <div className="mx-auto max-w-xl px-4 py-10">
-        <Link to="/futevolei/onboarding" className="inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-white">
+        <Link
+          to="/dashboard"
+          search={{ openFutevolei: true }}
+          className="inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-white"
+        >
           <ArrowLeft className="h-4 w-4" /> Voltar
         </Link>
         <h1 className="mt-6 text-2xl font-bold">Cadastro de Instrutor</h1>
@@ -62,10 +74,22 @@ function InstrutorCadastroPage() {
             <input value={apelido} onChange={(e) => setApelido(e.target.value)} className={inputCls} />
           </Field>
           <Field label="Idade">
-            <input type="number" min={5} max={99} value={idade} onChange={(e) => setIdade(e.target.value)} className={inputCls} />
+            <input
+              type="number"
+              min={5}
+              max={99}
+              value={idade}
+              onChange={(e) => setIdade(e.target.value)}
+              className={inputCls}
+            />
           </Field>
           <Field label="Onde dá aula">
-            <input value={localAula} onChange={(e) => setLocalAula(e.target.value)} className={inputCls} placeholder="Ex: Arena Beach, Porto Alegre" />
+            <input
+              value={localAula}
+              onChange={(e) => setLocalAula(e.target.value)}
+              className={inputCls}
+              placeholder="Ex: Arena Beach, Porto Alegre"
+            />
           </Field>
 
           <button

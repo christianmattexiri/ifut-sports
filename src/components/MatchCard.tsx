@@ -25,6 +25,9 @@ function MatchCardImpl({ pelada }: { pelada: Pelada; onClick?: () => void }) {
       params={{ id: pelada.id }}
       className="group relative block cursor-pointer overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/60 p-6 backdrop-blur-xl transition-transform duration-200 md:hover:scale-[1.02] md:hover:border-[#00FF00]/30 focus:outline-none focus:ring-2 focus:ring-[#00FF00]/60"
     >
+      <span className="absolute right-4 top-4 rounded-full border border-[#00FF00]/25 bg-[#00FF00]/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[#00FF00]/90">
+        ⚽ Futebol
+      </span>
       <div className="absolute inset-x-6 -top-px h-px bg-gradient-to-r from-transparent via-[#00FF00]/40 to-transparent opacity-0 transition-opacity md:group-hover:opacity-100" />
 
       <header className="flex items-start justify-between gap-3">

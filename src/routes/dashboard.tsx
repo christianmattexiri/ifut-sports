@@ -23,6 +23,9 @@ import { MatchCard, type Pelada } from "@/components/MatchCard";
 import { isSuperAdminUsername } from "@/lib/admin";
 import { ProfileDialog } from "@/components/ProfileDialog";
 import { InstallPwaModal } from "@/components/InstallPwaModal";
+import { FutevoleiOnboardingModal } from "@/components/futevolei/FutevoleiOnboardingModal";
+import { FutevoleiQuickAccessCard } from "@/components/futevolei/FutevoleiQuickAccessCard";
+import { useFutevoleiRoles } from "@/lib/futevolei-queries";
 import { Smartphone } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -37,6 +40,12 @@ import {
 
 export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
+  validateSearch: (search: Record<string, unknown>) => ({
+    openFutevolei:
+      search.openFutevolei === true ||
+      search.openFutevolei === "true" ||
+      search.openFutevolei === "1",
+  }),
   head: () => ({
     meta: [{ title: "iFut — Minhas Peladas" }],
   }),
@@ -52,16 +61,27 @@ type Profile = {
 function Dashboard() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { openFutevolei } = Route.useSearch();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [ready, setReady] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const [futevoleiOpen, setFutevoleiOpen] = useState(false);
   const [fixoOpen, setFixoOpen] = useState(false);
   const [installOpen, setInstallOpen] = useState(false);
   const [peladas, setPeladas] = useState<Pelada[]>([]);
 
   // Reactive pending invites count (refreshes when the user navigates back
   // from /convites or accepts/rejects something).
+  useEffect(() => {
+    if (openFutevolei) {
+      setFutevoleiOpen(true);
+      navigate({ to: "/dashboard", search: {}, replace: true });
+    }
+  }, [openFutevolei, navigate]);
+
+  const { data: futevoleiRoles, isLoading: futevoleiRolesLoading } = useFutevoleiRoles(ready);
+
   const { data: pendingInvites = 0 } = useQuery({
     queryKey: ["pending-invites", profile?.id ?? "anon"],
     enabled: !!profile?.id,
@@ -303,15 +323,34 @@ function Dashboard() {
             </p>
           </header>
 
-          {peladas.length === 0 ? (
-            <EmptyState hasInvites={pendingInvites > 0} onGoToInvites={() => navigate({ to: "/convites" })} />
-          ) : (
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
-              {peladas.map((p) => (
-                <MatchCard key={p.id} pelada={p} />
-              ))}
-            </div>
-          )}
+          {(() => {
+            const showFutevoleiCards =
+              !futevoleiRolesLoading &&
+              (futevoleiRoles?.isInstructor || futevoleiRoles?.isApprovedStudent);
+            const hasPeladas = peladas.length > 0;
+            const isEmpty = !hasPeladas && !showFutevoleiCards && !futevoleiRolesLoading;
+
+            if (isEmpty) {
+              return (
+                <EmptyState
+                  hasInvites={pendingInvites > 0}
+                  onGoToInvites={() => navigate({ to: "/convites" })}
+                />
+              );
+            }
+
+            return (
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                {futevoleiRoles?.isInstructor && <FutevoleiQuickAccessCard variant="instructor" />}
+                {futevoleiRoles?.isApprovedStudent && (
+                  <FutevoleiQuickAccessCard variant="student" />
+                )}
+                {peladas.map((p) => (
+                  <MatchCard key={p.id} pelada={p} />
+                ))}
+              </div>
+            );
+          })()}
 
           {/* CTA Dropdown */}
           <div className="mt-10 flex justify-center pb-6">
@@ -335,7 +374,13 @@ function Dashboard() {
           setCreateOpen(false);
           setFixoOpen(true);
         }}
+        onSelectFutevolei={() => {
+          setCreateOpen(false);
+          setFutevoleiOpen(true);
+        }}
       />
+
+      <FutevoleiOnboardingModal open={futevoleiOpen} onOpenChange={setFutevoleiOpen} />
 
       <CreateFixoDialog open={fixoOpen} onOpenChange={setFixoOpen} />
 
@@ -358,14 +403,15 @@ function CreatePeladaDialog({
   open,
   onOpenChange,
   onSelectFixo,
+  onSelectFutevolei,
   isSuperAdmin,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   onSelectFixo: () => void;
+  onSelectFutevolei: () => void;
   isSuperAdmin: boolean;
 }) {
-  const navigate = useNavigate();
   const [modality, setModality] = useState<"futebol" | null>(null);
 
   // Reset modality when dialog closes
@@ -392,10 +438,7 @@ function CreatePeladaDialog({
             </button>
             <button
               type="button"
-              onClick={() => {
-                onOpenChange(false);
-                navigate({ to: "/futevolei/onboarding" });
-              }}
+              onClick={onSelectFutevolei}
               className="group flex flex-col items-center gap-4 rounded-2xl border border-amber-400/50 bg-zinc-900 p-8 transition hover:border-amber-400 hover:shadow-[0_0_30px_-5px_rgba(251,191,36,0.6)]"
             >
               <span className="text-6xl drop-shadow-[0_0_12px_rgba(251,191,36,0.8)]">🏐</span>
