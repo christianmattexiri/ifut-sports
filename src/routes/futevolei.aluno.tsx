@@ -25,7 +25,7 @@ function AlunoDashboard() {
     (async () => {
       const s = await getMyStudent();
       if (!s) {
-        navigate({ to: "/futevolei/aluno/cadastro", replace: true });
+        navigate({ to: "/futevolei/cadastro-aluno", replace: true });
         return;
       }
       setStudent(s);
@@ -60,7 +60,7 @@ function AlunoDashboard() {
         {!membership || membership.status === "pending" ? (
           <BlockedScreen status={membership?.status ?? "pending"} />
         ) : membership.status === "rejected" ? (
-          <RejectedScreen onRetry={() => navigate({ to: "/futevolei/aluno/cadastro" })} />
+          <RejectedScreen onRetry={() => navigate({ to: "/futevolei/cadastro-aluno" })} />
         ) : (
           <ApprovedDashboard student={student} instructorName={instructorName} />
         )}

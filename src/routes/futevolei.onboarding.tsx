@@ -20,7 +20,7 @@ function OnboardingPage() {
         <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2">
           <button
             type="button"
-            onClick={() => navigate({ to: "/futevolei/instrutor/cadastro" })}
+            onClick={() => navigate({ to: "/futevolei/cadastro-instrutor" })}
             className="group flex flex-col items-center gap-4 rounded-2xl border border-amber-400/40 bg-zinc-900 p-8 transition hover:border-amber-400 hover:shadow-[0_0_30px_-5px_rgba(251,191,36,0.5)]"
           >
             <GraduationCap className="h-16 w-16 text-amber-400" strokeWidth={1.8} />
@@ -30,7 +30,7 @@ function OnboardingPage() {
 
           <button
             type="button"
-            onClick={() => navigate({ to: "/futevolei/aluno/cadastro" })}
+            onClick={() => navigate({ to: "/futevolei/cadastro-aluno" })}
             className="group flex flex-col items-center gap-4 rounded-2xl border border-sky-400/40 bg-zinc-900 p-8 transition hover:border-sky-400 hover:shadow-[0_0_30px_-5px_rgba(56,189,248,0.5)]"
           >
             <User2 className="h-16 w-16 text-sky-400" strokeWidth={1.8} />
