@@ -144,21 +144,23 @@ export async function getMyMembership() {
 }
 
 export async function listInstructorMembers(instructorId: string) {
-  const { data, error } = await supabase
+  const { data: members, error } = await supabase
     .from("futevolei_members")
-    .select("*, student:futevolei_students!futevolei_members_student_id_fkey(user_id,nome,apelido,idade,perna_dominante,nivel_atual)")
+    .select("*")
     .eq("instructor_id", instructorId)
     .order("created_at", { ascending: false });
-  if (error) {
-    // fallback without join if FK alias isn't recognized
-    const { data: plain } = await supabase
-      .from("futevolei_members")
-      .select("*")
-      .eq("instructor_id", instructorId)
-      .order("created_at", { ascending: false });
-    return (plain ?? []) as Array<Membership & { student?: StudentProfile }>;
-  }
-  return (data ?? []) as Array<Membership & { student?: StudentProfile }>;
+  if (error) throw error;
+  const rows = (members ?? []) as Membership[];
+  const studentIds = rows.map((m) => m.student_id);
+  if (studentIds.length === 0) return [] as Array<Membership & { student?: StudentProfile }>;
+  const { data: students } = await supabase
+    .from("futevolei_students")
+    .select("*")
+    .in("user_id", studentIds);
+  const byId = new Map<string, StudentProfile>(
+    ((students ?? []) as StudentProfile[]).map((s) => [s.user_id, s]),
+  );
+  return rows.map((m) => ({ ...m, student: byId.get(m.student_id) }));
 }
 
 export async function respondMembership(memberId: string, action: "approved" | "rejected") {
