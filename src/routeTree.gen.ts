@@ -26,6 +26,7 @@ import { Route as PeladaIdHistoricoRouteImport } from './routes/pelada.$id_.hist
 import { Route as PeladaIdCampeonatoRouteImport } from './routes/pelada.$id_.campeonato'
 import { Route as PeladaIdAdminRouteImport } from './routes/pelada.$id_.admin'
 import { Route as FutevoleiInstrutorCadastroRouteImport } from './routes/futevolei.instrutor.cadastro'
+import { Route as FutevoleiInstrutorAlunosRouteImport } from './routes/futevolei.instrutor.alunos'
 import { Route as FutevoleiAlunoCadastroRouteImport } from './routes/futevolei.aluno.cadastro'
 import { Route as PeladaIdJogadorUserIdRouteImport } from './routes/pelada.$id_.jogador.$userId'
 
@@ -115,6 +116,12 @@ const FutevoleiInstrutorCadastroRoute =
     path: '/cadastro',
     getParentRoute: () => FutevoleiInstrutorRoute,
   } as any)
+const FutevoleiInstrutorAlunosRoute =
+  FutevoleiInstrutorAlunosRouteImport.update({
+    id: '/alunos',
+    path: '/alunos',
+    getParentRoute: () => FutevoleiInstrutorRoute,
+  } as any)
 const FutevoleiAlunoCadastroRoute = FutevoleiAlunoCadastroRouteImport.update({
   id: '/futevolei/aluno/cadastro',
   path: '/futevolei/aluno/cadastro',
@@ -135,6 +142,7 @@ export interface FileRoutesByFullPath {
   '/futevolei/onboarding': typeof FutevoleiOnboardingRoute
   '/pelada/$id': typeof PeladaIdRoute
   '/futevolei/aluno/cadastro': typeof FutevoleiAlunoCadastroRoute
+  '/futevolei/instrutor/alunos': typeof FutevoleiInstrutorAlunosRoute
   '/futevolei/instrutor/cadastro': typeof FutevoleiInstrutorCadastroRoute
   '/pelada/$id/admin': typeof PeladaIdAdminRoute
   '/pelada/$id/campeonato': typeof PeladaIdCampeonatoRoute
@@ -155,6 +163,7 @@ export interface FileRoutesByTo {
   '/futevolei/onboarding': typeof FutevoleiOnboardingRoute
   '/pelada/$id': typeof PeladaIdRoute
   '/futevolei/aluno/cadastro': typeof FutevoleiAlunoCadastroRoute
+  '/futevolei/instrutor/alunos': typeof FutevoleiInstrutorAlunosRoute
   '/futevolei/instrutor/cadastro': typeof FutevoleiInstrutorCadastroRoute
   '/pelada/$id/admin': typeof PeladaIdAdminRoute
   '/pelada/$id/campeonato': typeof PeladaIdCampeonatoRoute
@@ -177,6 +186,7 @@ export interface FileRoutesById {
   '/futevolei/onboarding': typeof FutevoleiOnboardingRoute
   '/pelada/$id': typeof PeladaIdRoute
   '/futevolei/aluno/cadastro': typeof FutevoleiAlunoCadastroRoute
+  '/futevolei/instrutor/alunos': typeof FutevoleiInstrutorAlunosRoute
   '/futevolei/instrutor/cadastro': typeof FutevoleiInstrutorCadastroRoute
   '/pelada/$id_/admin': typeof PeladaIdAdminRoute
   '/pelada/$id_/campeonato': typeof PeladaIdCampeonatoRoute
@@ -200,6 +210,7 @@ export interface FileRouteTypes {
     | '/futevolei/onboarding'
     | '/pelada/$id'
     | '/futevolei/aluno/cadastro'
+    | '/futevolei/instrutor/alunos'
     | '/futevolei/instrutor/cadastro'
     | '/pelada/$id/admin'
     | '/pelada/$id/campeonato'
@@ -220,6 +231,7 @@ export interface FileRouteTypes {
     | '/futevolei/onboarding'
     | '/pelada/$id'
     | '/futevolei/aluno/cadastro'
+    | '/futevolei/instrutor/alunos'
     | '/futevolei/instrutor/cadastro'
     | '/pelada/$id/admin'
     | '/pelada/$id/campeonato'
@@ -241,6 +253,7 @@ export interface FileRouteTypes {
     | '/futevolei/onboarding'
     | '/pelada/$id'
     | '/futevolei/aluno/cadastro'
+    | '/futevolei/instrutor/alunos'
     | '/futevolei/instrutor/cadastro'
     | '/pelada/$id_/admin'
     | '/pelada/$id_/campeonato'
@@ -395,6 +408,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FutevoleiInstrutorCadastroRouteImport
       parentRoute: typeof FutevoleiInstrutorRoute
     }
+    '/futevolei/instrutor/alunos': {
+      id: '/futevolei/instrutor/alunos'
+      path: '/alunos'
+      fullPath: '/futevolei/instrutor/alunos'
+      preLoaderRoute: typeof FutevoleiInstrutorAlunosRouteImport
+      parentRoute: typeof FutevoleiInstrutorRoute
+    }
     '/futevolei/aluno/cadastro': {
       id: '/futevolei/aluno/cadastro'
       path: '/futevolei/aluno/cadastro'
@@ -413,11 +433,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface FutevoleiInstrutorRouteChildren {
+  FutevoleiInstrutorAlunosRoute: typeof FutevoleiInstrutorAlunosRoute
   FutevoleiInstrutorCadastroRoute: typeof FutevoleiInstrutorCadastroRoute
   FutevoleiInstrutorIndexRoute: typeof FutevoleiInstrutorIndexRoute
 }
 
 const FutevoleiInstrutorRouteChildren: FutevoleiInstrutorRouteChildren = {
+  FutevoleiInstrutorAlunosRoute: FutevoleiInstrutorAlunosRoute,
   FutevoleiInstrutorCadastroRoute: FutevoleiInstrutorCadastroRoute,
   FutevoleiInstrutorIndexRoute: FutevoleiInstrutorIndexRoute,
 }
