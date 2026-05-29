@@ -1,16 +1,9 @@
 {
     "version": 2,
-    "framework": "vite",
-    "builds": [
-      {
-        "src": "vite.config.ts",
-        "use": "@vercel/vite"
-      }
-    ],
     "routes": [
       {
         "src": "/(.*)",
-        "dest": "/"
+        "dest": "/index.html"
       }
     ]
   }
