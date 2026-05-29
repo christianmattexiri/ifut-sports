@@ -14,6 +14,99 @@ export type Database = {
   }
   public: {
     Tables: {
+      futevolei_instructors: {
+        Row: {
+          apelido: string | null
+          created_at: string
+          idade: number | null
+          invite_code: string
+          local_aula: string | null
+          nome: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          apelido?: string | null
+          created_at?: string
+          idade?: number | null
+          invite_code: string
+          local_aula?: string | null
+          nome: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          apelido?: string | null
+          created_at?: string
+          idade?: number | null
+          invite_code?: string
+          local_aula?: string | null
+          nome?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      futevolei_members: {
+        Row: {
+          created_at: string
+          id: string
+          instructor_id: string
+          status: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          instructor_id: string
+          status?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          instructor_id?: string
+          status?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      futevolei_students: {
+        Row: {
+          apelido: string | null
+          created_at: string
+          idade: number | null
+          nivel_atual: string
+          nome: string
+          perna_dominante: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          apelido?: string | null
+          created_at?: string
+          idade?: number | null
+          nivel_atual?: string
+          nome: string
+          perna_dominante?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          apelido?: string | null
+          created_at?: string
+          idade?: number | null
+          nivel_atual?: string
+          nome?: string
+          perna_dominante?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       game_player_stats: {
         Row: {
           apitto_rating: number | null
@@ -380,6 +473,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      gen_futevolei_invite_code: { Args: never; Returns: string }
       get_email_by_username: { Args: { uname: string }; Returns: string }
       get_match_member_counts: {
         Args: { match_ids: string[] }
@@ -389,6 +483,10 @@ export type Database = {
         }[]
       }
       is_super_admin: { Args: { _uid: string }; Returns: boolean }
+      lookup_futevolei_instructor_by_code: {
+        Args: { _code: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

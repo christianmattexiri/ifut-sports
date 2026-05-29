@@ -365,6 +365,49 @@ function CreatePeladaDialog({
   onSelectFixo: () => void;
   isSuperAdmin: boolean;
 }) {
+  const navigate = useNavigate();
+  const [modality, setModality] = useState<"futebol" | null>(null);
+
+  // Reset modality when dialog closes
+  useEffect(() => {
+    if (!open) setModality(null);
+  }, [open]);
+
+  if (open && modality === null) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-2xl border border-[#00FF00] bg-zinc-950 p-5 sm:p-8 mx-4 rounded-2xl sm:rounded-3xl shadow-[0_0_60px_-5px_rgba(0,255,0,0.7)]">
+          <DialogTitle className="text-center text-xl font-bold text-white md:text-3xl">
+            Escolha a modalidade
+          </DialogTitle>
+          <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => setModality("futebol")}
+              className="group flex flex-col items-center gap-4 rounded-2xl border border-green-500/50 bg-zinc-900 p-8 transition hover:border-[#00FF00] hover:shadow-[0_0_30px_-5px_rgba(0,255,0,0.7)]"
+            >
+              <span className="text-6xl drop-shadow-[0_0_12px_rgba(0,255,0,0.8)]">⚽</span>
+              <div className="text-xl font-bold text-white">Futebol</div>
+              <p className="text-sm text-zinc-400">Pelada, campeonato e mais</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                onOpenChange(false);
+                navigate({ to: "/futevolei/onboarding" });
+              }}
+              className="group flex flex-col items-center gap-4 rounded-2xl border border-amber-400/50 bg-zinc-900 p-8 transition hover:border-amber-400 hover:shadow-[0_0_30px_-5px_rgba(251,191,36,0.6)]"
+            >
+              <span className="text-6xl drop-shadow-[0_0_12px_rgba(251,191,36,0.8)]">🏐</span>
+              <div className="text-xl font-bold text-white">Futevôlei</div>
+              <p className="text-sm text-zinc-400">Instrutor e alunos</p>
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   const options = [
     {
       icon: RefreshCw,
