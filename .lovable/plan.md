@@ -1,65 +1,95 @@
-## Plano — Função "Juiz" (Árbitro) na pelada
+# Módulo Futevôlei — Arquitetura
 
-### Objetivo
-Criar um novo papel `juiz` que entra na pelada e na lista de presença, mas não joga, não é sorteado, não pontua e tem permissão de admin **apenas** para registrar/editar gols e assistências durante a partida.
+## 1. Banco de Dados (1 migration)
 
----
+Novas tabelas (todas com RLS + GRANTs):
 
-### 1. Banco de Dados (migration única)
+- **`futevolei_instructors`**
+  - `user_id uuid PK` (= auth.uid())
+  - `nome text`, `apelido text`, `idade int`, `local_aula text`
+  - `invite_code text unique` (gerado: 6 chars alfanuméricos via trigger)
+  - timestamps
 
-- `match_members.role` hoje **não existe** como coluna (a tabela só tem `user_id`, `match_id`, `is_goalkeeper`, `rating`, `created_at`). Vou **adicionar** `role text not null default 'player'` com check `role in ('player','juiz')`. Admin continua sendo identificado por `matches.admin_id` (não muda).
-- `match_attendance`: adicionar `is_referee boolean not null default false`.
-- Sem mudança de RLS (políticas atuais já permitem o que precisamos).
+- **`futevolei_students`**
+  - `user_id uuid PK`
+  - `nome text`, `apelido text`, `idade int`, `perna_dominante text` ('destra'|'canhota'|'ambidestra')
+  - `nivel_atual text default 'iniciante'`
+  - timestamps
 
-### 2. Server functions / lib
+- **`futevolei_members`** (vínculo instrutor↔aluno)
+  - `id uuid PK`
+  - `instructor_id uuid` (→ instructors.user_id)
+  - `student_id uuid` (→ students.user_id)
+  - `status text` ('pending'|'approved'|'rejected') default 'pending'
+  - unique(instructor_id, student_id)
+  - timestamps
 
-- `src/lib/admin-users.functions.ts` → nova `inviteRefereeToMatch({ matchId, userId })`: insere em `match_members` com `role='juiz'`, `rating=0`, `is_goalkeeper=false`. Autoriza para super admin ou `admin_id` da pelada.
-- Helpers compartilhados:
-  - Em `src/lib/pelada-queries.ts` (ou local da tela) passar `role` ao ler `match_members`.
-  - Tipo `MemberRow` ganha `role: 'player' | 'juiz'`.
+Função `public.gen_invite_code()` SECURITY DEFINER para gerar código único.
 
-### 3. UI — Gerenciamento de Usuários (`pelada.$id_.usuarios.tsx`)
+Função `public.lookup_instructor_by_code(_code text)` SECURITY DEFINER que retorna `user_id` do instrutor — necessária porque RLS de instructors não deixa aluno ler outros perfis pelo código.
 
-- Ao lado de **"+ Adicionar Jogador"**, novo botão **"🏁 Chamar Juiz"** (variant secundário).
-- Reusa o mesmo modal de busca de usuários; ao confirmar chama `inviteRefereeToMatch`.
-- Na listagem de membros, juízes aparecem em seção própria **"Juízes"** no topo, sem campo de Nota e sem botão de goleiro. Mantém botão de remover.
+### RLS resumida
+- `instructors`: dono lê/edita o próprio; qualquer authenticated lê (somente para nome — ou via função).
+- `students`: dono lê/edita; instrutor lê alunos vinculados approved (via has_membership function).
+- `members`:
+  - aluno insere o próprio pending
+  - aluno lê os próprios vínculos
+  - instrutor lê/atualiza vínculos onde é o instructor
+  - aluno deleta o próprio pending
 
-### 4. UI — Lista de Presença (`pelada.$id_.lista.tsx`)
+## 2. Roteamento (TanStack)
 
-- Ao marcar presença de um membro `juiz` da pelada (ou ao adicionar manualmente), `match_attendance.is_referee=true`, `rating=0`, `is_goalkeeper=false`.
-- Renderização: bloco **"🏁 Juiz da partida"** fixo no topo, antes do header `X/16 Linhas · X/2 Goleiros`.
-  - Card: avatar + nome + badge `🏁 JUIZ` com borda amarela sutil (`border-yellow-500/40 bg-yellow-500/5`).
-  - Sem campo de nota, sem botão luva.
-- Contadores `linhas/goleiros` **excluem** árbitros do total.
-- Botão "+ Adicionar Jogador" **não** permite marcar como juiz (juiz só vem do gerenciamento). A presença do juiz aparece automaticamente quando ele estiver em `match_members` com role juiz e for marcado presente (ou via toggle dedicado no card do juiz se ele ainda não estiver na lista).
+Novas rotas:
 
-### 5. Sorteio (`pelada.$id_.partida.tsx`)
+- `pelada.novo.tsx` — tela de seleção de modalidade (⚽ Futebol | 🏐 Futevôlei)
+- `futevolei.onboarding.tsx` — escolha perfil (Instrutor | Aluno)
+- `futevolei.instrutor.cadastro.tsx` — formulário instrutor
+- `futevolei.aluno.cadastro.tsx` — formulário aluno + step 2 (código)
+- `futevolei.instrutor.tsx` — layout dashboard instrutor com `<Outlet/>` (sidebar)
+  - `futevolei.instrutor.index.tsx` — visão geral (código convite em destaque, cards placeholder Alunos Atuais / Treinos do Dia)
+  - `futevolei.instrutor.alunos.tsx` — abas Pendentes/Aprovados
+- `futevolei.aluno.tsx` — layout aluno
+  - se `status='pending'` ou sem vínculo: tela de bloqueio "Aguardando…"
+  - se `approved`: dashboard (Nível Atual, Radar placeholder, Próximos/Passados Treinos)
 
-- Filtrar `attendance.filter(p => !p.is_referee)` em **todos** os pontos: lista de disponíveis, algoritmo de balanceamento, contagem de goleiros, escalações Time A/B. Juiz nunca aparece nem em "Disponíveis" nem nos times.
-- Exibir card "🏁 Juiz: <nome>" acima do bloco de sorteio.
+Botão "+ Criar Pelada" existente redireciona para `/pelada/novo`. A opção "Futebol" navega para a rota/modal de criação atual (sem mudança). "Futevôlei" → `/futevolei/onboarding`.
 
-### 6. Rankings / Histórico / Perfil
+## 3. Server functions
 
-- `src/routes/pelada.$id_.rankings.tsx`: ao computar partidas jogadas, ignorar jogadores cuja `game_player_stats` não exista — comportamento atual já cobre isso (juiz não é inserido em stats). Garantir que não criamos linha em `game_player_stats` para juiz no fluxo de salvar partida.
-- `pelada.$id_.jogador.$userId.tsx` (perfil do jogador): se o usuário é juiz da pelada, mostrar contador opcional "Jogos apitados" = count distinct de `games.id` em partidas onde ele esteve como juiz (`match_attendance.is_referee=true`). Fica como cartão extra; nenhuma alteração nos rankings.
+`src/lib/futevolei.functions.ts` — todas com `requireSupabaseAuth`:
+- `createInstructor(input)` — insere instructor, retorna invite_code
+- `createStudent(input)` — insere student
+- `joinByCode({ code })` — chama RPC lookup, cria membership pending
+- `listMyMemberships()` — para aluno
+- `listInstructorRequests()` — pending para instrutor
+- `listInstructorStudents()` — approved
+- `respondMembership({ memberId, action: 'approve'|'reject' })`
 
-### 7. Permissão "juiz como admin parcial"
+## 4. Dashboards (skeleton)
 
-- Helper `canEditMatchStats(userId, match, members)` → `true` se: super admin, ou `match.admin_id === userId`, ou existe `match_members` com `user_id=userId, role='juiz'`.
-- Usar esse helper em `pelada.$id_.partida.tsx` e `pelada.$id_.historico.tsx` para liberar o botão **"Registrar/Editar Partida"** e o `EditMatchDialog` para o juiz. Demais ações de admin (gerenciar membros, configurações, excluir pelada, abrir votação) continuam exclusivas do admin/super admin.
+Layouts usam shadcn sidebar. Estilo consistente com o app atual (semantic tokens de `src/styles.css`).
 
-### Arquivos a editar
-- migration nova em `supabase/migrations/`
-- `src/lib/admin-users.functions.ts`
-- `src/lib/pelada-queries.ts` (se aplicável)
-- `src/routes/pelada.$id_.usuarios.tsx`
-- `src/routes/pelada.$id_.lista.tsx`
-- `src/routes/pelada.$id_.partida.tsx`
-- `src/routes/pelada.$id_.historico.tsx`
-- `src/routes/pelada.$id_.rankings.tsx`
-- `src/routes/pelada.$id_.jogador.$userId.tsx`
+- Instrutor: header com invite code + botão copiar; sidebar [Visão Geral, Alunos]; cards placeholder.
+- Aluno: header com nome do instrutor; cards Nível, Radar (placeholder), listas Treinos.
 
-### Fora de escopo
-- Não mexer em políticas RLS.
-- Não criar tela dedicada de "juiz"; ele entra pela busca normal de usuários.
-- Não remover avatares ao remover juiz (consistente com remoção de membros hoje).
+## 5. Não-alteração do Futebol
+
+Nenhum arquivo existente do fluxo de Futebol (`pelada.$id*`, `dashboard.tsx`) é modificado, exceto:
+- Local do botão "+ Criar Pelada" (mudança de handler para navegar a `/pelada/novo`).
+
+## Ordem de execução
+
+1. Migration (tabelas + RLS + funções + GRANTs)
+2. Server functions
+3. Rotas e componentes
+4. Trocar handler do botão "+ Criar Pelada"
+
+## Detalhes técnicos
+
+- Convite code: 6 chars `[A-Z0-9]` excluindo confusos (0,O,1,I); gerado em loop até unique.
+- Idade: int 5–99.
+- Validação Zod em todas as server functions.
+- Cliente: TanStack Query com `queryClient.invalidateQueries` após mutações.
+- Realtime opcional não incluído neste skeleton.
+
+Tudo OK para começar?
