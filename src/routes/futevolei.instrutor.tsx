@@ -24,10 +24,10 @@ function InstrutorLayout() {
   }
   if (!profile) return null;
 
-  const nav = [
+  const nav: Array<{ to: "/futevolei/instrutor" | "/futevolei/instrutor/alunos"; label: string; icon: typeof Home; exact?: boolean }> = [
     { to: "/futevolei/instrutor", label: "Visão Geral", icon: Home, exact: true },
     { to: "/futevolei/instrutor/alunos", label: "Alunos", icon: Users },
-  ] as const;
+  ];
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
