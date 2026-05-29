@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { createInstructor, getMyInstructor } from "@/lib/futevolei";
 
-export const Route = createFileRoute("/futevolei/instrutor/cadastro")({
+export const Route = createFileRoute("/futevolei/cadastro-instrutor")({
   component: InstrutorCadastroPage,
   head: () => ({ meta: [{ title: "Futevôlei — Cadastro Instrutor" }] }),
 });

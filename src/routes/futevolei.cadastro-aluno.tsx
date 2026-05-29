@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { createStudent, getMyStudent, joinByInviteCode, getMyMembership } from "@/lib/futevolei";
 
-export const Route = createFileRoute("/futevolei/aluno/cadastro")({
+export const Route = createFileRoute("/futevolei/cadastro-aluno")({
   component: AlunoCadastroPage,
   head: () => ({ meta: [{ title: "Futevôlei — Cadastro Aluno" }] }),
 });

@@ -16,6 +16,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as PeladaIdRouteImport } from './routes/pelada.$id'
 import { Route as FutevoleiOnboardingRouteImport } from './routes/futevolei.onboarding'
 import { Route as FutevoleiInstrutorRouteImport } from './routes/futevolei.instrutor'
+import { Route as FutevoleiCadastroInstrutorRouteImport } from './routes/futevolei.cadastro-instrutor'
+import { Route as FutevoleiCadastroAlunoRouteImport } from './routes/futevolei.cadastro-aluno'
 import { Route as FutevoleiAlunoRouteImport } from './routes/futevolei.aluno'
 import { Route as FutevoleiInstrutorIndexRouteImport } from './routes/futevolei.instrutor.index'
 import { Route as PeladaIdUsuariosRouteImport } from './routes/pelada.$id_.usuarios'
@@ -26,9 +28,7 @@ import { Route as PeladaIdListaRouteImport } from './routes/pelada.$id_.lista'
 import { Route as PeladaIdHistoricoRouteImport } from './routes/pelada.$id_.historico'
 import { Route as PeladaIdCampeonatoRouteImport } from './routes/pelada.$id_.campeonato'
 import { Route as PeladaIdAdminRouteImport } from './routes/pelada.$id_.admin'
-import { Route as FutevoleiInstrutorCadastroRouteImport } from './routes/futevolei.instrutor.cadastro'
 import { Route as FutevoleiInstrutorAlunosRouteImport } from './routes/futevolei.instrutor.alunos'
-import { Route as FutevoleiAlunoCadastroRouteImport } from './routes/futevolei.aluno.cadastro'
 import { Route as PeladaIdJogadorUserIdRouteImport } from './routes/pelada.$id_.jogador.$userId'
 
 const SuperAdminRoute = SuperAdminRouteImport.update({
@@ -64,6 +64,17 @@ const FutevoleiOnboardingRoute = FutevoleiOnboardingRouteImport.update({
 const FutevoleiInstrutorRoute = FutevoleiInstrutorRouteImport.update({
   id: '/futevolei/instrutor',
   path: '/futevolei/instrutor',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FutevoleiCadastroInstrutorRoute =
+  FutevoleiCadastroInstrutorRouteImport.update({
+    id: '/futevolei/cadastro-instrutor',
+    path: '/futevolei/cadastro-instrutor',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const FutevoleiCadastroAlunoRoute = FutevoleiCadastroAlunoRouteImport.update({
+  id: '/futevolei/cadastro-aluno',
+  path: '/futevolei/cadastro-aluno',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FutevoleiAlunoRoute = FutevoleiAlunoRouteImport.update({
@@ -116,23 +127,12 @@ const PeladaIdAdminRoute = PeladaIdAdminRouteImport.update({
   path: '/pelada/$id/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
-const FutevoleiInstrutorCadastroRoute =
-  FutevoleiInstrutorCadastroRouteImport.update({
-    id: '/cadastro',
-    path: '/cadastro',
-    getParentRoute: () => FutevoleiInstrutorRoute,
-  } as any)
 const FutevoleiInstrutorAlunosRoute =
   FutevoleiInstrutorAlunosRouteImport.update({
     id: '/alunos',
     path: '/alunos',
     getParentRoute: () => FutevoleiInstrutorRoute,
   } as any)
-const FutevoleiAlunoCadastroRoute = FutevoleiAlunoCadastroRouteImport.update({
-  id: '/cadastro',
-  path: '/cadastro',
-  getParentRoute: () => FutevoleiAlunoRoute,
-} as any)
 const PeladaIdJogadorUserIdRoute = PeladaIdJogadorUserIdRouteImport.update({
   id: '/pelada/$id_/jogador/$userId',
   path: '/pelada/$id/jogador/$userId',
@@ -144,13 +144,13 @@ export interface FileRoutesByFullPath {
   '/convites': typeof ConvitesRoute
   '/dashboard': typeof DashboardRoute
   '/super-admin': typeof SuperAdminRoute
-  '/futevolei/aluno': typeof FutevoleiAlunoRouteWithChildren
+  '/futevolei/aluno': typeof FutevoleiAlunoRoute
+  '/futevolei/cadastro-aluno': typeof FutevoleiCadastroAlunoRoute
+  '/futevolei/cadastro-instrutor': typeof FutevoleiCadastroInstrutorRoute
   '/futevolei/instrutor': typeof FutevoleiInstrutorRouteWithChildren
   '/futevolei/onboarding': typeof FutevoleiOnboardingRoute
   '/pelada/$id': typeof PeladaIdRoute
-  '/futevolei/aluno/cadastro': typeof FutevoleiAlunoCadastroRoute
   '/futevolei/instrutor/alunos': typeof FutevoleiInstrutorAlunosRoute
-  '/futevolei/instrutor/cadastro': typeof FutevoleiInstrutorCadastroRoute
   '/pelada/$id/admin': typeof PeladaIdAdminRoute
   '/pelada/$id/campeonato': typeof PeladaIdCampeonatoRoute
   '/pelada/$id/historico': typeof PeladaIdHistoricoRoute
@@ -167,12 +167,12 @@ export interface FileRoutesByTo {
   '/convites': typeof ConvitesRoute
   '/dashboard': typeof DashboardRoute
   '/super-admin': typeof SuperAdminRoute
-  '/futevolei/aluno': typeof FutevoleiAlunoRouteWithChildren
+  '/futevolei/aluno': typeof FutevoleiAlunoRoute
+  '/futevolei/cadastro-aluno': typeof FutevoleiCadastroAlunoRoute
+  '/futevolei/cadastro-instrutor': typeof FutevoleiCadastroInstrutorRoute
   '/futevolei/onboarding': typeof FutevoleiOnboardingRoute
   '/pelada/$id': typeof PeladaIdRoute
-  '/futevolei/aluno/cadastro': typeof FutevoleiAlunoCadastroRoute
   '/futevolei/instrutor/alunos': typeof FutevoleiInstrutorAlunosRoute
-  '/futevolei/instrutor/cadastro': typeof FutevoleiInstrutorCadastroRoute
   '/pelada/$id/admin': typeof PeladaIdAdminRoute
   '/pelada/$id/campeonato': typeof PeladaIdCampeonatoRoute
   '/pelada/$id/historico': typeof PeladaIdHistoricoRoute
@@ -190,13 +190,13 @@ export interface FileRoutesById {
   '/convites': typeof ConvitesRoute
   '/dashboard': typeof DashboardRoute
   '/super-admin': typeof SuperAdminRoute
-  '/futevolei/aluno': typeof FutevoleiAlunoRouteWithChildren
+  '/futevolei/aluno': typeof FutevoleiAlunoRoute
+  '/futevolei/cadastro-aluno': typeof FutevoleiCadastroAlunoRoute
+  '/futevolei/cadastro-instrutor': typeof FutevoleiCadastroInstrutorRoute
   '/futevolei/instrutor': typeof FutevoleiInstrutorRouteWithChildren
   '/futevolei/onboarding': typeof FutevoleiOnboardingRoute
   '/pelada/$id': typeof PeladaIdRoute
-  '/futevolei/aluno/cadastro': typeof FutevoleiAlunoCadastroRoute
   '/futevolei/instrutor/alunos': typeof FutevoleiInstrutorAlunosRoute
-  '/futevolei/instrutor/cadastro': typeof FutevoleiInstrutorCadastroRoute
   '/pelada/$id_/admin': typeof PeladaIdAdminRoute
   '/pelada/$id_/campeonato': typeof PeladaIdCampeonatoRoute
   '/pelada/$id_/historico': typeof PeladaIdHistoricoRoute
@@ -216,12 +216,12 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/super-admin'
     | '/futevolei/aluno'
+    | '/futevolei/cadastro-aluno'
+    | '/futevolei/cadastro-instrutor'
     | '/futevolei/instrutor'
     | '/futevolei/onboarding'
     | '/pelada/$id'
-    | '/futevolei/aluno/cadastro'
     | '/futevolei/instrutor/alunos'
-    | '/futevolei/instrutor/cadastro'
     | '/pelada/$id/admin'
     | '/pelada/$id/campeonato'
     | '/pelada/$id/historico'
@@ -239,11 +239,11 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/super-admin'
     | '/futevolei/aluno'
+    | '/futevolei/cadastro-aluno'
+    | '/futevolei/cadastro-instrutor'
     | '/futevolei/onboarding'
     | '/pelada/$id'
-    | '/futevolei/aluno/cadastro'
     | '/futevolei/instrutor/alunos'
-    | '/futevolei/instrutor/cadastro'
     | '/pelada/$id/admin'
     | '/pelada/$id/campeonato'
     | '/pelada/$id/historico'
@@ -261,12 +261,12 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/super-admin'
     | '/futevolei/aluno'
+    | '/futevolei/cadastro-aluno'
+    | '/futevolei/cadastro-instrutor'
     | '/futevolei/instrutor'
     | '/futevolei/onboarding'
     | '/pelada/$id'
-    | '/futevolei/aluno/cadastro'
     | '/futevolei/instrutor/alunos'
-    | '/futevolei/instrutor/cadastro'
     | '/pelada/$id_/admin'
     | '/pelada/$id_/campeonato'
     | '/pelada/$id_/historico'
@@ -284,7 +284,9 @@ export interface RootRouteChildren {
   ConvitesRoute: typeof ConvitesRoute
   DashboardRoute: typeof DashboardRoute
   SuperAdminRoute: typeof SuperAdminRoute
-  FutevoleiAlunoRoute: typeof FutevoleiAlunoRouteWithChildren
+  FutevoleiAlunoRoute: typeof FutevoleiAlunoRoute
+  FutevoleiCadastroAlunoRoute: typeof FutevoleiCadastroAlunoRoute
+  FutevoleiCadastroInstrutorRoute: typeof FutevoleiCadastroInstrutorRoute
   FutevoleiInstrutorRoute: typeof FutevoleiInstrutorRouteWithChildren
   FutevoleiOnboardingRoute: typeof FutevoleiOnboardingRoute
   PeladaIdRoute: typeof PeladaIdRoute
@@ -348,6 +350,20 @@ declare module '@tanstack/react-router' {
       path: '/futevolei/instrutor'
       fullPath: '/futevolei/instrutor'
       preLoaderRoute: typeof FutevoleiInstrutorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/futevolei/cadastro-instrutor': {
+      id: '/futevolei/cadastro-instrutor'
+      path: '/futevolei/cadastro-instrutor'
+      fullPath: '/futevolei/cadastro-instrutor'
+      preLoaderRoute: typeof FutevoleiCadastroInstrutorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/futevolei/cadastro-aluno': {
+      id: '/futevolei/cadastro-aluno'
+      path: '/futevolei/cadastro-aluno'
+      fullPath: '/futevolei/cadastro-aluno'
+      preLoaderRoute: typeof FutevoleiCadastroAlunoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/futevolei/aluno': {
@@ -420,26 +436,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PeladaIdAdminRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/futevolei/instrutor/cadastro': {
-      id: '/futevolei/instrutor/cadastro'
-      path: '/cadastro'
-      fullPath: '/futevolei/instrutor/cadastro'
-      preLoaderRoute: typeof FutevoleiInstrutorCadastroRouteImport
-      parentRoute: typeof FutevoleiInstrutorRoute
-    }
     '/futevolei/instrutor/alunos': {
       id: '/futevolei/instrutor/alunos'
       path: '/alunos'
       fullPath: '/futevolei/instrutor/alunos'
       preLoaderRoute: typeof FutevoleiInstrutorAlunosRouteImport
       parentRoute: typeof FutevoleiInstrutorRoute
-    }
-    '/futevolei/aluno/cadastro': {
-      id: '/futevolei/aluno/cadastro'
-      path: '/cadastro'
-      fullPath: '/futevolei/aluno/cadastro'
-      preLoaderRoute: typeof FutevoleiAlunoCadastroRouteImport
-      parentRoute: typeof FutevoleiAlunoRoute
     }
     '/pelada/$id_/jogador/$userId': {
       id: '/pelada/$id_/jogador/$userId'
@@ -451,27 +453,13 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface FutevoleiAlunoRouteChildren {
-  FutevoleiAlunoCadastroRoute: typeof FutevoleiAlunoCadastroRoute
-}
-
-const FutevoleiAlunoRouteChildren: FutevoleiAlunoRouteChildren = {
-  FutevoleiAlunoCadastroRoute: FutevoleiAlunoCadastroRoute,
-}
-
-const FutevoleiAlunoRouteWithChildren = FutevoleiAlunoRoute._addFileChildren(
-  FutevoleiAlunoRouteChildren,
-)
-
 interface FutevoleiInstrutorRouteChildren {
   FutevoleiInstrutorAlunosRoute: typeof FutevoleiInstrutorAlunosRoute
-  FutevoleiInstrutorCadastroRoute: typeof FutevoleiInstrutorCadastroRoute
   FutevoleiInstrutorIndexRoute: typeof FutevoleiInstrutorIndexRoute
 }
 
 const FutevoleiInstrutorRouteChildren: FutevoleiInstrutorRouteChildren = {
   FutevoleiInstrutorAlunosRoute: FutevoleiInstrutorAlunosRoute,
-  FutevoleiInstrutorCadastroRoute: FutevoleiInstrutorCadastroRoute,
   FutevoleiInstrutorIndexRoute: FutevoleiInstrutorIndexRoute,
 }
 
@@ -483,7 +471,9 @@ const rootRouteChildren: RootRouteChildren = {
   ConvitesRoute: ConvitesRoute,
   DashboardRoute: DashboardRoute,
   SuperAdminRoute: SuperAdminRoute,
-  FutevoleiAlunoRoute: FutevoleiAlunoRouteWithChildren,
+  FutevoleiAlunoRoute: FutevoleiAlunoRoute,
+  FutevoleiCadastroAlunoRoute: FutevoleiCadastroAlunoRoute,
+  FutevoleiCadastroInstrutorRoute: FutevoleiCadastroInstrutorRoute,
   FutevoleiInstrutorRoute: FutevoleiInstrutorRouteWithChildren,
   FutevoleiOnboardingRoute: FutevoleiOnboardingRoute,
   PeladaIdRoute: PeladaIdRoute,
