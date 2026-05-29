@@ -16,6 +16,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as PeladaIdRouteImport } from './routes/pelada.$id'
 import { Route as FutevoleiOnboardingRouteImport } from './routes/futevolei.onboarding'
 import { Route as FutevoleiInstrutorRouteImport } from './routes/futevolei.instrutor'
+import { Route as FutevoleiInstrutorIndexRouteImport } from './routes/futevolei.instrutor.index'
 import { Route as PeladaIdUsuariosRouteImport } from './routes/pelada.$id_.usuarios'
 import { Route as PeladaIdRankingsRouteImport } from './routes/pelada.$id_.rankings'
 import { Route as PeladaIdPerfilRouteImport } from './routes/pelada.$id_.perfil'
@@ -62,6 +63,11 @@ const FutevoleiInstrutorRoute = FutevoleiInstrutorRouteImport.update({
   id: '/futevolei/instrutor',
   path: '/futevolei/instrutor',
   getParentRoute: () => rootRouteImport,
+} as any)
+const FutevoleiInstrutorIndexRoute = FutevoleiInstrutorIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => FutevoleiInstrutorRoute,
 } as any)
 const PeladaIdUsuariosRoute = PeladaIdUsuariosRouteImport.update({
   id: '/pelada/$id_/usuarios',
@@ -138,6 +144,7 @@ export interface FileRoutesByFullPath {
   '/pelada/$id/perfil': typeof PeladaIdPerfilRoute
   '/pelada/$id/rankings': typeof PeladaIdRankingsRoute
   '/pelada/$id/usuarios': typeof PeladaIdUsuariosRoute
+  '/futevolei/instrutor/': typeof FutevoleiInstrutorIndexRoute
   '/pelada/$id/jogador/$userId': typeof PeladaIdJogadorUserIdRoute
 }
 export interface FileRoutesByTo {
@@ -145,7 +152,6 @@ export interface FileRoutesByTo {
   '/convites': typeof ConvitesRoute
   '/dashboard': typeof DashboardRoute
   '/super-admin': typeof SuperAdminRoute
-  '/futevolei/instrutor': typeof FutevoleiInstrutorRouteWithChildren
   '/futevolei/onboarding': typeof FutevoleiOnboardingRoute
   '/pelada/$id': typeof PeladaIdRoute
   '/futevolei/aluno/cadastro': typeof FutevoleiAlunoCadastroRoute
@@ -158,6 +164,7 @@ export interface FileRoutesByTo {
   '/pelada/$id/perfil': typeof PeladaIdPerfilRoute
   '/pelada/$id/rankings': typeof PeladaIdRankingsRoute
   '/pelada/$id/usuarios': typeof PeladaIdUsuariosRoute
+  '/futevolei/instrutor': typeof FutevoleiInstrutorIndexRoute
   '/pelada/$id/jogador/$userId': typeof PeladaIdJogadorUserIdRoute
 }
 export interface FileRoutesById {
@@ -179,6 +186,7 @@ export interface FileRoutesById {
   '/pelada/$id_/perfil': typeof PeladaIdPerfilRoute
   '/pelada/$id_/rankings': typeof PeladaIdRankingsRoute
   '/pelada/$id_/usuarios': typeof PeladaIdUsuariosRoute
+  '/futevolei/instrutor/': typeof FutevoleiInstrutorIndexRoute
   '/pelada/$id_/jogador/$userId': typeof PeladaIdJogadorUserIdRoute
 }
 export interface FileRouteTypes {
@@ -201,6 +209,7 @@ export interface FileRouteTypes {
     | '/pelada/$id/perfil'
     | '/pelada/$id/rankings'
     | '/pelada/$id/usuarios'
+    | '/futevolei/instrutor/'
     | '/pelada/$id/jogador/$userId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -208,7 +217,6 @@ export interface FileRouteTypes {
     | '/convites'
     | '/dashboard'
     | '/super-admin'
-    | '/futevolei/instrutor'
     | '/futevolei/onboarding'
     | '/pelada/$id'
     | '/futevolei/aluno/cadastro'
@@ -221,6 +229,7 @@ export interface FileRouteTypes {
     | '/pelada/$id/perfil'
     | '/pelada/$id/rankings'
     | '/pelada/$id/usuarios'
+    | '/futevolei/instrutor'
     | '/pelada/$id/jogador/$userId'
   id:
     | '__root__'
@@ -241,6 +250,7 @@ export interface FileRouteTypes {
     | '/pelada/$id_/perfil'
     | '/pelada/$id_/rankings'
     | '/pelada/$id_/usuarios'
+    | '/futevolei/instrutor/'
     | '/pelada/$id_/jogador/$userId'
   fileRoutesById: FileRoutesById
 }
@@ -314,6 +324,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/futevolei/instrutor'
       preLoaderRoute: typeof FutevoleiInstrutorRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/futevolei/instrutor/': {
+      id: '/futevolei/instrutor/'
+      path: '/'
+      fullPath: '/futevolei/instrutor/'
+      preLoaderRoute: typeof FutevoleiInstrutorIndexRouteImport
+      parentRoute: typeof FutevoleiInstrutorRoute
     }
     '/pelada/$id_/usuarios': {
       id: '/pelada/$id_/usuarios'
@@ -397,10 +414,12 @@ declare module '@tanstack/react-router' {
 
 interface FutevoleiInstrutorRouteChildren {
   FutevoleiInstrutorCadastroRoute: typeof FutevoleiInstrutorCadastroRoute
+  FutevoleiInstrutorIndexRoute: typeof FutevoleiInstrutorIndexRoute
 }
 
 const FutevoleiInstrutorRouteChildren: FutevoleiInstrutorRouteChildren = {
   FutevoleiInstrutorCadastroRoute: FutevoleiInstrutorCadastroRoute,
+  FutevoleiInstrutorIndexRoute: FutevoleiInstrutorIndexRoute,
 }
 
 const FutevoleiInstrutorRouteWithChildren =
@@ -428,3 +447,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
