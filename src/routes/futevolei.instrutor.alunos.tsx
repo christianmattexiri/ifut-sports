@@ -49,77 +49,45 @@ function AlunosPage() {
   const [isSubmittingShadow, setIsSubmittingShadow] = useState(false);
 
   async function handleSaveShadowStudent() {
-    if (!shadowName.trim()) {
-      toast.error("Digite o nome do aluno.");
-      return;
-    }
-    
     setIsSubmittingShadow(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        toast.error("Nenhum usuário logado encontrado!");
-        return;
-      }
-
-      const emailPrefix = user.email ? user.email.split('@')[0] : 'instrutor';
-
-      // 1. PROFILE: Agora com username E email salvos juntos!
-      const { error: profileErr } = await supabase
-        .from('profiles')
-        .upsert({ 
-          id: user.id,
-          username: emailPrefix,
-          email: user.email
-        } as any, { onConflict: 'id' });
-        
-      if (profileErr) console.error("Aviso profile:", profileErr);
-
-      // 2. INSTRUTOR: Agora com nome E o invite_code gerado na hora!
-      const instructorName = user.user_metadata?.full_name || 'Instrutor';
-      const { error: instructorErr } = await supabase
-        .from('futevolei_instructors')
-        .upsert({ 
-          user_id: user.id,
-          nome: instructorName,
-          invite_code: crypto.randomUUID()
-        } as any, { onConflict: 'user_id' });
-
-      if (instructorErr) console.error("Aviso instructor:", instructorErr);
-
-      const currentInstructorId = instructorId || user.id;
+      if (!user) { toast.error("Sem usuário logado!"); return; }
+  
+      // DIAGNÓSTICO 1: Estrutura do erro ao inserir aluno
       const shadowId = crypto.randomUUID();
-
-      // 3. ALUNO: Sem a coluna 'is_shadow' (que causava o erro vermelho no seu print)
-      const { error: studentErr } = await supabase
+      const { data, error } = await supabase
         .from("futevolei_students")
-        .insert({
-          user_id: shadowId,
-          nome: shadowName.trim()
-        } as any);
-
-      if (studentErr) throw studentErr;
-
-      // 4. VÍNCULO DE MEMBRO
-      const { error: memberErr } = await supabase
-        .from("futevolei_members")
-        .insert({
-          instructor_id: currentInstructorId,
-          student_id: shadowId,
-          status: "approved"
-        } as any);
-
-      if (memberErr) throw memberErr;
-
-      toast.success(`${shadowName} adicionado à sua turma!`);
-      setShadowName(""); 
-      setIsShadowModalOpen(false); 
-      load(); 
-      
+        .insert({ user_id: shadowId, nome: "TESTE_DIAGNOSTICO" } as any)
+        .select();
+  
+      console.log("=== DIAGNÓSTICO futevolei_students ===");
+      console.log("data:", JSON.stringify(data, null, 2));
+      if (error) {
+        console.log("code:", error.code);
+        console.log("message:", error.message);
+        console.log("details:", error.details);
+        console.log("hint:", error.hint);
+      }
+  
+      // DIAGNÓSTICO 2: Tentar SELECT para ver se RLS bloqueia leitura também
+      const { data: rows, error: selectErr } = await supabase
+        .from("futevolei_students")
+        .select("*")
+        .limit(1);
+  
+      console.log("=== SELECT futevolei_students ===");
+      console.log("rows:", JSON.stringify(rows, null, 2));
+      if (selectErr) {
+        console.log("select error:", selectErr.message);
+      }
+  
     } catch (err: any) {
-      console.error("Erro detalhado:", err);
-      toast.error("Erro ao salvar o aluno. Verifique o console.");
+      console.log("=== CATCH ===");
+      console.log("message:", err.message);
+      console.log("details:", err.details);
+      console.log("hint:", err.hint);
+      console.log("code:", err.code);
     } finally {
       setIsSubmittingShadow(false);
     }
