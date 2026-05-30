@@ -53,42 +53,72 @@ function AlunosPage() {
       toast.error("Digite o nome do aluno.");
       return;
     }
-    if (!instructorId) return;
-
+    
     setIsSubmittingShadow(true);
     try {
-      // 1. Gera um ID único aleatório para esse aluno "fantasma"
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error("Nenhum usuário logado encontrado!");
+        return;
+      }
+
+      const emailPrefix = user.email ? user.email.split('@')[0] : 'instrutor';
+
+      // 1. PROFILE: Agora com username E email salvos juntos!
+      const { error: profileErr } = await supabase
+        .from('profiles')
+        .upsert({ 
+          id: user.id,
+          username: emailPrefix,
+          email: user.email
+        } as any, { onConflict: 'id' });
+        
+      if (profileErr) console.error("Aviso profile:", profileErr);
+
+      // 2. INSTRUTOR: Agora com nome E o invite_code gerado na hora!
+      const instructorName = user.user_metadata?.full_name || 'Instrutor';
+      const { error: instructorErr } = await supabase
+        .from('futevolei_instructors')
+        .upsert({ 
+          user_id: user.id,
+          nome: instructorName,
+          invite_code: crypto.randomUUID()
+        } as any, { onConflict: 'user_id' });
+
+      if (instructorErr) console.error("Aviso instructor:", instructorErr);
+
+      const currentInstructorId = instructorId || user.id;
       const shadowId = crypto.randomUUID();
 
-      // 2. Insere na tabela de alunos
+      // 3. ALUNO: Sem a coluna 'is_shadow' (que causava o erro vermelho no seu print)
       const { error: studentErr } = await supabase
         .from("futevolei_students")
         .insert({
           user_id: shadowId,
-          nome: shadowName.trim(),
-          is_shadow: true
-        });
+          nome: shadowName.trim()
+        } as any);
 
       if (studentErr) throw studentErr;
 
-      // 3. Cria o vínculo automático com o professor (já aprovado)
+      // 4. VÍNCULO DE MEMBRO
       const { error: memberErr } = await supabase
         .from("futevolei_members")
         .insert({
-          instructor_id: instructorId,
+          instructor_id: currentInstructorId,
           student_id: shadowId,
           status: "approved"
-        });
+        } as any);
 
       if (memberErr) throw memberErr;
 
       toast.success(`${shadowName} adicionado à sua turma!`);
-      setShadowName(""); // Limpa o campo
-      setIsShadowModalOpen(false); // Fecha o modal
-      load(); // Recarrega a lista para o aluno aparecer na tela
+      setShadowName(""); 
+      setIsShadowModalOpen(false); 
+      load(); 
       
     } catch (err: any) {
-      console.error(err);
+      console.error("Erro detalhado:", err);
       toast.error("Erro ao salvar o aluno. Verifique o console.");
     } finally {
       setIsSubmittingShadow(false);
